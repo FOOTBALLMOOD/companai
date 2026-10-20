@@ -36,7 +36,7 @@ rules, hazards and where we are.
 - **`default: false` in an entity decorator does not make the property optional** — `[OptionalProps]` must say so (L185).
 
 ## FRONTIER (2026-10-20)
-**The spine:** `PLAN-2026-10-18-one-agent.md`, W1–W8. **Register 80 · 62 · 142.** Docs checker PASS
+**The spine:** `PLAN-2026-10-18-one-agent.md`, W1–W8. **Register 81 · 62 · 143.** Docs checker PASS
 (36 checks, 14/14 mutations RED); `derive-counts` 78/321.
 **★ THE PLATFORM IS AN ARCHITECTURE, NOT A VERTICAL.** A type is a role for agents; chain ceiling → type
 → instance → binding, each a subset above; an agent is always inside a tenant.
@@ -51,7 +51,8 @@ route gated like the ceiling) · `CC-140` (the write refuses a stale view, 409, 
 
 **★ CI (2026-10-20): the remote exists and the first run found three real defects** — the build
 (`CC-141`, fixed+guarded), i18n drift that blocks the whole unit suite (`CC-142`, open), and an
-integration probe that 404s so no Playwright test has ever run (`CC-143`, open).
+integration probe that 404s so no Playwright test has ever run (`CC-143`, open); i18n closed by hand-translating 258 strings (`CC-142`), and the checker
+covers 3 of 5 offered locales — Arabic is 337 keys short (`CC-144`).
 
 **★ IN HAND — `CC-92` Slot 0: 10 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`.
 Remaining, in order: `T-05` (double approve, no compare-and-set) · `T-06` (the record the chain misses) ·

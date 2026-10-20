@@ -56,6 +56,39 @@ path is waiting on the owner.**
 
 ---
 
+## 2026-10-20 — `CC-142` closed: 258 strings translated, and the checker covers three of five locales
+
+The `test` job's second step blocked everything behind it: `auth` was **86 keys short in `pl`, `es` and
+`de`** — five features added in English only (`delegations` 19, `denials` 20, `projects` 17,
+`recordLocks` 16, `trust` 14).
+
+**They were translated by hand, not placeholdered.** Each locale keeps its own register (informal
+address) and its own established terms — *uprawnienie* / *permiso* / *Berechtigung*, *rola* / *rol* /
+*Rolle*, *rekord* / *registro* / *Datensatz*, *Superadministrator* — and every placeholder was asserted
+to survive, because a translation that drops `{grantee}` renders a broken string and no test would
+catch it.
+
+**★ The trap in `--fix`, and why the order mattered.** `i18n-check-sync.ts:165` repairs a missing key
+by **copying the English text into the locale** — a placeholder that makes the check green while a
+Polish user reads English. So the keys were filled first, and `--fix` was then used **only to sort**
+12 files across `apps/mercato/src`, `api_keys` and `audit_logs`. The check now prints **"All
+translation files are in sync."**; `auth` **107 suites / 955 tests** green.
+
+**Written down, because the next person will need it:** `library/development/I18N-CATALOGS.md` — the
+rule, the enforcement, the `--fix` trap, the 258 strings, and the one debt they carry: **no native
+speaker has reviewed them.**
+
+**★ And the finding underneath the finding.** The app offers **five** locales
+(`config.ts:14`: en, pl, es, de, ar) and renders Arabic right-to-left — but the checker reads
+`TARGET_LOCALES = ['pl','es','de']`. `auth/i18n/ar.json` holds **40 of 377 keys**, so 337 strings
+render as raw dotted keys in an Arabic UI while the checker reports "all in sync". That is `CC-144`,
+and it is the same shape as everything else in this register: **a check that covers three of five
+offered locales reports completion for a product that is two-fifths untranslated.**
+
+Register **81 · 62 · 143**.
+
+---
+
 ## 2026-10-20 — the run that is not green yet: two pre-existing failures, now rows
 
 The build is fixed (`CC-141`), and the run still fails — for two reasons that predate the remote and
