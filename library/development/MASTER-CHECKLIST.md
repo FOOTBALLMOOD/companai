@@ -41,7 +41,33 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE — 2026-10-20 (03:40): `T-04` is BUILT and CLOSED — a Function that asks for a number is refused
+**LAST DONE — 2026-10-20 (11:14): `CC-146` is BUILT and CLOSED — two source files were in no checkout
+at all, and every local run was green.** The second CI run to reach the unit suite failed
+`backend-sidebar-icons.test.ts` with *cannot find module
+`…/attachments/backend/storage/attachments/page.meta`*. The file was on disk; it was **not in the
+repository**. Cause: a **bare `storage` rule** in `.gitignore` — a bare directory name matches **at
+every depth**, and one of those depths was
+`packages/core/src/modules/attachments/backend/storage/**`, two real source files (an attachments page
+and its `requireFeatures: ['attachments.view']` meta). **Why nothing had ever said so:** the files
+exist locally, so every local run was green; `git status` is clean because an ignored file never
+appears as untracked; `git ls-files` lists only tracked files, so no inventory mentioned them. **Only a
+clean checkout — what CI does — can see the hole**, which is why the first CI run in this project's
+history found in minutes what 2,600+ green tests could not. **Fix:** the rule is anchored as `/storage`
+and the two files are added. **Guard:** `no-ignored-source.test.ts` asks **git**
+(`git ls-files --others --ignored --exclude-standard`) which files under a `src/` tree it refuses to
+track — a file-exists walker would find the file on the developer's machine and pass, so the question
+can only be put to git — and it asserts a **denominator** (uploads, dist and caches *are* ignored), so a
+run that found nothing ignored cannot pass by vacuity. Proven **RED** by restoring the bare rule and
+adding a new source file under it, then restored sha256-identical. **Also fixed in the same commit:**
+`guard-registry-delivery.test.ts` asserted the old wording (*"snake_case"*) while the gate now names
+the rule it broke (*"not a readable permission-surface id"*, with the allowed characters) — the
+assertion now pins the reason, not a stale adjective. **Proof:** core 1/1 · apps/mercato 5/5 · cli
+**74 suites / 1,269 tests**, 0 failures. This closes the CI thread opened at 05:12 — `CC-141` (the
+build's export convention) · `CC-142` (258 i18n strings) · `CC-143` (a probe asking a parked module) ·
+`CC-145` (guards re-measured, one false red) — and leaves the run **one observation** from green.
+**84 closed · 61 open · 145 total.**
+
+**PREVIOUSLY — 2026-10-20 (03:40): `T-04` is BUILT and CLOSED — a Function that asks for a number is refused
 instead of answered with rows.** The compiler said *"no physical execution is possible"* — as a **gap** —
 and `verifyFunction` filters diagnostics to `severity === 'error'`, so a gap is excluded **by
 construction**: the report printed *"resolved without error"* beside the compiler's own refusal. Literally
@@ -528,7 +554,7 @@ not ban** (`CC-124` — **built and closed the same day**, see LAST DONE above);
 and the **type catalogue has only a code layer**, so a tenant can override a type and cannot create one
 (`CC-126` — *corrected 2026-10-18: this read "platform level has no schema home", which was my misreading
 of **types** as **agents**; agents are correctly tenant-scoped, 12 of 12 tables*); and owner
-departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **83 closed · 61 open · 144 total**, counted from §5.
+departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **84 closed · 61 open · 145 total**, counted from §5.
 **★ AND THE OWNER FOUND THE GAP ABOVE ALL OF THEM (2026-10-18, documented as asked — `CC-128`, plan §4.6):
 the platform has no ceiling over its tenants.** Measured, four reads: `Tenant` holds `name`/`is_active`
 and nothing else, and **no plan, feature, limit or settings table exists** — so D1's answer (*"the platform
@@ -800,7 +826,7 @@ that *does* still matter is **code that nothing calls** — a checker on disk wi
 referencing it is an unfinished row, because the wiring itself is missing code (`CC-101` fixed seven
 of eight; `CC-117` closed the eighth, as a report step). Do not confuse the two: **no remote is a
 deployment state; no caller is a defect.**
-**CC-75 was never assigned** — the numbering skips it. **83 closed · 61 open · 144 total.**
+**CC-75 was never assigned** — the numbering skips it. **84 closed · 61 open · 145 total.**
 *(Rule 13, corrected 2026-10-17. The committed header read **52 closed · 44 open · 96 total**, and that
 figure corresponded to **no state the table ever held**: measured at `HEAD`, the table below already
 carried **97 rows — 55 closed, 42 open** — because rows were appended to the table without the header
@@ -975,6 +1001,7 @@ be the thing that drifts.)*
 | CC-143 | THE INTEGRATION SUITE HAS NEVER BOOTED — the readiness probe’s authenticated read returns 404 — 2026-10-20, found by run `39363070729` (all five shards that completed), OPEN, and it predates this remote. MEASURED from a shard log: the app **does** serve (`GET /login returned healthy HTML`), authentication **does** answer (`POST /api/auth/login returned 401` for the probe’s credentials), and the **authenticated `GET /api/customers/people` returns 404** — so the probe gives up after **180 s** and every Playwright test in the shard is skipped. Three readings are possible and this row does not guess: the probe user is not the seeded admin, the customers module is not enabled in the CI environment, or the route does not exist under that path. **The next act is a measurement, not a fix:** run the same three probes against a locally booted app with the CI environment and see which is true.  **CLOSED 2026-10-20 (code `75502071`): the cause was a parking decision nobody connected to the probe.** `customers` is **disabled by design** in `apps/mercato/src/modules.ts` (“upstream’s reference module for CRUD patterns … parked, not deleted”), so its routes are never generated — and the probe read `/api/customers/people?pageSize=1` in **every** configuration of this app. FIX: `READINESS_PROBE_PATH = ‘/api/auth/profile’` — `auth` is core and always enabled, its `GET` declares `requireAuth: true` and nothing else, and a 200 still proves what the probe exists to prove. GUARD: `readiness-probe-route.test.ts` asserts **both** facts the old path violated — the module is in `enabledModules` **and** a route file exists — because one alone is not enough: with the old path the module assertion goes red while the route-file assertion stays **green**, since a parked module’s source file still exists. That is exactly why nobody noticed. Measured: cli `lib/testing` **4 suites / 35 tests** green; guard proven red on the old path, file restored sha256-identical. | ✅ closed |
 | CC-144 | ARABIC IS A SUPPORTED LOCALE THE i18n CHECKER DOES NOT COVER — 2026-10-20, found while closing `CC-142`, OPEN. `packages/shared/src/lib/i18n/config.ts:14` offers **five** locales — `[‘en’,‘pl’,‘es’,‘de’,‘ar’]` — and `direction.ts` renders Arabic right-to-left, but `scripts/i18n-check-sync.ts:25` reads `TARGET_LOCALES = [‘pl’,‘es’,‘de’]`. MEASURED: `auth/i18n/ar.json` holds **40 of 377 keys** — **337 missing** — so an Arabic UI renders raw dotted keys for most of the auth module, and the checker calls the catalogs **"in sync"**. **FIX: add `‘ar’` to `TARGET_LOCALES`** and translate the gap; the array change alone turns the check red on the next run, which is the point — but it has to land **with** the translations, or the build is blocked by a check whose subject does not exist yet. **The general form, and the reason this is a row: a check that covers three of five offered locales reports completion for a product that is two-fifths untranslated.** | ☐ open |
 | CC-145 | THE COVERAGE GUARDS WERE PINNED 75 COMMITS AGO, AND ONE OF THEM WAS A FALSE RED — 2026-10-20, found by the first CI run that ever reached the unit suite, CLOSED. Three count-pinned guards failed exactly as designed — they exist to fail when the surface grows without a human looking — and every number was traced to real work rather than bumped: **route files 458 → 464** and **GET routes 297 → 303** are the **six** files added since the pin (`3ba7b28f`, `CC-44`): agent-types ×2 and departures (`CC-127`), capability-ceiling ×3 (`CC-135`/`CC-139`) — 458 + 6 = 464, arithmetic that closes; **tables 234 → 237**, and two of the three new ones were **unclassified**, which the guard reports by name (`auth.TenantCapabilityCeiling`, `ai_assistant.AiAgentRuntime`) — both are now on `INTERNAL_TABLES` **with a reason**, because neither is a business list surface; **write rows 170 → 175**. **★ The valuable find was a FALSE RED:** the departure route declares `requireFeatures: DEPARTURE_FEATURES` — a same-file constant shared by GET and POST, better style than two literal arrays — and the walker matched only the literal form, so a **gated** route was reported ungated. **A guard that produces false reds is a guard that gets muted**, so `classify` now resolves one same-file `const NAME = [ … ]` and counts it as the gate it is, with three cases pinning it (non-empty resolves · empty does not · a name from elsewhere does not). Measured: cli **73 suites / 1,267 tests**, 0 failures. | ✅ closed |
+| CC-146 | **TWO SOURCE FILES WERE IN NO CHECKOUT AT ALL — AND EVERY LOCAL RUN WAS GREEN** — 2026-10-20, found by the **second CI run** to reach the unit suite, CLOSED. The run failed `backend-sidebar-icons.test.ts` with *cannot find module `…/attachments/backend/storage/attachments/page.meta`*. The file existed on disk and every local run passed, because it **was not in the repository**: a **bare `storage` rule** in `.gitignore` matches **at every depth**, and one of those depths was `packages/core/src/modules/attachments/backend/storage/**` — two real source files (an attachments page and its `requireFeatures: ['attachments.view']` meta). **Why no inventory mentioned them, three ways measured:** they exist locally, so local runs are green; `git status` is clean because an **ignored** file never appears as untracked; and `git ls-files` lists only **tracked** files. **Only a clean checkout — what CI does — can see the hole.** **FIX:** the rule is anchored as `/storage`, so only a top-level `storage/` is ignored, and the two files are added. **GUARD:** `packages/cli/src/lib/generators/__tests__/no-ignored-source.test.ts` asks **git** (`git ls-files --others --ignored --exclude-standard -- packages apps`, filtered to `src/` and source extensions) which files it refuses to track — a file-exists walker would find the file on the developer's machine and pass, so the question can only be put to git — and it asserts a **denominator** (`ignoreCountEverything() > 0`: uploads, dist and caches *are* ignored), so a run that found nothing ignored cannot pass by vacuity. Proven **RED** by restoring the bare rule and adding a new source file under it, then restored **sha256-identical**. **Also fixed in the same commit:** `guard-registry-delivery.test.ts` asserted the old wording (*"snake_case"*) while the gate now names the rule it broke (*"not a readable permission-surface id"*, with the allowed characters) — the assertion now pins the **reason**, not a stale adjective; `ok: false` was already the behaviour under test. **Proof:** core **1/1** · apps/mercato **5/5** · cli **74 suites / 1,269 tests**, 0 failures. Commit `39dcef67`, pushed to the `code` branch. | ✅ closed |
 
 ---
 ## 6. Platform study — 11 platforms, every one with its address
@@ -1141,7 +1168,7 @@ is a measured coverage claim, not a typed one.
 
 | Family | What it is | Home (relative to this folder) | ids in home | Carried here |
 |---|---|---|---:|---|
-| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 144 | ✅ **all** — §5 + §4 |
+| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 145 | ✅ **all** — §5 + §4 |
 | `SR-*` | the architecture requirements, pole by pole | **§7, this file** | 54 | ✅ **all** — §7 |
 | `G-*` | the governance & security floor | `platform_points.md` §G | 21 | 🟡 **9 named** (`G-01/02/03/04/07/09/17/21/22`, the rest only as triggers) — **12 with no row** → §9 |
 | `AH-*` | the agent half — `AH-1`…`AH-12` | `platform_points.md` §E | 12 | 🟡 **1 named** (`AH-1`) — **11 open, no row** → §9 |

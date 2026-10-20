@@ -45,14 +45,48 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-19:** register **79 closed · 60 open · 139 total**; §4's open rows
-**13 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
+**THE POSITION, MEASURED — 2026-10-20 (after `CC-146`):** register **84 closed · 61 open · 145 total**;
+§4's open rows **14 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 — `CC-146`: two source files were in no checkout at all, and every local run was green
+
+**The first CI run in this project's history found, in its second attempt, a hole that 2,600+ green
+tests could not see.** The unit suite failed on `backend-sidebar-icons.test.ts` with *cannot find module
+`…/attachments/backend/storage/attachments/page.meta`*. The file was on disk. It was **not in the
+repository**.
+
+**The cause is one character of a pattern.** `.gitignore` carried a bare `storage` rule. A bare
+directory name matches **at every depth**, and one of those depths was
+`packages/core/src/modules/attachments/backend/storage/**` — two real source files, an attachments page
+and its `requireFeatures: ['attachments.view']` meta. **Three inventories each looked away:** the files
+exist locally, so local runs pass; `git status` is clean because an *ignored* file never appears as
+untracked; `git ls-files` lists only *tracked* files. Only a clean checkout sees it.
+
+**The guard asks git, not the filesystem.** `no-ignored-source.test.ts` runs
+`git ls-files --others --ignored --exclude-standard -- packages apps`, filters to `src/` and source
+extensions, and asserts the list is empty — because a file-exists walker would find the file on the
+developer's machine and pass. It also asserts its **denominator** (`ignoreCountEverything() > 0`:
+uploads, dist and caches *are* ignored), so a run that found nothing ignored cannot pass by vacuity.
+Proven red by restoring the bare rule and adding a new source file under it, then restored
+sha256-identical.
+
+**Also in the same commit:** `guard-registry-delivery.test.ts` was asserting the old wording
+(*"snake_case"*) while the gate had moved to naming the rule it broke (*"not a readable
+permission-surface id"*). The assertion now pins the reason, not a stale adjective — `ok: false` was
+already the behaviour under test.
+
+**Proof:** core 1/1 · apps/mercato 5/5 · cli **74 suites / 1,269 tests**, 0 failures. Commit `39dcef67`,
+pushed to `code`. This closes the CI thread opened at 05:12 — `CC-141`, `CC-142`, `CC-143`, `CC-145` —
+and leaves the run **one observation** from green, which is a thing to go and look at, not a thing to
+assert.
 
 ---
 

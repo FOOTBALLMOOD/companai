@@ -5396,3 +5396,36 @@ exist for another reason, separated them.
    the wrong stage is a green test over an unchanged system.
 
 *Cross-ref: L186 (the same family, from the input side) · `PLAN-T04-count-returns-rows.md` §6.*
+
+## L197
+
+**A green local run proves the file exists on disk, not that it is in the repository.**
+
+`CC-146`, 2026-10-20. The second CI run to reach the unit suite failed with *cannot find module
+`…/attachments/backend/storage/attachments/page.meta`*. The file was there. Every local run was green.
+**It had never been committed**: `.gitignore` carried a bare `storage` rule, and a bare directory name
+matches **at every depth** — including `packages/core/src/modules/attachments/backend/storage/**`, where
+two real source files lived.
+
+**Three inventories each looked away, and each for a different reason:**
+1. the **test run** reads the filesystem, and the file is on it;
+2. **`git status`** is clean, because an *ignored* file never appears as untracked;
+3. **`git ls-files`** lists only *tracked* files, so the two appear in no inventory at all.
+
+Only a **clean checkout** — what CI does — can see the hole. The first CI run in this project's history
+found it within minutes, after 2,600+ green tests had said nothing.
+
+**The rules.**
+1. **Anchor every bare directory name in `.gitignore`** (`/storage`, not `storage`). A bare name is a
+   pattern that matches at every depth, and you cannot see which siblings you have hidden by accident.
+2. **Ask git, not the filesystem.** The honest guard is
+   `git ls-files --others --ignored --exclude-standard` filtered to source extensions — a file-exists
+   walker finds the file on the developer's machine and passes for the wrong reason.
+3. **A guard for this needs a denominator.** `uploads`, `dist` and caches *are* ignored; if the check
+   asserted only "the offender list is empty", a run that ignored nothing would pass by vacuity.
+4. **"Green on my machine" is a claim about a filesystem.** When a failure appears only in CI, suspect
+   the *delivery* of the files before the code that uses them — and reproduce with a clean clone, which
+   is the only environment that has the same files as the repository.
+
+*Cross-ref: `CC-146` (the fix, the guard, and the proof); `CC-141` (the same first CI run, a different
+delivery defect); L186 (a test that measured the wrong object).*
