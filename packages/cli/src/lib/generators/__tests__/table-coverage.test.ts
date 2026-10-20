@@ -110,6 +110,10 @@ export const INTERNAL_TABLES: Record<string, string> = {
   'auth.AuthorityProjectRecord': 'authority project record link (engine state)',
   'auth.AuthorityDenial': 'authority denial record (engine state)',
   'auth.PermissionSurfaceRecord': 'persisted permission-surface rows (read via a dedicated service, not a table list)',
+  // Added 2026-10-20 with the re-measurement below. Both are real tables from real work, and neither
+  // is a business list surface — which is the question this guard asks.
+  'auth.TenantCapabilityCeiling': 'the platform capability ceiling (CC-128) — one row per tenant, read only through the gated /api/auth/capability-ceiling route (CC-135/CC-139), which resolves it through a repository the walker cannot see. Configuration, never a business list',
+  'ai_assistant.AiAgentRuntime': 'agent runtime registry (SR-02/CC-102) — daemon registration and liveness rows, written and read by the registry itself; no business list surface',
 
   // --- append-only logs / queues / index tables (written by workers, not listed) ---
   'audit_logs.AccessLog': 'access log (append-only; read via audit tooling)',
@@ -261,7 +265,7 @@ const tableKey = (t: Table) => `${t.module}.${t.name}`
 // Measured 2026-10-11 (pinned EXACTLY, not as a floor — a shrinking discovery
 // must fail loudly, not pass vacuously; hostile-critic hole #3).
 // Re-pinned 2026-10-11 (CC-27 added the `ai_agent_bindings` table → 233→234).
-const EXPECTED_TABLES = 234
+const EXPECTED_TABLES = 237
 const EXPECTED_SURFACE_MODULES = 47
 const EXPECTED_SEARCH_MODULES = 12
 

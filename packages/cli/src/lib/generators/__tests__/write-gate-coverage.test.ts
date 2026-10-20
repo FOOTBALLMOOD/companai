@@ -181,6 +181,23 @@ function stripCommentsAndStrings(src: string): string {
 // `[]`, `[ ]`, `[0]`, `[[]]`, `[,]` are deliberately NOT gates (the runtime drops
 // non-string / empty elements, so none of them gates anything).
 const RE_REQUIRE_FEATURES = /requireFeatures\s*:\s*\[\s*(?:"|[A-Za-z_$])/
+/**
+ * A `requireFeatures: NAME` naming a **same-file** constant whose array literal is non-empty is the
+ * same gate as the literal — written once and shared, which is better style, not a weaker gate.
+ *
+ * The departure route (`api/ai/departures/[userId]/route.ts:52`) does exactly this:
+ * `const DEPARTURE_FEATURES = [DELETE_USER_FEATURE, MANAGE_FEATURE]`, then uses it for GET and POST.
+ * Matching only the literal form reported that gated route as ungated — **a false red**, and a guard
+ * that produces false reds is a guard that gets muted. Found 2026-10-20 by the first CI run.
+ */
+const RE_REQUIRE_FEATURES_NAME = /requireFeatures\s*:\s*([A-Za-z_$][\w$]*)/
+
+function constantResolvesToGate(code: string, name: string): boolean {
+  const re = new RegExp(
+    '(?:^|\\n)\\s*(?:const|let|var)\\s+' + name + '\\s*(?::[^=\\n]+)?=\\s*\\[\\s*(?:"|[A-Za-z_$])',
+  )
+  return re.test(code)
+}
 // A real marker has a quoted reason; after stripping, the string literal is `""`.
 const RE_BY_DESIGN = /byDesign\s*:\s*"/
 
@@ -220,8 +237,13 @@ function resolveReexport(file: string, src: string, depth = 0): string {
 
 function classify(src: string): { featureGated: boolean; byDesign: boolean } {
   const code = stripCommentsAndStrings(src)
+  let featureGated = RE_REQUIRE_FEATURES.test(code)
+  if (!featureGated) {
+    const named = RE_REQUIRE_FEATURES_NAME.exec(code)
+    if (named) featureGated = constantResolvesToGate(code, named[1])
+  }
   return {
-    featureGated: RE_REQUIRE_FEATURES.test(code),
+    featureGated,
     byDesign: RE_BY_DESIGN.test(code),
   }
 }
@@ -327,7 +349,7 @@ describe('CC-44 — the write-path feature gate is default-deny', () => {
   it('sanity — the exact measured counts (a walker that stops scanning fails loudly)', () => {
     // Pinned so a silent shrink fails. Update deliberately when routes change.
     expect(enabled.length).toBe(35)
-    expect(rows.length).toBe(170)
+    expect(rows.length).toBe(175)
     expect(byDesignFound.length).toBe(11)
   })
 
@@ -364,5 +386,22 @@ describe('CC-44 — the write-path feature gate is default-deny', () => {
     expect(classify('export const metadata = { POST: { requireFeatures: [REQUIRED_FEATURE] } }').featureGated).toBe(true)
     expect(classify("export const metadata = { POST: { byDesign: 'x' } }").byDesign).toBe(true)
     expect(classify('export const metadata = { POST: { byDesign: `x` } }').byDesign).toBe(true)
+
+    // ★ A SHARED CONSTANT is the same gate, and the departure route uses one (2026-10-20)
+    expect(
+      classify(
+        'const DEPARTURE_FEATURES = [DELETE_USER_FEATURE, MANAGE_FEATURE]\n' +
+          'export const metadata = { POST: { requireFeatures: DEPARTURE_FEATURES } }',
+      ).featureGated,
+    ).toBe(true)
+    // …but only when the constant actually resolves to a NON-EMPTY array in the same file
+    expect(
+      classify(
+        'const EMPTY = []\nexport const metadata = { POST: { requireFeatures: EMPTY } }',
+      ).featureGated,
+    ).toBe(false)
+    expect(
+      classify('export const metadata = { POST: { requireFeatures: FROM_ELSEWHERE } }').featureGated,
+    ).toBe(false)
   })
 })

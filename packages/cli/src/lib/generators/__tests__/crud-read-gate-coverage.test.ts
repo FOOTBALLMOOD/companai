@@ -721,9 +721,9 @@ describe('CC-47: every human CRUD list route declares a read gate', () => {
     // Pinned EXACTLY (not a loose floor): if a walker silently stops
     // scanning `apps/` (442 of the 458 files live under `packages/`), a floor like `>100`
     // would still clear while the guarantee quietly shrank. Exact counts fail loudly.
-    expect(routeFiles.length).toBe(458)
+    expect(routeFiles.length).toBe(464)
     expect(crudRoutes.length).toBe(60)
-    expect(getRoutes.length).toBe(297)
+    expect(getRoutes.length).toBe(303)
   })
 
   it('A. every makeCrudRoute route declares a GET read gate (or is handler-gated)', () => {
