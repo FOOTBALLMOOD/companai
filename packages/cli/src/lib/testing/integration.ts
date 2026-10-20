@@ -1431,6 +1431,25 @@ async function probeBackendLoginEndpoint(baseUrl: string): Promise<BackendLoginP
   }
 }
 
+/**
+ * The path the authenticated readiness probe reads.
+ *
+ * It was `/api/customers/people?pageSize=1`, and `customers` is **parked** in `apps/mercato/src/modules.ts`
+ * ("upstream's reference module for CRUD patterns … parked, not deleted"). So the probe asked a module
+ * that is not enabled for a route that therefore does not exist, got 404, waited its full 180 seconds and
+ * failed every integration shard — on every configuration of this app, from the day `customers` was
+ * parked. No run had ever reached the probe, so nothing ever said so (`CC-143`).
+ *
+ * `/api/auth/profile` is the right question: `auth` is core and always enabled, its `GET` declares
+ * `requireAuth: true` and nothing else, and it returns the caller's own profile — so a 200 proves the
+ * thing the probe exists to prove (a token obtained by logging in can read an authenticated route),
+ * without depending on any business module being on.
+ *
+ * `readiness-probe-route.test.ts` asserts the module named here is enabled, so the next parking
+ * decision cannot silently break the harness again.
+ */
+export const READINESS_PROBE_PATH = '/api/auth/profile'
+
 async function probeAuthenticatedApi(baseUrl: string): Promise<AuthenticatedApiProbeResult> {
   try {
     const form = new URLSearchParams()
@@ -1467,7 +1486,7 @@ async function probeAuthenticatedApi(baseUrl: string): Promise<AuthenticatedApiP
       }
     }
 
-    const apiResponse = await probeFetch(`${baseUrl}/api/customers/people?pageSize=1`, {
+    const apiResponse = await probeFetch(`${baseUrl}${READINESS_PROBE_PATH}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -1479,8 +1498,8 @@ async function probeAuthenticatedApi(baseUrl: string): Promise<AuthenticatedApiP
       apiStatus: apiResponse.status,
       healthy,
       detail: healthy
-        ? 'Authenticated GET /api/customers/people returned 200'
-        : `Authenticated GET /api/customers/people returned ${apiResponse.status}`,
+        ? `Authenticated GET ${READINESS_PROBE_PATH} returned 200`
+        : `Authenticated GET ${READINESS_PROBE_PATH} returned ${apiResponse.status}`,
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
