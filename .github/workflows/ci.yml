@@ -654,6 +654,16 @@ jobs:
       OM_ENABLE_ENTERPRISE_MODULES: 'true'
       OM_ENABLE_ENTERPRISE_MODULES_SSO: 'true'
       OM_ENABLE_ENTERPRISE_MODULES_SECURITY: 'true'
+      # The example module is off by default so it never reaches a customer's
+      # product (`modules.ts` pushes it behind this flag with a comment saying
+      # exactly that). CI works ON the platform, so the flag is on here: with
+      # it off, every integration spec in the repo belongs to a module whose
+      # pages and routes are not generated, and all of them fail on 404s
+      # (CC-152). Discovery now lets a guarded push in only when its own
+      # switch is on — this line is what keeps the suite non-empty. The job
+      # builds the app itself (coverage run), so the routes exist by the time
+      # Playwright starts.
+      OM_ENABLE_EXAMPLES: 'true'
       JWT_SECRET: 'ci-ephemeral-test-jwt-secret'
       OM_SECURITY_MFA_SETUP_SECRET: 'ci-ephemeral-test-mfa-setup-secret'
       OM_WEBHOOKS_ALLOW_PRIVATE_URLS: '1'

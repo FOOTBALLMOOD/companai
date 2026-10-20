@@ -116,6 +116,24 @@ function collectModuleIdsFromModulesRoot(modulesRoot: string, enabledModules: Se
  * ids (`customers/commands/people.ts:197` reads `E.customers`, which is not generated for a parked
  * module) — before a single test runs.
  *
+ * `CC-152` — the same trap one level deeper, in this file's own second question. A module can be
+ * pushed **behind a guard**:
+ *
+ *     if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) {
+ *       enabledModules.push({ id: 'example', from: '@app' })
+ *     }
+ *
+ * Reading the push without its guard answers "enabled" from a line the runtime never executes — so
+ * the example module's specs ran in CI, where the flag is off, against pages and routes that are only
+ * generated for an enabled module. Every one of them failed on a 404 (`CC-152`). The guard is
+ * therefore read *with* the push:
+ *   - `parseBooleanWithDefault(process.env.NAME, DEFAULT)` — the module counts as enabled only when
+ *     NAME parses on, with the same token table `@open-mercato/shared/lib/boolean` uses.
+ *   - `enabledModules.some((entry) => entry.id === 'OTHER')` — enabled only when OTHER is already
+ *     in the set (the set is built static-array-first, then push-by-push, in source order).
+ *   - any other shape, or no guard — the module counts as enabled. Over-inclusion fails loud (the
+ *     spec runs and fails); under-inclusion would silently shrink the suite.
+ *
  * Returns `null` when the project declares no such file (a standalone app whose enablement lives
  * elsewhere), and the caller keeps the old directory-based answer.
  */
@@ -137,12 +155,62 @@ function readDeclaredEnabledModules(projectRoot: string): Set<string> | null {
     for (const match of source.slice(start, end).matchAll(/^ {4}id:\s*'([^']+)'/gm)) {
       ids.add(normalizeModuleId(match[1]))
     }
-    for (const match of source.matchAll(/enabledModules\.push\(\s*\{\s*id:\s*'([^']+)'/g)) {
-      ids.add(normalizeModuleId(match[1]))
-    }
+    collectPushedModuleIds(source, ids)
     if (ids.size > 0) return ids
   }
   return null
+}
+
+/**
+ * `CC-152` — a guarded push is only a push when its guard is open. See the docblock above for the
+ * two guard shapes this reads and why an unrecognised shape must over-include.
+ */
+function collectPushedModuleIds(source: string, ids: Set<string>): void {
+  const lines = source.split('\n')
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!lines[index].includes('enabledModules.push(')) continue
+    // `enabledModules.push({ id: 'x' …` may put the id on the same line or the next one.
+    const pushWindow = lines.slice(index, index + 3).join('\n')
+    const pushMatch = pushWindow.match(/enabledModules\.push\(\s*\{\s*id:\s*'([^']+)'/)
+    if (!pushMatch) continue
+    let guardIndex = index - 1
+    while (guardIndex >= 0 && lines[guardIndex].trim() === '') guardIndex -= 1
+    const guardLine = guardIndex >= 0 ? lines[guardIndex] : ''
+    const envGuard = guardLine.match(
+      /^if\s*\(\s*parseBooleanWithDefault\(\s*process\.env\.([A-Z0-9_]+)\s*,\s*(true|false)\s*\)\s*\)\s*\{\s*$/,
+    )
+    if (envGuard) {
+      if (!isEnvFlagEnabled(envGuard[1], envGuard[2] === 'true')) continue
+      ids.add(normalizeModuleId(pushMatch[1]))
+      continue
+    }
+    const moduleGuard = guardLine.match(
+      /^if\s*\(\s*enabledModules\.some\(\(entry\)\s*=>\s*entry\.id\s*===\s*'([^']+)'\)\s*\)\s*\{\s*$/,
+    )
+    if (moduleGuard) {
+      if (!ids.has(normalizeModuleId(moduleGuard[1]))) continue
+      ids.add(normalizeModuleId(pushMatch[1]))
+      continue
+    }
+    ids.add(normalizeModuleId(pushMatch[1]))
+  }
+}
+
+/**
+ * `CC-152` — mirrors `parseBooleanWithDefault` from `@open-mercato/shared/lib/boolean` (same token
+ * table, same default-when-unset). Duplicated rather than imported: this file must not pull the
+ * shared package into the CLI's discovery path.
+ */
+function isEnvFlagEnabled(name: string, fallback: boolean): boolean {
+  const rawValue = process.env[name]
+  if (typeof rawValue !== 'string') return fallback
+  const normalized = rawValue.trim().toLowerCase()
+  if (!normalized) return fallback
+  const trueValues = new Set(['1', 'true', 'yes', 'y', 'on', 'enable', 'enabled'])
+  const falseValues = new Set(['0', 'false', 'no', 'n', 'off', 'disable', 'disabled'])
+  if (trueValues.has(normalized)) return true
+  if (falseValues.has(normalized)) return false
+  return fallback
 }
 
 function resolveEnabledModuleIds(projectRoot: string): Set<string> {

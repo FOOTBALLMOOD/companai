@@ -16,6 +16,7 @@ describe('integration discovery', () => {
     'OM_TEST_DISCOVERY_AI_KEY',
     'OM_TEST_DISCOVERY_FALLBACK_AI_KEY',
     'OM_TEST_DISCOVERY_REQUIRED_KEY',
+    'OM_ENABLE_EXAMPLES',
   ] as const
   const previousTestEnvValues = new Map<string, string | undefined>()
 
@@ -262,5 +263,97 @@ describe('integration discovery', () => {
     const discovered = discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests'))
 
     expect(discovered).toEqual([])
+  })
+
+  it('CC-152 — a push behind an env guard enables its module only when the guard is on', async () => {
+    // The exact shape from apps/mercato/src/modules.ts: the example module is pushed inside
+    // `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false))`. Reading the push
+    // without the guard is what kept 33 CI specs running against pages that are only generated
+    // for an enabled module — every one failed on a 404.
+    await writeTestFile(
+      tempRoot,
+      'apps/mercato/src/modules.ts',
+      [
+        'import { parseBooleanWithDefault } from "@open-mercato/shared/lib/boolean"',
+        'export const enabledModules: ModuleEntry[] = [',
+        '  {',
+        "    id: 'auth',",
+        "    from: '@open-mercato/core',",
+        '  },',
+        ']',
+        '',
+        'if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) {',
+        '  enabledModules.push({',
+        "    id: 'example',",
+        "    from: '@app',",
+        '  })',
+        '}',
+        '',
+      ].join('\n'),
+    )
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts')
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/example/__integration__/TC-EX-001.spec.ts')
+
+    const expectedWithoutFlag = ['apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts']
+    const expectedWithFlag = [
+      'apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts',
+      'apps/mercato/src/modules/example/__integration__/TC-EX-001.spec.ts',
+    ]
+
+    expect(
+      discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests')).map((entry) => entry.path),
+    ).toEqual(expectedWithoutFlag)
+
+    // A false token keeps it off, like the unset default.
+    process.env.OM_ENABLE_EXAMPLES = '0'
+    expect(
+      discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests')).map((entry) => entry.path),
+    ).toEqual(expectedWithoutFlag)
+
+    // `yes` is a true token in @open-mercato/shared/lib/boolean, not only `true`.
+    process.env.OM_ENABLE_EXAMPLES = 'yes'
+    expect(
+      discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests')).map((entry) => entry.path),
+    ).toEqual(expectedWithFlag)
+  })
+
+  it('CC-152 — a push behind a module guard follows the module it names', async () => {
+    // `example_customers_sync` is pushed only when `example` is already enabled. With the flag
+    // off neither module counts as enabled; with it on both do.
+    await writeTestFile(
+      tempRoot,
+      'apps/mercato/src/modules.ts',
+      [
+        'import { parseBooleanWithDefault } from "@open-mercato/shared/lib/boolean"',
+        'export const enabledModules: ModuleEntry[] = [',
+        '  {',
+        "    id: 'auth',",
+        "    from: '@open-mercato/core',",
+        '  },',
+        ']',
+        '',
+        'if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) {',
+        '  enabledModules.push({',
+        "    id: 'example',",
+        "    from: '@app',",
+        '  })',
+        '}',
+        '',
+        "if (enabledModules.some((entry) => entry.id === 'example')) {",
+        "  enabledModules.push({ id: 'example_customers_sync', from: '@app' })",
+        '}',
+        '',
+      ].join('\n'),
+    )
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/example_customers_sync/__integration__/TC-SYNC-001.spec.ts')
+
+    expect(
+      discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests')).map((entry) => entry.path),
+    ).toEqual([])
+
+    process.env.OM_ENABLE_EXAMPLES = 'true'
+    expect(
+      discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests')).map((entry) => entry.path),
+    ).toEqual(['apps/mercato/src/modules/example_customers_sync/__integration__/TC-SYNC-001.spec.ts'])
   })
 })
