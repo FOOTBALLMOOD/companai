@@ -7,6 +7,9 @@
   "audit_logs.access.columns.user": "Usuario",
   "audit_logs.access.columns.when": "Fecha",
   "audit_logs.access.title": "Registro de accesos",
+  "audit_logs.actions.actorKind.ai_worker": "Trabajador IA",
+  "audit_logs.actions.actorKind.service": "Clave API",
+  "audit_logs.actions.actorKind.system": "Sistema",
   "audit_logs.actions.columns.action": "Acción",
   "audit_logs.actions.columns.controls": "Controles",
   "audit_logs.actions.columns.organization": "Organización",
@@ -62,8 +65,5 @@
   "audit_logs.version_history.status.failed": "Fallido",
   "audit_logs.version_history.status.redone": "Rehecho",
   "audit_logs.version_history.status.undone": "Deshecho",
-  "audit_logs.version_history.title": "Historial de versiones",
-  "audit_logs.actions.actorKind.ai_worker": "Trabajador IA",
-  "audit_logs.actions.actorKind.service": "Clave API",
-  "audit_logs.actions.actorKind.system": "Sistema"
+  "audit_logs.version_history.title": "Historial de versiones"
 }

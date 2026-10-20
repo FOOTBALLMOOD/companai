@@ -7,6 +7,9 @@
   "audit_logs.access.columns.user": "User",
   "audit_logs.access.columns.when": "When",
   "audit_logs.access.title": "Access Log",
+  "audit_logs.actions.actorKind.ai_worker": "AI worker",
+  "audit_logs.actions.actorKind.service": "API key",
+  "audit_logs.actions.actorKind.system": "System",
   "audit_logs.actions.columns.action": "Action",
   "audit_logs.actions.columns.controls": "Controls",
   "audit_logs.actions.columns.organization": "Organization",
@@ -62,8 +65,5 @@
   "audit_logs.version_history.status.failed": "Failed",
   "audit_logs.version_history.status.redone": "Redone",
   "audit_logs.version_history.status.undone": "Undone",
-  "audit_logs.version_history.title": "Version History",
-  "audit_logs.actions.actorKind.ai_worker": "AI worker",
-  "audit_logs.actions.actorKind.service": "API key",
-  "audit_logs.actions.actorKind.system": "System"
+  "audit_logs.version_history.title": "Version History"
 }

@@ -7,6 +7,9 @@
   "audit_logs.access.columns.user": "Benutzer",
   "audit_logs.access.columns.when": "Zeitpunkt",
   "audit_logs.access.title": "Zugriffsprotokoll",
+  "audit_logs.actions.actorKind.ai_worker": "KI-Mitarbeiter",
+  "audit_logs.actions.actorKind.service": "API-Schlüssel",
+  "audit_logs.actions.actorKind.system": "System",
   "audit_logs.actions.columns.action": "Aktion",
   "audit_logs.actions.columns.controls": "Steuerelemente",
   "audit_logs.actions.columns.organization": "Organisation",
@@ -62,8 +65,5 @@
   "audit_logs.version_history.status.failed": "Fehlgeschlagen",
   "audit_logs.version_history.status.redone": "Erneut ausgeführt",
   "audit_logs.version_history.status.undone": "Rückgängig",
-  "audit_logs.version_history.title": "Versionsverlauf",
-  "audit_logs.actions.actorKind.ai_worker": "KI-Mitarbeiter",
-  "audit_logs.actions.actorKind.service": "API-Schlüssel",
-  "audit_logs.actions.actorKind.system": "System"
+  "audit_logs.version_history.title": "Versionsverlauf"
 }
