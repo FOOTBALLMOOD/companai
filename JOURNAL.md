@@ -46,14 +46,42 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after the deploy):** register **86 closed · 64 open · 150 total**;
-§4's open rows **17 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
+**THE POSITION, MEASURED — 2026-10-20 (after `CC-150`/`CC-151`):** register **88 closed · 62 open · 150
+total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
+trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 — `CC-150`/`CC-151`: the two debts the deploy exposed, closed the same day
+
+**`CC-150` was not a test failure at all — it was my instrument.** I ran jest in `create-app` and got a
+wall of syntax errors; the package's own command is `node --import tsx --test`, and jest was parsing
+TypeScript as plain JavaScript. The real failure was the **template parity test**:
+`create-app/template/src/app/api/[...slug]/route.ts` was **stale by the whole `CC-123` change** — the
+`derivePrincipal` import and the invoker-ceiling block — and the test that demands byte-identity with
+`apps/mercato` failed. Synced the template from the real file: **124 tests, 104 pass, 0 fail, 20 skipped**.
+The lesson is `L186`'s, again: a test that fails on the wrong input proves nothing about the code.
+
+**`CC-151`'s own diagnosis was half wrong, and measuring corrected it.** I had written "the specs call a
+parked module" — but `CC-149` already excluded the parked modules' **own** specs. The failures were specs
+in the **enabled** `example` module that *call* the parked CRM. Two halves: seven per-spec `*.meta.ts`
+files declare `dependsOnModules: ['customers']`, and **the discovery's dependency check was still reading
+the directory scan** — `resolveEnabledModuleIds` answers *exists*, and a parked module's directory exists.
+That is the `CC-132` denominator trap in the **second half of the same filter**. `isModuleEnabled` now
+prefers the app's declaration for both questions.
+
+**Proof:** discovery on the real project **42 → 34 specs, 0 from enabled modules calling a parked route**;
+discovery suite **8/8**; **two mutations RED** — the stale dispatcher (1 failed) and the dependency check
+reverted to directories (2 failed) — both files restored sha256-identical.
+
+**What is still not claimed:** that CI is green. These fixes are pushed; the run that proves it has not
+finished at the time of writing. The claim waits for the observation.
 
 ---
 
