@@ -38,6 +38,23 @@ function createFakeEm(rows: Row[] = []) {
         return true
       }),
     ),
+    /**
+     * `T-05` — the fake models the ONE thing the claim relies on: the condition and the write are a
+     * single statement. It matches against the rows as they are **now**, applies the data to every
+     * match, and returns how many matched — exactly what MikroORM's `nativeUpdate` returns. A fake
+     * that ignored the condition would make the race test green for the wrong reason.
+     */
+    nativeUpdate: jest.fn(async (_entity: unknown, where: Row, data: Row) => {
+      const condition = where.status as string | { $in?: string[] } | undefined
+      const matches = rows.filter((row) => {
+        if (row.id !== where.id || row.tenantId !== where.tenantId) return false
+        if (typeof condition === 'string') return row.status === condition
+        if (condition && Array.isArray(condition.$in)) return condition.$in.includes(row.status as string)
+        return true
+      })
+      for (const row of matches) Object.assign(row, data)
+      return matches.length
+    }),
   }
   return { em, rows, flush }
 }
@@ -194,6 +211,57 @@ describe('approving a held act', () => {
 
     expect(second).toMatchObject({ ok: false, reason: 'already-approved' })
     expect(execute).toHaveBeenCalledTimes(1)
+  })
+
+  it('T-05 — two approvers at the same instant run it ONCE, and the claim decides which', async () => {
+    // The sequential test above passes even without a claim, because the first call has already
+    // written `approved` before the second reads. The race is two reads that both see `pending`, so
+    // both approvals are started before either can finish — the shape a real double-click or two
+    // administrators produce. Without the compare-and-set both execute the command.
+    const execute = jest.fn(async () => ({}))
+    const { em, rows } = createFakeEm()
+    const service = new PendingActService(em as never)
+    await service.hold(holdInput())
+    const id = rows[0].id as string
+    const container = makeContainer(execute)
+
+    const [first, second] = await Promise.all([
+      service.approve({ tenantId: TENANT, id, approverUserId: 'a', container, auth: {} }),
+      service.approve({ tenantId: TENANT, id, approverUserId: 'b', container, auth: {} }),
+    ])
+
+    expect(execute).toHaveBeenCalledTimes(1)
+    expect([first.ok, second.ok].sort()).toEqual([false, true])
+    const loser = first.ok ? second : first
+    expect(loser.ok).toBe(false)
+    expect((loser as { reason: string }).reason).toMatch(/^already-/)
+    expect(rows[0].status).toBe('approved')
+  })
+
+  it('T-05 — a veto cannot overwrite an approval that has already claimed the row', async () => {
+    // The rejection reads `pending`, then writes. If an approval claims the row between those two
+    // moments, an unconditional write would replace `approving` with `rejected` while the command is
+    // already running — the act would execute and be recorded as vetoed.
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const execute = jest.fn(async () => { await gate; return {} })
+    const { em, rows } = createFakeEm()
+    const service = new PendingActService(em as never)
+    await service.hold(holdInput())
+    const id = rows[0].id as string
+
+    const approving = service.approve({ tenantId: TENANT, id, approverUserId: 'a', container: makeContainer(execute), auth: {} })
+    // Let the approval reach the claim and block inside the command.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(rows[0].status).toBe('approving')
+
+    const rejected = await service.reject({ tenantId: TENANT, id, approverUserId: 'b', note: 'no' })
+    expect(rejected).toMatchObject({ ok: false, reason: 'already-approving' })
+    expect(rows[0].status).toBe('approving')
+
+    release()
+    await approving
+    expect(rows[0].status).toBe('approved')
   })
 
   it('records a failure instead of leaving the act approvable again', async () => {
@@ -422,6 +490,27 @@ describe('an act held until its window passes', () => {
 
     expect(outcome).toEqual({ committed: 1, failed: 0 })
     expect(execute).toHaveBeenCalledTimes(1)
+    expect(rows[0].status).toBe('committed')
+  })
+
+  it('T-05 — two sweeps that both saw the same due act run it ONCE', async () => {
+    // The sweep reads the due list and then acts on it. Two overlapping sweeps (or a sweep and a
+    // manual approval) both see `holding`; without a claim both execute the command, and "commits
+    // unless vetoed" stops being true.
+    const execute = jest.fn(async () => ({}))
+    const { em, rows } = createFakeEm()
+    const service = new PendingActService(em as never)
+    await service.holdUntilCommit(holdInput({ decision: a3Decision }))
+    rows[0].commitAt = new Date(Date.now() - 1000)
+    const container = makeContainer(execute)
+
+    const [a, b] = await Promise.all([
+      service.commitDue({ tenantId: TENANT, container, systemAuth: {} }),
+      service.commitDue({ tenantId: TENANT, container, systemAuth: {} }),
+    ])
+
+    expect(execute).toHaveBeenCalledTimes(1)
+    expect(a.committed + b.committed).toBe(1)
     expect(rows[0].status).toBe('committed')
   })
 

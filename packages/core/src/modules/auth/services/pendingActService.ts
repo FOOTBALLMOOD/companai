@@ -98,7 +98,7 @@ export function resolveTtlMs(stored: unknown, tenantId: string): number {
 export const COMMIT_WINDOW_MS = 15 * 60 * 1000
 
 export const PENDING_ACT_STATUSES = [
-  'pending', 'holding', 'approved', 'committed', 'rejected', 'vetoed', 'expired', 'failed',
+  'pending', 'holding', 'approving', 'committing', 'approved', 'committed', 'rejected', 'vetoed', 'expired', 'failed',
 ] as const
 export type PendingActStatus = (typeof PENDING_ACT_STATUSES)[number]
 
@@ -303,6 +303,37 @@ export class PendingActService {
   }
 
   /**
+   * `T-05` — claim the row before doing anything irreversible with it.
+   *
+   * `findById` followed by `if (status !== 'pending')` is a **read-then-act**: two approvers both read
+   * `pending`, both run the command, both write `approved`. The command is not instantaneous, so the
+   * window is the execution time, not a race between two adjacent statements.
+   *
+   * This is a **compare-and-set**: the database decides which caller wins. `nativeUpdate` returns the
+   * number of rows it matched — `1` means this caller owns the act from here; `0` means somebody else
+   * moved it first, and the caller must report what happened rather than repeat the act. There is no
+   * read-then-write between the check and the claim, which is the whole point: the condition and the
+   * write are one statement.
+   *
+   * The claim is also a **state**: `approving` / `committing` are visible in the row, so an approval
+   * interrupted mid-execution is a fact on record rather than an invisible lock. Resolving those rows
+   * is a lifecycle concern with its own row (`CC-147`) — but they can never be re-run.
+   */
+  private async claim(
+    tenantId: string,
+    id: string,
+    from: readonly PendingActStatus[],
+    to: PendingActStatus,
+  ): Promise<boolean> {
+    const affected = await this.em.nativeUpdate(
+      AuthorityAct,
+      { id, tenantId, status: { $in: [...from] } },
+      { status: to },
+    )
+    return affected === 1
+  }
+
+  /**
    * Runs a held act, with the approver accountable for it.
    *
    * The act executes **as the approver**, not as whoever proposed it. That is
@@ -327,10 +358,28 @@ export class PendingActService {
     if (!act) return { ok: false, reason: 'not-found' }
     if (act.status !== 'pending') return { ok: false, reason: `already-${act.status}`, act }
     if (act.expiresAt.getTime() <= Date.now()) {
-      act.status = 'expired'
-      await this.em.flush()
-      return { ok: false, reason: 'expired', act }
+      // The expiry write is a compare-and-set too: two readers who both see an overdue act must not
+      // both "expire" it — the second has nothing left to do and says so.
+      const expired = await this.em.nativeUpdate(
+        AuthorityAct,
+        { id: act.id, tenantId: params.tenantId, status: 'pending' },
+        { status: 'expired', resolvedAt: new Date() },
+      )
+      if (expired === 1) {
+        act.status = 'expired'
+        return { ok: false, reason: 'expired', act }
+      }
+      const current = await this.findById(params.tenantId, params.id)
+      return { ok: false, reason: `already-${current?.status ?? 'gone'}`, act: current ?? act }
     }
+
+    // The claim is what makes this an approval of ONE act rather than a race. Everything below may run
+    // only for the caller that won it — and the loser is told what happened instead of repeating it.
+    if (!(await this.claim(params.tenantId, params.id, ['pending'], 'approving'))) {
+      const current = await this.findById(params.tenantId, params.id)
+      return { ok: false, reason: `already-${current?.status ?? 'gone'}`, act: current ?? act }
+    }
+    act.status = 'approving'
 
     const bus = params.container.resolve('commandBus') as CommandBusLike
     try {
@@ -407,6 +456,11 @@ export class PendingActService {
     let failed = 0
 
     for (const act of due) {
+      // The sweep can overlap with a veto or with another sweep. Claim the row first: the loser skips
+      // it without running the command, which is the only way "commits unless vetoed" stays true when
+      // two of these run at once.
+      if (!(await this.claim(params.tenantId, act.id, ['holding'], 'committing'))) continue
+      act.status = 'committing'
       try {
         await bus.execute(act.commandId, {
           input: act.commandInput,
@@ -456,11 +510,31 @@ export class PendingActService {
       return { ok: false, reason: `already-${act.status}` }
     }
 
-    act.status = act.status === 'holding' ? 'vetoed' : 'rejected'
-    act.resolvedAt = new Date()
+    // Compute the destination without touching the managed entity first: mutating it here would put
+    // the new status in the unit of work *before* the compare-and-set, so a later flush could write it
+    // even after the CAS said somebody else had moved the row.
+    const finalStatus: PendingActStatus = act.status === 'holding' ? 'vetoed' : 'rejected'
+    const resolvedAt = new Date()
+    // One statement: the status that permits a veto is part of the WHERE, so an approval that claimed
+    // the row a moment earlier cannot be overwritten by a rejection that read `pending` first.
+    const stopped = await this.em.nativeUpdate(
+      AuthorityAct,
+      { id: act.id, tenantId: params.tenantId, status: { $in: ['pending', 'holding'] } },
+      {
+        status: finalStatus,
+        resolvedAt,
+        resolvedByUserId: params.approverUserId ?? null,
+        resolutionNote: params.note ?? null,
+      },
+    )
+    if (stopped !== 1) {
+      const current = await this.findById(params.tenantId, params.id)
+      return { ok: false, reason: `already-${current?.status ?? 'gone'}` }
+    }
+    act.status = finalStatus
+    act.resolvedAt = resolvedAt
     act.resolvedByUserId = params.approverUserId ?? null
     act.resolutionNote = params.note ?? null
-    await this.em.flush()
 
     logger.warn('Held act stopped before it ran', {
       pendingActId: act.id,
