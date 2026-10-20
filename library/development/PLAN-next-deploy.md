@@ -1,6 +1,14 @@
 # PLAN — the next deploy: what is live, what is not, and when to push it
 
-**Written 2026-10-20. Status: not started — this is a gate and a sequence, not a record of a deploy.**
+**Written 2026-10-20. Status: EXECUTED the same day — see `DEPLOY-2026-10-20.md`, which is now the record
+to read and extend. This file is kept for the reasoning that led to the decision, not as a live plan.**
+
+> **What changed between writing this and doing it.** The owner chose a **fresh instance** instead of an
+> in-place update: delete this platform's containers and volumes, deploy the latest commit, create the
+> schema from zero. That removes §3's hard gate — there is nothing to migrate — and converts `CC-119`'s
+> first check from a rehearsal into the real thing. A verified backup was taken first, so "delete
+> everything" stayed reversible. The gate that still applies is **CI green**, and it is **not** met
+> (`CC-150`, `CC-151`); the build job passed, which is why the deploy went ahead with the debts recorded.
 
 The owner's question: *"when is the best time to deploy a new updated build, as what we have now is
 relatively old — it will be good to see live what changed."* This document answers it with the two facts

@@ -20,7 +20,7 @@ The authority family is **complete and closed**: `CC-125` (the machine floor) ·
 ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) · `CC-135` (the ceiling's
 route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
-**Register: 86 closed · 62 open · 148 total**, counted from `MASTER-CHECKLIST.md` §5 by
+**Register: 86 closed · 64 open · 150 total**, counted from `MASTER-CHECKLIST.md` §5 by
 `scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 9 spine findings left** before
 `CC-121`, and `T-06` is next; the box at the top of [`../../JOURNAL.md`](../../JOURNAL.md) names it with
 its steps. **The ONE NUMBER is 78 / 321 units (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
@@ -276,9 +276,9 @@ reads the **repository** — and a parked module's directory still exists. Befor
 CI-only failure, check what a clean checkout actually contains.
 
 **Deployment is NOT automatic.** A green CI deploys nothing. The live instance is deployed by hand
-(`RUNBOOK-deploying-a-site.md` / `RUNBOOK-platform-server.md`), and the live build predates the authority
-family. The next deploy's gate and sequence are in [`PLAN-next-deploy.md`](PLAN-next-deploy.md) — read it
-before deploying, not after.
+(`RUNBOOK-deploying-a-site.md` / `RUNBOOK-platform-server.md`), and **it was replaced on 2026-10-20 with
+commit `86c2b1ed`** — a fresh instance, schema created from zero (`DEPLOY-2026-10-20.md` is the record,
+and it is the file to read and extend for the next one).
 
 ---
 

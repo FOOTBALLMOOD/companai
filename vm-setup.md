@@ -228,6 +228,20 @@ The deployment’s `.env` files contain generated secrets and are intentionally 
 
 The expected root response is a `307` redirect to `/login`.
 
+**Deployed 2026-10-20, 12:37–12:41 UTC — a fresh instance, commit `86c2b1ed`.** The `companai-platform`
+stack was removed (containers, network, and the six `mercato-*-wan` volumes) and rebuilt from a clean
+`git archive` of that commit: image `open-mercato/app:wan`
+(`sha256:ed7544dd4e32fba0c09a8a782cb89079fe13a8ace31bca2af30c42c654a5cf9a`), schema created from zero and
+seeded (1 tenant, 3 users). The outgoing image is preserved as `open-mercato/app:wan-20261020T121954Z`;
+the pre-deploy database is at `/home/ramzi/companai-backup-20261020T121335Z/db.dump` (2.4 MB, verified
+readable). **Full record: [`library/development/DEPLOY-2026-10-20.md`](library/development/DEPLOY-2026-10-20.md)**
+— read it before the next deploy and write the next entry there.
+
+**Update procedure for a new version:** `git archive HEAD` from the codebase → copy to
+`/home/ramzi/build-src` → `docker build -t open-mercato/app:wan -f /home/ramzi/build-src/Dockerfile
+/home/ramzi/build-src` → `cd /opt/companai-platform && ./deploy.sh` → `./verify.sh`. The build takes
+~15 minutes on this VM and needs free disk (the image is ~3 GB).
+
 Current application container:
 
 ```text
@@ -335,7 +349,7 @@ On 2026-10-07, the following were verified from outside the VM:
 - The Cloudflare Tunnel was healthy and had all four hostname rules.
 - Konsult, Companai, Cloudflare Tunnel, the existing PHP site, and required supporting containers were running.
 
-### companai platform updates
+### companai platform updates (historical — superseded by the 2026-10-20 fresh deploy above)
 
 companai.corprorate.com exposes a platform that was already deployed on the VM before this session.
 Evidence:

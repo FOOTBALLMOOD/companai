@@ -46,15 +46,47 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after `CC-148`/`CC-149`):** register **86 closed · 62 open · 148
-total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
-trigger**.
+**THE POSITION, MEASURED — 2026-10-20 (after the deploy):** register **86 closed · 64 open · 150 total**;
+§4's open rows **17 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 — deployed: a fresh Companai at `companai.corprorate.com`
+
+**The owner's call, and it was better than the plan I had given him.** Instead of updating an old demo in
+place, delete **this platform's** containers and volumes — never the other sites on the VM — and deploy
+the latest codebase fresh. A fresh database has nothing to migrate, so the migration-rehearsal gate
+disappears and `CC-119`'s first check stops being a rehearsal and becomes the real thing.
+
+**What was done, in order.** A verified backup first (`pg_dump -Fc` + the deployment directory, 2.4 MB,
+`pg_restore -l` readable) — so "delete everything" stayed reversible. Then commit **`86c2b1ed`** archived
+with `git archive`, copied to `/home/ramzi/build-src`, built on the VM (`~15 min`, image
+`sha256:ed7544dd…`), the `companai-platform` project removed with its six `mercato-*-wan` volumes, a fresh
+`.env` generated, and `deploy.sh` — which created the schema **from zero** and seeded it. The outgoing
+image is preserved as `open-mercato/app:wan-20261020T121954Z`.
+
+**Verified, not assumed:** loopback and public both **307 → `/login` 200**; the seed's three users exist;
+all three logins return **HTTP 200** (the login route reads **form data**, not JSON — a 400 that looked
+like bad credentials was my request shape, not the password). Every other stack on the VM was checked
+present after the removal: Cloudflare tunnel, Coolify, the apex PHP site, demo-site, Konsult.
+
+**★ What this proved:** the schema builds from zero on a real PostgreSQL 17 + pgvector and the app serves.
+`CC-119` said that had never happened; it has now, and the row is updated rather than closed — `down()` and
+the schema-vs-entities diff were not run.
+
+**★ What it exposed, recorded rather than smoothed over:** CI is **not** green on the deployed commit.
+`CC-150` — `create-mercato-app`'s tests are the one failing unit package. `CC-151` — 12 of 15 integration
+shards fail because the specs themselves call `/api/customers/people`, a **parked** module. Neither blocks
+the build (the `docker-build` job passed); both are open, startable rows.
+
+**Record:** `library/development/DEPLOY-2026-10-20.md` — the file that did not exist for the previous
+deployment, which is why nobody could say what commit was live.
 
 ---
 
