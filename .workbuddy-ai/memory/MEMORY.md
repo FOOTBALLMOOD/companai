@@ -36,7 +36,7 @@ rules, hazards and where we are.
 - **`default: false` in an entity decorator does not make the property optional** — `[OptionalProps]` must say so (L185).
 
 ## FRONTIER (2026-10-20)
-**The spine:** `PLAN-2026-10-18-one-agent.md`, W1–W8. **Register 82 · 61 · 143.** Docs checker PASS
+**The spine:** `PLAN-2026-10-18-one-agent.md`, W1–W8. **Register 83 · 61 · 144.** Docs checker PASS
 (36 checks, 14/14 mutations RED); `derive-counts` 78/321.
 **★ THE PLATFORM IS AN ARCHITECTURE, NOT A VERTICAL.** A type is a role for agents; chain ceiling → type
 → instance → binding, each a subset above; an agent is always inside a tenant.
@@ -54,7 +54,8 @@ route gated like the ceiling) · `CC-140` (the write refuses a stale view, 409, 
 integration probe that 404s so no Playwright test has ever run (`CC-143`, closed — the probe read a route from a **parked** module; it now reads
 `/api/auth/profile` and a guard checks module-enabled + file-exists, because one alone passes); i18n closed by
 hand-translating 258 strings (`CC-142`), and the checker covers 3 of 5 offered locales — Arabic is 337
-keys short (`CC-144`).
+keys short (`CC-144`). Coverage guards re-measured after 75 commits (`CC-145`) — and one
+of them was a **false red**: a shared `requireFeatures` constant read as ungated.
 
 **★ IN HAND — `CC-92` Slot 0: 10 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`.
 Remaining, in order: `T-05` (double approve, no compare-and-set) · `T-06` (the record the chain misses) ·

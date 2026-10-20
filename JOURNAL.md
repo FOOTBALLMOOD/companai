@@ -56,6 +56,31 @@ path is waiting on the owner.**
 
 ---
 
+## 2026-10-20 — `CC-145`: the coverage guards were pinned 75 commits ago, and one was a false red
+
+The unit suite ran for the first time and three count-pinned guards failed — **the guards working**,
+not a defect in them. Each number was traced to real work rather than bumped:
+
+- **route files 458 → 464, GET routes 297 → 303** — the **six** files added since the pin
+  (`3ba7b28f`, `CC-44`): agent-types ×2 and departures (`CC-127`), capability-ceiling ×3
+  (`CC-135`/`CC-139`). 458 + 6 = 464, arithmetic that closes.
+- **tables 234 → 237**, and two of the three were **unclassified** — the guard names them:
+  `auth.TenantCapabilityCeiling` and `ai_assistant.AiAgentRuntime`. Both are on `INTERNAL_TABLES` now
+  **with a reason**: one is configuration read through a single gated route, the other is the runtime
+  registry. Neither is a business list surface.
+- **write rows 170 → 175.**
+
+**★ The valuable find was a false red.** The departure route declares
+`requireFeatures: DEPARTURE_FEATURES` — a same-file constant shared by GET and POST, which is better
+style than two literal arrays — and the walker matched only the literal form, so a **gated** route was
+reported as ungated. **A guard that produces false reds is a guard that gets muted**, so `classify`
+now resolves one same-file `const NAME = [ … ]` and counts it as the gate it is, with three cases
+pinning it: non-empty resolves, empty does not, and a name from elsewhere does not.
+
+Register **83 · 61 · 144**.
+
+---
+
 ## 2026-10-20 — `CC-143` closed: the integration harness was asking a parked module for a route
 
 Every integration shard failed, and **none of them ever ran a single test**. The probe logged in, got a
