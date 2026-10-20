@@ -423,6 +423,11 @@ export function discoverIntegrationSpecFiles(projectRoot: string, legacyIntegrat
   const discovered = Array.from(discoveredByPath.values())
   const enabledModules = resolveEnabledModuleIds(projectRoot)
   const declaredEnabledModules = readDeclaredEnabledModules(projectRoot)
+  // One definition of "enabled" for both questions: may this spec's own module run, and are the
+  // modules it DEPENDS on available. The directory scan answers "exists", and a parked module's
+  // directory exists — using it here is how a spec that needs the parked CRM stayed in the suite.
+  const isModuleEnabled = (moduleId: string): boolean =>
+    (declaredEnabledModules ?? enabledModules).has(normalizeModuleId(moduleId))
   const enabledModuleNames = new Set<string>()
   for (const file of discovered) {
     if (!file.isOverlay && file.moduleName) {
@@ -438,12 +443,11 @@ export function discoverIntegrationSpecFiles(projectRoot: string, legacyIntegrat
       if (
         !file.isOverlay &&
         file.moduleName &&
-        declaredEnabledModules &&
-        !declaredEnabledModules.has(normalizeModuleId(file.moduleName))
+        !isModuleEnabled(file.moduleName)
       ) {
         return false
       }
-      if (file.requiredModules.some((moduleId) => !enabledModules.has(normalizeModuleId(moduleId)))) {
+      if (file.requiredModules.some((moduleId) => !isModuleEnabled(moduleId))) {
         return false
       }
       if (file.requiredEnvVars.some((envVar) => !isEnvironmentVariableConfigured(envVar))) {

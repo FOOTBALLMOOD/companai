@@ -234,4 +234,33 @@ describe('integration discovery', () => {
       'apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts',
     ])
   })
+
+  it('CC-151 — excludes a spec whose DECLARED dependency is not enabled', async () => {
+    // The spec's own module is enabled; the module it needs is parked. The directory scan says the
+    // parked module "exists", so the dependency check must use the app's declaration, not the folders.
+    await writeTestFile(
+      tempRoot,
+      'apps/mercato/src/modules.ts',
+      [
+        'export const enabledModules: ModuleEntry[] = [',
+        '  {',
+        "    id: 'example',",
+        "    from: '@open-mercato/core',",
+        '  },',
+        ']',
+        '',
+      ].join('\n'),
+    )
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/example/__integration__/TC-X-001.spec.ts')
+    await writeTestFile(
+      tempRoot,
+      'apps/mercato/src/modules/example/__integration__/TC-X-001.meta.ts',
+      "export const integrationMeta = { dependsOnModules: ['customers'] }\n",
+    )
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/customers/.gitkeep')
+
+    const discovered = discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests'))
+
+    expect(discovered).toEqual([])
+  })
 })

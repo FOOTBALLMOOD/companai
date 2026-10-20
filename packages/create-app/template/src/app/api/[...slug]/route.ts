@@ -3,6 +3,7 @@ import { findApiRouteManifestMatch, getApiRouteManifests, registerApiRouteManife
 import { isCrudHttpError } from '@open-mercato/shared/lib/crud/errors'
 import { apiRoutes } from '@/.mercato/generated/api-routes.generated'
 import { resolveAuthFromRequestDetailed } from '@open-mercato/shared/lib/auth/server'
+import { derivePrincipal } from '@open-mercato/shared/lib/auth/principal'
 import { bootstrap } from '@/bootstrap'
 import type { AuthContext } from '@open-mercato/shared/lib/auth/server'
 import { createRequestContainer } from '@open-mercato/shared/lib/di/container'
@@ -212,10 +213,24 @@ export async function checkAuthorization(
     const rbac = featureContainer.resolve<RbacService>('rbacService')
     const featureContext = await resolveFeatureCheckContext({ container: featureContainer, auth, request: req })
     const { organizationId } = featureContext
-    const ok = await rbac.userHasAllFeatures(auth.sub, requiredFeatures, {
-      tenantId: featureContext.scope.tenantId ?? auth.tenantId ?? null,
-      organizationId,
-    })
+    // The person this actor acts for, or `null` when it acts as itself.
+    //
+    // Read from the **principal**, never from `auth.userId`: `userId` is
+    // inconsistent across the door's construction sites — sometimes a credential
+    // subject, sometimes a real user id — so deriving from it would name a
+    // credential as a person at some sites and miss the intersection at others.
+    // `principal.ts` fills this field only for a credential, which is exactly the
+    // distinction the rule needs. A person answers to themselves.
+    const onBehalfOfUserId = derivePrincipal(auth)?.onBehalfOfUserId ?? null
+    const ok = await rbac.userHasAllFeatures(
+      auth.sub,
+      requiredFeatures,
+      {
+        tenantId: featureContext.scope.tenantId ?? auth.tenantId ?? null,
+        organizationId,
+      },
+      { onBehalfOfUserId },
+    )
     if (!ok) {
       try {
         const acl = await rbac.loadAcl(auth.sub, { tenantId: featureContext.scope.tenantId ?? auth.tenantId ?? null, organizationId })
