@@ -56,6 +56,32 @@ path is waiting on the owner.**
 
 ---
 
+## 2026-10-20 — `CC-143` closed: the integration harness was asking a parked module for a route
+
+Every integration shard failed, and **none of them ever ran a single test**. The probe logged in, got a
+token, called `GET /api/customers/people?pageSize=1`, received **404**, waited its full **180 seconds**,
+and reported "Application did not become ready".
+
+**The cause was a parking decision nobody connected to the probe.** `customers` is disabled by design in
+`apps/mercato/src/modules.ts` — *"upstream's reference module for CRUD patterns … parked, not deleted"* —
+so its routes are never generated. The probe was asking for a route that cannot exist, in **every**
+configuration of this app, from the day the module was parked.
+
+**Fix:** `READINESS_PROBE_PATH = '/api/auth/profile'`. `auth` is core and always enabled, the route
+declares `requireAuth: true` and nothing else, and a 200 still proves exactly what the probe exists to
+prove: a token obtained by logging in can read an authenticated route. It no longer depends on any
+business module being switched on.
+
+**★ The guard needs two assertions, and the mutation shows why.** `readiness-probe-route.test.ts` checks
+that the path's module is in `enabledModules` **and** that a route file exists. With the old path, the
+module assertion goes red — and the route-file assertion stays **green**, because a parked module's source
+file is still on disk. Either check alone would have called that path healthy. That is precisely why
+nobody noticed for as long as the harness existed.
+
+Register **82 · 61 · 143**.
+
+---
+
 ## 2026-10-20 — `CC-142` closed: 258 strings translated, and the checker covers three of five locales
 
 The `test` job's second step blocked everything behind it: `auth` was **86 keys short in `pl`, `es` and
