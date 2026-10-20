@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 
 export type IntegrationSpecDiscoveryItem = {
@@ -104,6 +104,45 @@ function collectModuleIdsFromModulesRoot(modulesRoot: string, enabledModules: Se
   for (const moduleName of collectDirectDirectoryNames(modulesRoot)) {
     enabledModules.add(normalizeModuleId(moduleName))
   }
+}
+
+/**
+ * `CC-149` — the modules the APP actually enables, read from its own declaration.
+ *
+ * `resolveEnabledModuleIds` below scans **directories**, so it answers *"which modules exist"* — and a
+ * parked module's directory still exists. That is the `CC-132` trap in a second place: a denominator
+ * built from the filesystem cannot see a switch that lives in a config file. A spec belonging to a
+ * parked module is discovered, loaded by Playwright, and crashes on the module's own generated entity
+ * ids (`customers/commands/people.ts:197` reads `E.customers`, which is not generated for a parked
+ * module) — before a single test runs.
+ *
+ * Returns `null` when the project declares no such file (a standalone app whose enablement lives
+ * elsewhere), and the caller keeps the old directory-based answer.
+ */
+function readDeclaredEnabledModules(projectRoot: string): Set<string> | null {
+  const candidates = [
+    path.join(projectRoot, 'apps', 'mercato', 'src', 'modules.ts'),
+    path.join(projectRoot, 'src', 'modules.ts'),
+  ]
+  for (const file of candidates) {
+    if (!existsSync(file)) continue
+    const source = readFileSync(file, 'utf8')
+    const start = source.indexOf('export const enabledModules')
+    if (start < 0) continue
+    const end = source.indexOf('\n]', start)
+    if (end < 0) continue
+    const ids = new Set<string>()
+    // Top-level entries are `id:` at four spaces; nested override objects are deeper, so the indent
+    // keeps a widget id out of the module set.
+    for (const match of source.slice(start, end).matchAll(/^ {4}id:\s*'([^']+)'/gm)) {
+      ids.add(normalizeModuleId(match[1]))
+    }
+    for (const match of source.matchAll(/enabledModules\.push\(\s*\{\s*id:\s*'([^']+)'/g)) {
+      ids.add(normalizeModuleId(match[1]))
+    }
+    if (ids.size > 0) return ids
+  }
+  return null
 }
 
 function resolveEnabledModuleIds(projectRoot: string): Set<string> {
@@ -383,6 +422,7 @@ export function discoverIntegrationSpecFiles(projectRoot: string, legacyIntegrat
 
   const discovered = Array.from(discoveredByPath.values())
   const enabledModules = resolveEnabledModuleIds(projectRoot)
+  const declaredEnabledModules = readDeclaredEnabledModules(projectRoot)
   const enabledModuleNames = new Set<string>()
   for (const file of discovered) {
     if (!file.isOverlay && file.moduleName) {
@@ -392,6 +432,17 @@ export function discoverIntegrationSpecFiles(projectRoot: string, legacyIntegrat
 
   return discovered
     .filter((file) => {
+      // `CC-149` — a spec that belongs to a module this app does not enable cannot run: the module's
+      // commands and generated entity ids are not part of the build, so loading the spec crashes
+      // before the first test. Overlays declare their own enablement below.
+      if (
+        !file.isOverlay &&
+        file.moduleName &&
+        declaredEnabledModules &&
+        !declaredEnabledModules.has(normalizeModuleId(file.moduleName))
+      ) {
+        return false
+      }
       if (file.requiredModules.some((moduleId) => !enabledModules.has(normalizeModuleId(moduleId)))) {
         return false
       }

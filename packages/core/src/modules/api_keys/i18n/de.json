@@ -20,6 +20,7 @@
   "api_keys.form.expiresAt": "Läuft ab am",
   "api_keys.form.expiresHint": "Leer lassen für kein Ablaufdatum.",
   "api_keys.form.isAiWorker": "KI-Benutzer",
+  "api_keys.form.isAiWorkerHint": "Ein KI-Benutzer handelt als Maschine: für seine Handlungen gilt die Maschinen-Untergrenze, und er kann nur die ihm zugewiesenen Agenten ausführen.",
   "api_keys.form.name": "Name",
   "api_keys.form.organization": "Organisation",
   "api_keys.form.organizationPlaceholder": "Vom ausgewählten Geltungsbereich übernehmen",

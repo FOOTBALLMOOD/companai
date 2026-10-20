@@ -207,4 +207,31 @@ describe('integration discovery', () => {
       'packages/ai-assistant/src/modules/ai_assistant/__integration__/TC-AI-002.spec.ts',
     ])
   })
+
+  it('CC-149 — does not discover a spec whose own module the app does not enable', async () => {
+    // The directory exists for a parked module, so a scan of the filesystem finds its specs. Loading
+    // one crashes on the module's generated entity ids, which are not built — so the spec must not be
+    // discovered at all. `auth` is enabled; `customers` is not.
+    await writeTestFile(
+      tempRoot,
+      'apps/mercato/src/modules.ts',
+      [
+        'export const enabledModules: ModuleEntry[] = [',
+        '  {',
+        "    id: 'auth',",
+        "    from: '@open-mercato/core',",
+        '  },',
+        ']',
+        '',
+      ].join('\n'),
+    )
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts')
+    await writeTestFile(tempRoot, 'apps/mercato/src/modules/customers/__integration__/TC-CUST-001.spec.ts')
+
+    const discovered = discoverIntegrationSpecFiles(tempRoot, path.join(tempRoot, '.ai', 'qa', 'tests'))
+
+    expect(discovered.map((entry) => entry.path)).toEqual([
+      'apps/mercato/src/modules/auth/__integration__/TC-AUTH-001.spec.ts',
+    ])
+  })
 })

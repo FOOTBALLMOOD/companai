@@ -20,6 +20,7 @@
   "api_keys.form.expiresAt": "Caduca el",
   "api_keys.form.expiresHint": "Déjalo vacío si no caduca.",
   "api_keys.form.isAiWorker": "Usuario de IA",
+  "api_keys.form.isAiWorkerHint": "Un usuario de IA actúa como una máquina: sus actos están sujetos al límite inferior de máquina y solo puede ejecutar los agentes que tiene concedidos.",
   "api_keys.form.name": "Nombre",
   "api_keys.form.organization": "Organización",
   "api_keys.form.organizationPlaceholder": "Heredar del ámbito seleccionado",

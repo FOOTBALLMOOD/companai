@@ -20,6 +20,7 @@
   "api_keys.form.expiresAt": "Expires At",
   "api_keys.form.expiresHint": "Leave empty for no expiration.",
   "api_keys.form.isAiWorker": "AI user",
+  "api_keys.form.isAiWorkerHint": "An AI user acts as a machine: the machine floor applies to its acts, and it can run only the agents granted to it.",
   "api_keys.form.name": "Name",
   "api_keys.form.organization": "Organization",
   "api_keys.form.organizationPlaceholder": "Inherit from selected scope",

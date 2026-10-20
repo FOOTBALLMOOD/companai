@@ -20,6 +20,7 @@
   "api_keys.form.expiresAt": "Wygasa",
   "api_keys.form.expiresHint": "Pozostaw puste, aby klucz nie wygasał.",
   "api_keys.form.isAiWorker": "Użytkownik AI",
+  "api_keys.form.isAiWorkerHint": "Użytkownik AI działa jak maszyna: jego działania podlegają maszynowemu limitowi dolnemu i może uruchamiać wyłącznie przyznanych mu agentów.",
   "api_keys.form.name": "Nazwa",
   "api_keys.form.organization": "Organizacja",
   "api_keys.form.organizationPlaceholder": "Dziedzicz z wybranego zakresu",
