@@ -41,7 +41,29 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE — 2026-10-20 (evening): `CC-150` and `CC-151` are BUILT and CLOSED — the two debts the
+**LAST DONE — 2026-10-20 (night): `CC-152` is BUILT and CLOSED — the debt the `CC-150`/`CC-151` fix
+commit's own CI run exposed, and it was hiding in the fix itself.** The run went red again: **7 of 15
+shards, 56 failed tests, every one an example-module spec failing on a 404** (`heading "404"` at
+`/backend/mutation-lifecycle`; `Received: "404: This page could not be found."` at `/backend/example`).
+**The mechanism:** `modules.ts` pushes the example module **behind a switch** —
+`if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false))` — because it must never reach a
+customer's product, so its pages and routes are generated **only when the flag is on**; and **the
+discovery I wrote for `CC-149` answered "enabled" from a line the runtime never executes** — the regex
+matched `enabledModules.push({ id: 'example'` and could not see the guard above it. The `CC-132`
+denominator trap in a **third** place: not a folder that exists, a switch that lives in an `if`.
+**The fix, two halves:** discovery now reads the guard **with** the push (env-guarded pushes count only
+when their own flag parses on — the same token table `@open-mercato/shared/lib/boolean` uses; a
+`enabledModules.some(...)` guard follows the module it names; **any other shape over-includes**, so a
+wrong check fails loud), and the `ephemeral-integration` job sets **`OM_ENABLE_EXAMPLES: 'true'`** — CI
+works **on** the platform, so the module is enabled and its specs finally cover the pages they were
+written for. **Proof, two routes:** discovery suite **10/10** with **two mutations RED individually**
+(both files restored sha256-identical), cli package **74 suites / 1,273 tests** 0 failures, `tsc` clean;
+and the **real repo** through the fixed code returns **0 specs with the flag unset** (CI's default) and
+**33 with it on**. **Still to observe, not to assert:** the CI run carrying this commit — that the flag
+reaches the in-shard build, and whether the specs then pass with the module on.
+
+
+**PREVIOUSLY — 2026-10-20 (evening): `CC-150` and `CC-151` are BUILT and CLOSED — the two debts the
 deploy run exposed, fixed hours after they were opened.** **`CC-150` was not a test failure at all:** the
 package's own command is `node --import tsx --test`, and running jest there was **my wrong instrument**.
 The real failure was the **template parity test** — `create-app/template/src/app/api/[...slug]/route.ts`
@@ -56,7 +78,7 @@ directory exists) — the `CC-132` denominator trap in the second half of the sa
 now prefers the app's declaration for both questions. **Proof:** discovery **42 → 34 specs, 0 from enabled
 modules calling a parked route**; discovery suite **8/8**; **two mutations RED** (stale dispatcher → 1
 failed; dependency check reverted to directories → 2 failed), both files restored sha256-identical.
-**88 closed · 62 open · 150 total.**
+**89 closed · 62 open · 151 total.**
 
 **PREVIOUSLY — 2026-10-20 (afternoon): `CC-148` and `CC-149` are BUILT and CLOSED — and both are the
 same class: a check whose denominator excludes the thing it is checking.** The first CI run to reach the
@@ -628,7 +650,7 @@ not ban** (`CC-124` — **built and closed the same day**, see LAST DONE above);
 and the **type catalogue has only a code layer**, so a tenant can override a type and cannot create one
 (`CC-126` — *corrected 2026-10-18: this read "platform level has no schema home", which was my misreading
 of **types** as **agents**; agents are correctly tenant-scoped, 12 of 12 tables*); and owner
-departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **88 closed · 62 open · 150 total**, counted from §5.
+departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **89 closed · 62 open · 151 total**, counted from §5.
 **★ AND THE OWNER FOUND THE GAP ABOVE ALL OF THEM (2026-10-18, documented as asked — `CC-128`, plan §4.6):
 the platform has no ceiling over its tenants.** Measured, four reads: `Tenant` holds `name`/`is_active`
 and nothing else, and **no plan, feature, limit or settings table exists** — so D1's answer (*"the platform
@@ -907,7 +929,7 @@ that *does* still matter is **code that nothing calls** — a checker on disk wi
 referencing it is an unfinished row, because the wiring itself is missing code (`CC-101` fixed seven
 of eight; `CC-117` closed the eighth, as a report step). Do not confuse the two: **no remote is a
 deployment state; no caller is a defect.**
-**CC-75 was never assigned** — the numbering skips it. **88 closed · 62 open · 150 total.**
+**CC-75 was never assigned** — the numbering skips it. **89 closed · 62 open · 151 total.**
 *(Rule 13, corrected 2026-10-17. The committed header read **52 closed · 44 open · 96 total**, and that
 figure corresponded to **no state the table ever held**: measured at `HEAD`, the table below already
 carried **97 rows — 55 closed, 42 open** — because rows were appended to the table without the header
@@ -1088,6 +1110,7 @@ be the thing that drifts.)*
 | CC-149 | **THE INTEGRATION HARNESS HAS NEVER RUN A TEST — DISCOVERY INCLUDES A PARKED MODULE'S SPECS, AND LOADING ONE CRASHES ON GENERATED ENTITY IDS** — 2026-10-20, found by the same CI run, CLOSED the same day. **THE MEASUREMENT:** `discoverIntegrationSpecFiles` filtered on a spec's `requiredModules` but **not on the spec's own module**; `customers` is parked, its **directory still exists**, so its `__integration__` specs were discovered; loading one evaluates `packages/core/src/modules/customers/commands/people.ts:197` → `E.customers.customer_person_profile`, and `E` (the generated entity ids) has **no `customers` entry** because the module is parked → `TypeError: Cannot read properties of undefined`, before the first test. Every one of the **15 shards** reported `passed=0, failed=0, total=0`. **This is `CC-143` one layer up:** the readiness probe asked a parked module for a route; discovery asks it for a module graph. **FIX:** the discovery now reads the app's **own** enablement declaration (`apps/mercato/src/modules.ts`: `id:` at four-space indent plus `enabledModules.push({ id: … })`), because `resolveEnabledModuleIds` scans **directories** and a parked module's directory still exists — the `CC-132` denominator trap in a second place. Falls back to the directory answer when no declaration exists; overlays keep their own rule. **Proof:** the real project discovers **42 specs, 0 from `customers`**; a new test asserts a parked module's spec is excluded while an enabled one is kept; the mutation that disables the filter is **RED** (1 failed), file restored **sha256-identical**; the discovery suite **7/7**. | ✅ closed |
 | CC-150 | **`create-mercato-app`'s TEST SUITE FAILS IN CI — the only failing unit package on the deploy commit** — 2026-10-20, found by the CI run for `86c2b1ed` while preparing the fresh deployment. Every other suite passed in that job (core, shared, cli, ai-assistant, …), and the job's only failure is `create-mercato-app#test` exiting 1: `##[error]command (…/packages/create-app) yarn run test exited (1)`. **Measured so far: the exit code and the package.** The package's own output has not been read, so the cause is unknown — do not infer it from the name. **Startable now** — run that package's suite locally and read the first failure; it is one package, not the platform, and the deploy commit's build passed without it. **★ FIXED 2026-10-20, and the cause was not a test:** the package's own `test` script is `node --import tsx --test`, so running jest there was **my wrong instrument** and proved nothing. The real failure was the **template parity test**: `packages/create-app/template/src/app/api/[...slug]/route.ts` was **stale by the whole `CC-123` change** — the `derivePrincipal` import and the invoker-ceiling block — and the test that demands byte-identity with `apps/mercato` failed. Synced the template from the real file. **Proof:** the package's own command → **124 tests, 104 pass, 0 fail, 20 skipped, exit 0**; the mutation that restores the stale file is **RED** (1 failed), restored sha256-identical. | ✅ closed |
 | CC-151 | **THE INTEGRATION SPECS CALL ROUTES OF A PARKED MODULE — 12 of 15 shards fail on `POST /api/customers/people: 404`** — 2026-10-20, found by the CI run after `CC-149` fixed discovery. **The harness now genuinely runs tests** (3 shards pass; before, all 15 reported zero), and the remaining failures are the specs themselves: they exercise the CRM (`customers`), which is **deliberately parked**, so its routes are never generated. A spec that needs a parked module is asking for a route that cannot exist. **The fix is a declaration, not a code change:** the spec's `meta.ts` declares `dependsOnModules` / `requiredModules` (the discovery already honours it), so the suite reports what it can actually run. **Measure first:** how many specs call a parked module's routes, and whether any of them should instead run with `customers` enabled (a product decision, not a test decision). **Startable now** — count the specs, declare the dependency on the ones that need it, re-run. **★ FIXED 2026-10-20, and the measurement corrected this row's own diagnosis:** the parked modules' own specs were **already** excluded by `CC-149`; the failures were specs in the **enabled** `example` module that *call* the parked CRM. Two halves: (1) seven `apps/mercato/src/modules/example/__integration__/*.meta.ts` files declare `dependsOnModules: ['customers']`; (2) **the discovery's dependency check was still using the directory scan** — `resolveEnabledModuleIds` answers *exists*, and a parked module's directory exists — the `CC-132` denominator trap in the **second half of the same filter**. `isModuleEnabled` now prefers the app's declaration for both the spec's own module and its dependencies. **Proof:** discovery on the real project **42 → 34 specs, 0 from enabled modules calling a parked route** (the 7 remaining are `create-app/template` specs the Playwright config already ignores); discovery suite **8/8**; the mutation reverting the dependency check to directories is **RED** (2 failed), file restored sha256-identical. | ✅ closed |
+| CC-152 | **DISCOVERY READ A GUARD IT COULD NOT SEE — 33 INTEGRATION SPECS RAN AGAINST PAGES THAT EXIST ONLY WHEN A FLAG IS ON** — 2026-10-20, found by the CI run **for the `CC-150`/`CC-151` fix commit** (`04c98082`): unit tests green, and **7 of 15 shards red with 56 failed tests**. **THE MEASUREMENT:** every failing test belongs to the **example** module — of the 13 specs that ran, **10 files failed** (`TC-APP-001`, `TC-UMES-001/005/006/007/009/011/020/022`, `todo-priority-validation`); the 3 that passed (`TC-CLI-001`, `TC-UMES-010`, `TC-UMES-013`) never touch the module's pages or routes. The Playwright error-context snapshots say why: `heading "404" — This page could not be found.` at `/backend/mutation-lifecycle`, and `toHaveTitle … Received: "404: This page could not be found."` at `/backend/example`. **THE MECHANISM:** `apps/mercato/src/modules.ts` pushes the module **behind a switch** — `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) { enabledModules.push({ id: 'example' … }) }` — because the module must never reach a customer's product; its ~20 backend pages and its API routes are **generated only for an enabled module**. The integration job never set the flag, so none of those routes existed. **And `CC-149`'s own reader answered "enabled" from a line the runtime never executes:** `readDeclaredEnabledModules` matched `enabledModules.push({ id: 'example'` with a regex that cannot see the guard above it — the `CC-132`/`CC-149` denominator trap in a **third** place: not a folder that exists, a **switch that lives in an `if`**. (With the flag off the suite is also hollow by construction: discovery would return 0 specs and every shard would pass having run nothing — observed today, 8 shards.) **FIX, two halves:** (1) `collectPushedModuleIds` reads the guard **with** the push: an `parseBooleanWithDefault(process.env.NAME, default)` guard counts the module only when NAME parses on (same token table as `@open-mercato/shared/lib/boolean`); an `enabledModules.some((entry) => entry.id === 'OTHER')` guard follows the module it names; **any other shape over-includes** — a wrong check must fail loud (the spec runs and fails), never silently shrink the suite. (2) the `ephemeral-integration` job sets **`OM_ENABLE_EXAMPLES: 'true'`** — CI works **on** the platform, so the module is enabled and its specs finally cover the pages they were written for; the shard builds the app itself, so the routes exist by the time Playwright starts. **Proof, two routes:** (a) unit — two new tests (the env guard across `unset`/`0`/`yes`; the module guard following `example`), discovery suite **10/10**; **two mutations RED individually** (env guard neutralised → 2 failed; module guard neutralised → 1 failed), file restored **sha256-identical** each time; cli package **74 suites / 1,273 tests** 0 failures; `tsc --noEmit` clean. (b) the **real repo** through the fixed code: flag unset (CI's default) → **0 specs**; flag `true` → **33** (13 `apps/mercato` + 20 template, the latter ignored by the Playwright config). **Observation to take, not a fact:** the CI run carrying this commit is the end-to-end confirmation — that the flag reaches the in-shard build, and whether the specs then pass with the module on (the seeded `admin` role receives `example.*` via the module's `defaultRoleFeatures`, so the pages' `requireFeatures` gate should open). | ✅ closed |
 
 ---
 ## 6. Platform study — 11 platforms, every one with its address
@@ -1254,7 +1277,7 @@ is a measured coverage claim, not a typed one.
 
 | Family | What it is | Home (relative to this folder) | ids in home | Carried here |
 |---|---|---|---:|---|
-| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 150 | ✅ **all** — §5 + §4 |
+| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 151 | ✅ **all** — §5 + §4 |
 | `SR-*` | the architecture requirements, pole by pole | **§7, this file** | 54 | ✅ **all** — §7 |
 | `G-*` | the governance & security floor | `platform_points.md` §G | 21 | 🟡 **9 named** (`G-01/02/03/04/07/09/17/21/22`, the rest only as triggers) — **12 with no row** → §9 |
 | `AH-*` | the agent half — `AH-1`…`AH-12` | `platform_points.md` §E | 12 | 🟡 **1 named** (`AH-1`) — **11 open, no row** → §9 |

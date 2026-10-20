@@ -46,7 +46,7 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after `CC-150`/`CC-151`):** register **88 closed · 62 open · 150
+**THE POSITION, MEASURED — 2026-10-20 (after `CC-152`):** register **89 closed · 62 open · 151
 total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
 trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
@@ -55,6 +55,49 @@ trigger**.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 (night) — `CC-152`: discovery read a guard it could not see, and the flag was off
+
+**The `CC-150`/`CC-151` fix commit's own CI run went red again — 7 of 15 shards, 56 failed tests — and
+every failing test was an example-module spec failing on a 404.** The Playwright error-context snapshots
+downloaded from the run say it plainly: `heading "404" — This page could not be found.` at
+`/backend/mutation-lifecycle`, and `toHaveTitle … Received: "404: This page could not be found."` at
+`/backend/example`. Of the 13 specs that ran, 10 files failed; the 3 that passed (`TC-CLI-001`,
+`TC-UMES-010`, `TC-UMES-013`) never touch the module's pages or routes.
+
+**The mechanism is a switch, not a folder.** `apps/mercato/src/modules.ts` pushes the example module
+behind a guard — `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) { enabledModules.push({
+id: 'example' … }) }` — because the module must never reach a customer's product. Its ~20 backend pages and
+its API routes are **generated only for an enabled module**, and the integration job never sets the flag.
+And **the reader I wrote for `CC-149` answered "enabled" from a line the runtime never executes**: the regex
+`enabledModules\.push\(\s*\{\s*id:\s*'…'` matched the push and could not see the `if` above it. Same trap as
+`CC-132`/`CC-149` (a denominator that cannot see the thing that decides), one layer deeper — the deciding
+fact was neither a directory nor a declaration but a **guard around the declaration**.
+
+**Two halves, because there are two truths to keep.** (1) Discovery now reads the guard with the push:
+an env-guarded push counts only when its own flag parses on, with the same token table
+`@open-mercato/shared/lib/boolean` uses; an `enabledModules.some((entry) => entry.id === 'OTHER')` guard
+follows the module it names; **any other shape over-includes** — a wrong check must fail loud (the spec runs
+and fails), never silently shrink the suite. (2) The `ephemeral-integration` job sets
+`OM_ENABLE_EXAMPLES: 'true'`: CI works **on** the platform, so the module is enabled and its specs finally
+cover the pages they were written for. Without (2), (1) alone would turn the suite hollow — 0 specs, 15
+shards each passing having run nothing, which is exactly what 8 of today's shards did.
+
+**Proof, by two different routes.** (a) Unit: two new tests — the env guard across `unset` / `0` / `yes`,
+and the module guard following `example` — discovery suite **10/10**; the mutation neutralising the env
+guard is **RED** (2 failed), the one neutralising the module guard is **RED** (1 failed), each file
+restored **sha256-identical**; cli package **74 suites / 1,273 tests** 0 failures; `tsc --noEmit` clean.
+(b) The **real repository** through the fixed code: flag unset (CI's default) → **0 specs discovered**;
+flag `true` → **33** (13 `apps/mercato` + 20 template; the template's are ignored by the Playwright
+config, which is why only the 13 ran).
+
+**What is not claimed:** that CI is now green, or that the example specs pass with the module on. The run
+carrying this commit is the end-to-end confirmation — that the flag reaches the in-shard build (the shard
+rebuilds the app itself, so it should) and that the specs pass once the pages exist. The seeded `admin`
+role receives `example.*` through the module's `defaultRoleFeatures`, so the pages' `requireFeatures`
+gate should open for it. `CC-152`'s §5 row records this as an observation to take, not a fact.
 
 ---
 

@@ -5477,3 +5477,32 @@ first, and it is the one a person repeats when asked "is i18n fine?".
 
 *Cross-ref: `CC-148` (the fix, 96 entries), `CC-142` (sync, and the `--fix` trap), `CC-149` (the same
 denominator lesson in the integration harness), L197.*
+
+---
+
+## L200
+
+**A check that reads a line of config without the guard around it answers a question nobody asked.**
+
+`CC-152`, 2026-10-20. The integration discovery read `apps/mercato/src/modules.ts` and matched
+`enabledModules.push({ id: 'example' … })` — a regex with no idea that the push sits inside
+`if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false))`. It answered "is this module
+enabled?" with **yes**, while the runtime, reading the same file, answered **no** — because the runtime
+executes the `if` and the regex only reads the text. 33 specs then ran against pages that exist only when
+the flag is on; 56 tests failed on 404s. The same trap `CC-132` (a directory scan cannot see a parked
+module) and `CC-149` (a dependency check that read directories) fell into — twice the deciding fact was
+**in the file and the check could not interpret it**.
+
+**The rules.**
+1. **A guard is part of the declaration.** `enabledModules.push(...)` alone is half a fact; the `if`
+   above it is the other half. A reader that takes the push without the guard is reading a different
+   file than the one the runtime executes.
+2. **When a check cannot interpret what it reads, over-include, never under-include.** Here the unknown
+   shape fails loud — the spec runs and fails visibly. The opposite (silently excluding) shrinks the suite
+   and nobody notices until something regresses in the dark.
+3. **The hollow green is the second failure.** With the flag off, discovery would find **0 specs** and all
+   15 shards would pass having run nothing — 8 of today's shards already did exactly that. A suite that
+   runs nothing is not green; it is absent. If the fix's effect can be "no tests", say so in the row.
+
+*Cross-ref: `CC-152` (the fix: guard-aware discovery + `OM_ENABLE_EXAMPLES` in the integration job),
+`CC-149` and `CC-132` (the same trap in the directory scan), L197 (a green run proves the file exists).*
