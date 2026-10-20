@@ -46,14 +46,47 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after `T-05`):** register **84 closed · 62 open · 146 total**;
-§4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
+**THE POSITION, MEASURED — 2026-10-20 (after `CC-148`/`CC-149`):** register **86 closed · 62 open · 148
+total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
+trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 — `CC-148`/`CC-149`: the first CI run that reached the tests found two denominators
+
+**Both failures were in the measuring, not the measured.** `CC-142` had made the i18n *sync* check pass —
+and it printed *"All translation files are in sync"* while four locales were **equally** missing the same
+21 keys. The check that sees it is the other one: `i18n:check-usage`, code → English. It named screens
+that would render raw key names in every locale: the authority graph (10 keys), the structural-permissions
+settings (7), two phone-field labels, the Arabic language name, and the AI-worker hint. Fixed by hand in
+en/pl/es/de across five catalogues — **96 entries**, English taken from each `t()` call's own default, not
+invented. `i18n:check-usage` now reports **0 missing**; sync stays green (the 8 *"unsorted keys"* reports
+were my own re-sort, and `--fix` was used only to sort — `CC-142`'s rule; a key-set comparison against
+HEAD proved only the 3 new UI keys differ).
+
+**`CC-149` is the same shape one layer down.** All 15 integration shards reported
+`passed=0, failed=0, total=0` — **the harness had never run a single test**. Discovery filtered on a
+spec's `requiredModules` but **not on the spec's own module**; `customers` is parked, its directory still
+exists, so its specs were discovered, and loading one evaluates
+`customers/commands/people.ts:197` → `E.customers.customer_person_profile`, which is **not generated for a
+parked module**. A `TypeError` before the first test. **`CC-143` was the same parking decision asking for
+a route; this asked for a module graph.** The fix reads the app's **own** enablement declaration
+(`apps/mercato/src/modules.ts`) instead of the directory scan — because a parked module's directory still
+exists, the `CC-132` denominator trap met a second time. Falls back to the old answer when no declaration
+exists; overlays keep their rule.
+
+**Proof:** `i18n:check-usage` 0 missing · `i18n:check-sync` in sync · discovery **7/7**, the real project
+discovers **42 specs, 0 from `customers`**, the filter-disabled mutation **RED** and the file restored
+sha256-identical. **The handover gained the section it was missing** — the remote, the two branches, how
+`gh` is authenticated here, and the commands that read a run. **And the deploy question is answered in
+`PLAN-next-deploy.md`: the last deployed commit is recorded nowhere, CI must be green, and `CC-119`'s
+migration chain must run against a copy of the live database before anything is deployed.**
 
 ---
 

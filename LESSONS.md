@@ -5454,3 +5454,26 @@ work** and the early check is a fast path.
 
 *Cross-ref: `PLAN-T05-approve-once.md` §4 (M3's first run, and the corrected one); L187 (a restore that
 answered the wrong question); L186 (a test that measured the wrong object).*
+
+## L199
+
+**Two checks with almost the same name can measure opposite things — and the one that passes is the one people quote.**
+
+`CC-148`, 2026-10-20. `i18n:check-sync` printed *"All translation files are in sync"* and was **right**:
+all four locales were **equally** missing the same 21 keys. `i18n:check-usage` — code → English — found
+them: screens that would render raw key names in every locale. The green check was the one in the CI log
+first, and it is the one a person repeats when asked "is i18n fine?".
+
+**The rules.**
+1. **A sync check compares copies to each other; a usage check compares code to the catalogue.** Neither
+   subsumes the other, and a passing sync says exactly nothing about whether a key exists.
+2. **When a check's name contains a word you have not defined, define it before trusting a pass** —
+   *sync* here meant *the locales agree*, not *the translations exist*.
+3. **The failing check is the one that names the user-visible symptom.** "Raw key names on a screen" is a
+   symptom; "locales differ" is a maintenance property. Prefer the check that would embarrass you.
+4. **When you re-sort a generated file, prove the sort was the only change** — a key-set comparison
+   against `HEAD` (added / removed / changed), not a line count. A 55-line diff for a 3-key addition is
+   reordering, and saying so is part of the record.
+
+*Cross-ref: `CC-148` (the fix, 96 entries), `CC-142` (sync, and the `--fix` trap), `CC-149` (the same
+denominator lesson in the integration harness), L197.*

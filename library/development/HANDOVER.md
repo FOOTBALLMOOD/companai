@@ -15,18 +15,23 @@ continue the development work.** Read it top to bottom once (about 20 minutes), 
 follow §2 to actually get working. Everything else in the project is reachable from here.
 
 **Written 2026-10-05, revision 33 (2026-10-14). Owner: Ramzi. Development machine: `BIXMASERVER` (Windows 10 Pro).**
-**★★ CURRENT POSITION — 2026-10-19 (revision 36). Read this paragraph, then go to the box.**
-The development pause is **over** and the build frontier is the **authority family**, which is now
-**complete and closed**: `CC-125` (the machine floor — the capabilities no configuration may ever grant a
-machine) · `CC-128` (the tenant ceiling) · `CC-134` (the superadmin read, scoped to the foundational
-tenant) · `CC-135` (the ceiling's route + the flag's producer) · `CC-136` (a platform act is a platform
-act, in both places that decide it) · `CC-137` (one capability means one door) · `CC-139` (the ceiling's
-screen). **Register: 79 closed · 60 open · 139 total**, counted from `MASTER-CHECKLIST.md` §5 by
-`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0** — the 13 spine findings that gate
-`CC-121` — and it is named, with its steps and the
-queue behind it, in **the `★ ACTIVE TASK` box at the top of
-[`../../JOURNAL.md`](../../JOURNAL.md)**.
-**★ And one repair this revision made, because it would have stranded you:** the box was **missing**.
+**★★ CURRENT POSITION — 2026-10-20 (revision 37). Read this paragraph, then go to the box.**
+The authority family is **complete and closed**: `CC-125` (the machine floor) · `CC-128` (the tenant
+ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) · `CC-135` (the ceiling's
+route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
+means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
+**Register: 86 closed · 62 open · 148 total**, counted from `MASTER-CHECKLIST.md` §5 by
+`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 9 spine findings left** before
+`CC-121`, and `T-06` is next; the box at the top of [`../../JOURNAL.md`](../../JOURNAL.md) names it with
+its steps. **The ONE NUMBER is 78 / 321 units (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
+**★ What is new since revision 36, and it changes how you work:** the repositories are now on a remote
+(`FOOTBALLMOOD/companai`, one repository, two branches) and **CI runs on every push** — see the section
+*"The remote, the branches, and CI"* below, which is the part this page was missing. The first CI runs
+found **three** defects no local run could see (`CC-141`, `CC-146`, `CC-148`, `CC-149` are the fixes;
+`CC-143` was the probe): a build export, two gitignored source files, 21 i18n keys, and an integration
+harness that had never run a test. **Treat CI as a gate, not a formality** — and read its log before
+believing any claim about the state of the tree.
+**★ And one repair revision 36 made, because it would have stranded you:** the box was **missing**.
 Both this page and `START-PROMPT.md` pointed at it and neither was allowed to state a task itself, so the
 two documents a newcomer is told to read first both led nowhere. **The box is restored, and it is the only
 place a live task is written.** If you find it gone again, restoring it is the fix — not adding a task
@@ -228,7 +233,56 @@ page and the `★ ACTIVE TASK` box disagree about *what is being worked on now*,
 
 ---
 
-## ★★ READ THIS FIRST — WHERE WE ARE NOW (measured 2026-10-16, revision 34)
+## ★★ The remote, the branches, and CI — read this before your first push (2026-10-20, revision 37)
+
+**One repository, two branches, and neither is called `master` any more.**
+
+| Branch | Holds | Workflow | Runs on |
+|---|---|---|---|
+| `main` | **the documentation** (this folder, the repo root) | `.github/workflows/docs.yml` | push to `main`, every PR, manual dispatch |
+| `code` | **the codebase** (`workspace/starting-kit`) | `.github/workflows/ci.yml` | push to `code`, `develop`, `feat/wms` |
+
+Remote: `https://github.com/FOOTBALLMOOD/companai`. **Both branches are pushed after every slice** — the
+rule is push, not commit-and-forget. There is no PR gate yet: a push to `code` runs CI directly, so a red
+run is visible to anyone who looks.
+
+**Authentication on this machine.** `git push` uses the Windows Credential Manager entry for
+`github.com`; a push needs nothing from you. **`gh` is not logged in**, and `gh auth login` refuses that
+stored credential because it lacks the `read:org` scope. Use the wrapper, which reads the credential from
+the OS store at call time and writes no token to disk:
+
+```
+~/.workbuddy-ai/bin/ghx run list -R FOOTBALLMOOD/companai --limit 5
+```
+
+**The four commands that answer "is it green?"**
+
+```
+ghx run list -R FOOTBALLMOOD/companai --limit 5
+ghx run view <run-id> -R FOOTBALLMOOD/companai --json jobs \
+  --jq '.jobs[] | {name, conclusion, failed: [.steps[] | select(.conclusion=="failure") | .name]}'
+ghx run view <run-id> -R FOOTBALLMOOD/companai --log-failed
+ghx run view --job <job-id> -R FOOTBALLMOOD/companai --log
+```
+
+**What CI has actually found, and the pattern to carry.** Four defects that every local run passed over:
+`CC-141` (a module exported a default but not the named export the generator resolves **statically** — a
+`??` fallback does not exist for a bundler), `CC-146` (two source files were **gitignored** by a bare
+`storage` rule, so no checkout contained them — `LESSONS.md` L197), `CC-148` (21 i18n keys referenced by
+code and present in no `en.json` — the **sync** check cannot see this; the **usage** check can), `CC-149`
+(the integration harness had **never run a test**: discovery included a **parked** module's specs, and
+loading one crashed on generated entity ids). **The pattern:** a local run reads the **filesystem**, CI
+reads the **repository** — and a parked module's directory still exists. Before blaming code for a
+CI-only failure, check what a clean checkout actually contains.
+
+**Deployment is NOT automatic.** A green CI deploys nothing. The live instance is deployed by hand
+(`RUNBOOK-deploying-a-site.md` / `RUNBOOK-platform-server.md`), and the live build predates the authority
+family. The next deploy's gate and sequence are in [`PLAN-next-deploy.md`](PLAN-next-deploy.md) — read it
+before deploying, not after.
+
+---
+
+## ★★ READ THIS FIRST — WHERE WE ARE NOW (measured 2026-10-16, revision 34 — SUPERSEDED by revision 37 above)
 
 **The 2026-10-14 snapshot below is now historical context, not the live frontier.** After a deliberate
 **development pause**, the owner chose to finish the **platform architecture** before resuming builds.
