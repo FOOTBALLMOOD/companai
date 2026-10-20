@@ -101,6 +101,11 @@ describe('D0 — generated guard registry delivers guards', () => {
     )
 
     expect(result.ok).toBe(false)
-    expect(String(result.errorBody?.error ?? '')).toContain('snake_case')
+    // The reason must say WHY (dictionary standard S3) — not a bare refusal.
+    // It names the rule the key broke, in the words the gate uses; the assertion is on that rule,
+    // not on a stale adjective. (`field-definitions.sd1.test.ts:183` matches the same sentence
+    // with a looser regex — this one pins it exactly, which is the difference between a test that
+    // documents and a test that merely passes.)
+    expect(String(result.errorBody?.error ?? '')).toContain('not a readable permission-surface id')
   })
 })

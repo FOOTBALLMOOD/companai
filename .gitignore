@@ -95,7 +95,13 @@ tmp/
 public/uploads/*
 apps/mercato/storage/*
 apps/mercato/storage/attachments/*
-storage
+# ROOT-ANCHORED, deliberately. A bare `storage` matches at ANY depth, and it silently swallowed
+# `packages/core/src/modules/attachments/backend/storage/**` — SOURCE FILES — for as long as
+# they existed. Nothing reported it: they are on disk locally, so every local run was green, and
+# `git status` was clean because an ignored file never shows as untracked. The first clean
+# checkout that ran `backend-sidebar-icons.test.ts` failed with "Cannot find module" (2026-10-20).
+# `no-ignored-source.test.ts` now asserts that no file under a src/ tree is gitignored.
+/storage
 packages/client/src/generated/openapi.types.ts
 package-lock.json
 
