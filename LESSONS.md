@@ -5429,3 +5429,28 @@ found it within minutes, after 2,600+ green tests had said nothing.
 
 *Cross-ref: `CC-146` (the fix, the guard, and the proof); `CC-141` (the same first CI run, a different
 delivery defect); L186 (a test that measured the wrong object).*
+
+## L198
+
+**A mutation that survives may have removed the wrong guard — and that tells you which guard was real.**
+
+`T-05`, 2026-10-20. The approvals queue refused a veto after an approval had claimed the row **twice
+over**: an early `if (status !== 'pending')` and a compare-and-set in the `WHERE`. The mutation meant to
+remove the protection edited the early check and *missed the one-line `WHERE`* — and the suite stayed
+green. Two possible explanations, and they are not the same: the guard is dead code, or the mutation
+never happened. Reading the diff settled it — the CAS was untouched, so **the CAS alone was doing the
+work** and the early check is a fast path.
+
+**The rules.**
+1. **Before accepting a surviving mutation, read the mutated file.** `sed`/`perl` that silently match
+   nothing is the commonest way to run a mutation that is not one — the same family as `L187` (a restore
+   that was not a restore). Print the changed lines, not just the test output.
+2. **A guard that survives removal of its *neighbour* is not redundant — it is the control.** Write that
+   down: it changes what a future editor is allowed to delete.
+3. **When two guards refuse the same thing, the mutation must remove both to prove the pair matters.**
+   Removing one and staying green proves the *other* one suffices, which is a useful result but a
+   different claim than "this row is protected".
+4. **Keep the surviving mutation in the record.** It is evidence about the design, not a failed test run.
+
+*Cross-ref: `PLAN-T05-approve-once.md` §4 (M3's first run, and the corrected one); L187 (a restore that
+answered the wrong question); L186 (a test that measured the wrong object).*

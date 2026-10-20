@@ -41,7 +41,31 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE — 2026-10-20 (11:14): `CC-146` is BUILT and CLOSED — two source files were in no checkout
+**LAST DONE — 2026-10-20: `T-05` is BUILT and CLOSED — an act is approved once, whatever the
+concurrency.** The row said the queue could approve the same act twice (read-then-act, no
+compare-and-set). Measured, the sequence was `findById` → `if (status !== 'pending')` → **run the
+command** → write `approved`: two approvers both read `pending`, both passed, **both ran the act**, and
+the window was the command's own execution time — not a race between adjacent statements. **★ And the
+same shape was in the file twice more**, which the row did not name: `reject` wrote unconditionally (two
+vetoes both "succeed", the second overwriting the first's actor and note), and the A3 `commitDue` sweep
+read `holding` → executed → wrote, so two overlapping sweeps ran it twice — and a sweep could run an act
+a veto had just stopped. **The fix is one primitive: a compare-and-set claim** —
+`nativeUpdate(… WHERE status IN (…) )` returns **matched rows**; `1` means this caller owns the act, `0`
+means somebody else moved it first — used by `approve` (`pending → approving`) and by the sweep
+(`holding → committing`), with a conditional write for the veto and for expiry. **Two new states,
+because a lock nobody can see is not evidence:** an approval interrupted mid-execution is a fact on
+record (`approving` / `committing`), and the guarantee still holds — it can never be re-run. **★ The
+first mutation SURVIVED, and that was the useful result:** it removed the early status check but not the
+CAS (the pattern missed a one-line WHERE), and the test stayed green — proving the CAS alone refuses the
+veto and the early check is a fast path, not the control. The corrected mutation removed both and went
+RED (`L198`). **Proof:** `pendingActService` **29/29**; the neighbouring suites (`.di`, `.ttl`, the
+approvals page) **50/50 across 4 suites**; `tsc` **0**; **four mutations RED** — claim always true (1) ·
+claim always false (11) · both veto guards removed (2) · sweep never claims (4) — file restored
+**sha256-identical**. **`CC-147` opened** for the lifecycle gap the claim creates (a claim that never
+finalises stays `approving` forever). Record: `PLAN-T05-approve-once.md`.
+**84 closed · 62 open · 146 total.**
+
+**PREVIOUSLY — 2026-10-20 (11:14): `CC-146` is BUILT and CLOSED — two source files were in no checkout
 at all, and every local run was green.** The second CI run to reach the unit suite failed
 `backend-sidebar-icons.test.ts` with *cannot find module
 `…/attachments/backend/storage/attachments/page.meta`*. The file was on disk; it was **not in the
@@ -352,7 +376,7 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 10 spine findings left, before `CC-121` starts.** `T-05` is the next one by
+**▶ NEXT — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts.** `T-06` is the next one by
 rank: the approvals queue can approve the same act twice, a read-then-act with no compare-and-set, and
 every approval built later inherits the race. Then `T-06` (the one record the tamper-evident chain does
 not cover), `T-07` (seven modules' commands invisible to the gate), `T-08`, `T-15`, `T-16`, `T-17`, `T-28`,
@@ -554,7 +578,7 @@ not ban** (`CC-124` — **built and closed the same day**, see LAST DONE above);
 and the **type catalogue has only a code layer**, so a tenant can override a type and cannot create one
 (`CC-126` — *corrected 2026-10-18: this read "platform level has no schema home", which was my misreading
 of **types** as **agents**; agents are correctly tenant-scoped, 12 of 12 tables*); and owner
-departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **84 closed · 61 open · 145 total**, counted from §5.
+departure is unmodelled — **the flow now exists, built 2026-10-19** (`CC-127`). Register: **84 closed · 62 open · 146 total**, counted from §5.
 **★ AND THE OWNER FOUND THE GAP ABOVE ALL OF THEM (2026-10-18, documented as asked — `CC-128`, plan §4.6):
 the platform has no ceiling over its tenants.** Measured, four reads: `Tenant` holds `name`/`is_active`
 and nothing else, and **no plan, feature, limit or settings table exists** — so D1's answer (*"the platform
@@ -698,8 +722,8 @@ rather than silently copied.)*
 ## 4. Open work — every unfinished item, with its trigger
 
 **The trigger is the observable event that makes an item startable.** *"When a command is next
-touched"* is a trigger; *"later"* is not. This is the complete list — all **61** open
-register rows, counted from §5, never typed. **14** can start right now,
+touched"* is a trigger; *"later"* is not. This is the complete list — all **62** open
+register rows, counted from §5, never typed. **15** can start right now,
 **1** needs only a database, **4** need a
 decision from you, and the rest wait on the trigger named in their row.
 *(Rule 13, corrected 2026-10-19 (`CC-137` closed): **14 · 1 · 4 · 42 = 61** — the row was built, so it
@@ -781,8 +805,11 @@ paragraph was not, and that is why it drifted.)*
 | `CC-133` | — | **The platform has no identity above its tenants — Option B, deferred by the owner, not dropped.** `CC-128` was decided as Option A (the platform's admins live inside the foundational tenant, and other tenants inherit, or are limited to, what it allows). Under A, *"platform admin"* and *"admin of the foundational tenant"* are the same thing; cross-tenant reach is a **rule** rather than a structure; an agent serving the platform's superadmins has no home outside the foundation; and the foundation is special **by convention** rather than by schema. B puts the platform's admins **above** every tenant, in a row that belongs to no tenant — the first genuinely platform-level table. | **After the pipeline is finalised and the platform is fully operational** — the owner's trigger, 2026-10-19. `CC-128` (Option A) lands first: A is a strict subset of B's shape, so B adds a layer above rather than rewriting one below. | **blocked on its trigger** |
 | `CC-138` | — | **No route declares human-only or machine-only** — `CC-125`'s authority half is built and closed, and its **surface** half was left inside the closed row with no row of its own. The consequence is unchanged: any API key holding `ai_assistant.view` reaches the assistant surface, because the gate above it does not distinguish the caller's kind. | **With the `W3` gate** — every route declares one of the three, the default is neither, and a route with no declaration fails the build (`CC-92` Slot 1). | **blocked on its trigger** |
 | `CC-144` | — | **Arabic is offered but not checked**: `TARGET_LOCALES` covers pl/es/de, and `auth/i18n/ar.json` holds 40 of 377 keys — 337 missing — so an Arabic UI shows raw keys. | **Startable now** — translate the gap, then add `‘ar’` to `TARGET_LOCALES` in the same change. | **startable now** |
-*Grouped by state:* **14 startable now** · **1 needs a database** ·
+| `CC-147` | — | **A claim that never finalises stays `approving` forever** — the lifecycle gap `T-05`'s compare-and-set creates, opened by its own build rather than left implicit. `approve` claims the row (`pending → approving`) before executing, and `commitDue` claims (`holding → committing`). If the process dies between the claim and the final write, the row stays in the claim state: **it can never be re-run** — which is the guarantee the claim exists for — but **nothing resolves it either**, so it is neither in the pending queue nor finished. It carries `resolvedAt` from the claim (the decision *was* made; the execution is what did not finish), but a reader has to know to look. | **Startable now** — in `expireOverdue` (already called by `list`), also fail `approving`/`committing` rows whose claim is older than a named threshold (one hour), with `failureReason: 'approval-interrupted'`. Terminal, so still never re-run; a test asserts a stale claim becomes `failed` and a fresh one is left alone. | **startable now** |
+*Grouped by state:* **15 startable now** · **1 needs a database** ·
 **4 need you** · **42 blocked** on a named trigger.
+*(Rule 13, corrected 2026-10-20 (`T-05` built): `CC-147` opened as *startable now*, so the line is
+15 + 1 + 4 + 42 = 62, counted from the table. `T-05` is a `T-*` row and does not move the `CC-*` counts.)*
 *(Rule 13, corrected 2026-10-19 (`CC-140` closed): **13 · 1 · 4 · 42 = 60** — the row was built, so it
 left the table and the startable count follows it out. The ceiling pair finished as a unit: the screen
 shipped with a token it could not send, and the row that made sending it possible was opened by the same
@@ -826,7 +853,7 @@ that *does* still matter is **code that nothing calls** — a checker on disk wi
 referencing it is an unfinished row, because the wiring itself is missing code (`CC-101` fixed seven
 of eight; `CC-117` closed the eighth, as a report step). Do not confuse the two: **no remote is a
 deployment state; no caller is a defect.**
-**CC-75 was never assigned** — the numbering skips it. **84 closed · 61 open · 145 total.**
+**CC-75 was never assigned** — the numbering skips it. **84 closed · 62 open · 146 total.**
 *(Rule 13, corrected 2026-10-17. The committed header read **52 closed · 44 open · 96 total**, and that
 figure corresponded to **no state the table ever held**: measured at `HEAD`, the table below already
 carried **97 rows — 55 closed, 42 open** — because rows were appended to the table without the header
@@ -1002,6 +1029,7 @@ be the thing that drifts.)*
 | CC-144 | ARABIC IS A SUPPORTED LOCALE THE i18n CHECKER DOES NOT COVER — 2026-10-20, found while closing `CC-142`, OPEN. `packages/shared/src/lib/i18n/config.ts:14` offers **five** locales — `[‘en’,‘pl’,‘es’,‘de’,‘ar’]` — and `direction.ts` renders Arabic right-to-left, but `scripts/i18n-check-sync.ts:25` reads `TARGET_LOCALES = [‘pl’,‘es’,‘de’]`. MEASURED: `auth/i18n/ar.json` holds **40 of 377 keys** — **337 missing** — so an Arabic UI renders raw dotted keys for most of the auth module, and the checker calls the catalogs **"in sync"**. **FIX: add `‘ar’` to `TARGET_LOCALES`** and translate the gap; the array change alone turns the check red on the next run, which is the point — but it has to land **with** the translations, or the build is blocked by a check whose subject does not exist yet. **The general form, and the reason this is a row: a check that covers three of five offered locales reports completion for a product that is two-fifths untranslated.** | ☐ open |
 | CC-145 | THE COVERAGE GUARDS WERE PINNED 75 COMMITS AGO, AND ONE OF THEM WAS A FALSE RED — 2026-10-20, found by the first CI run that ever reached the unit suite, CLOSED. Three count-pinned guards failed exactly as designed — they exist to fail when the surface grows without a human looking — and every number was traced to real work rather than bumped: **route files 458 → 464** and **GET routes 297 → 303** are the **six** files added since the pin (`3ba7b28f`, `CC-44`): agent-types ×2 and departures (`CC-127`), capability-ceiling ×3 (`CC-135`/`CC-139`) — 458 + 6 = 464, arithmetic that closes; **tables 234 → 237**, and two of the three new ones were **unclassified**, which the guard reports by name (`auth.TenantCapabilityCeiling`, `ai_assistant.AiAgentRuntime`) — both are now on `INTERNAL_TABLES` **with a reason**, because neither is a business list surface; **write rows 170 → 175**. **★ The valuable find was a FALSE RED:** the departure route declares `requireFeatures: DEPARTURE_FEATURES` — a same-file constant shared by GET and POST, better style than two literal arrays — and the walker matched only the literal form, so a **gated** route was reported ungated. **A guard that produces false reds is a guard that gets muted**, so `classify` now resolves one same-file `const NAME = [ … ]` and counts it as the gate it is, with three cases pinning it (non-empty resolves · empty does not · a name from elsewhere does not). Measured: cli **73 suites / 1,267 tests**, 0 failures. | ✅ closed |
 | CC-146 | **TWO SOURCE FILES WERE IN NO CHECKOUT AT ALL — AND EVERY LOCAL RUN WAS GREEN** — 2026-10-20, found by the **second CI run** to reach the unit suite, CLOSED. The run failed `backend-sidebar-icons.test.ts` with *cannot find module `…/attachments/backend/storage/attachments/page.meta`*. The file existed on disk and every local run passed, because it **was not in the repository**: a **bare `storage` rule** in `.gitignore` matches **at every depth**, and one of those depths was `packages/core/src/modules/attachments/backend/storage/**` — two real source files (an attachments page and its `requireFeatures: ['attachments.view']` meta). **Why no inventory mentioned them, three ways measured:** they exist locally, so local runs are green; `git status` is clean because an **ignored** file never appears as untracked; and `git ls-files` lists only **tracked** files. **Only a clean checkout — what CI does — can see the hole.** **FIX:** the rule is anchored as `/storage`, so only a top-level `storage/` is ignored, and the two files are added. **GUARD:** `packages/cli/src/lib/generators/__tests__/no-ignored-source.test.ts` asks **git** (`git ls-files --others --ignored --exclude-standard -- packages apps`, filtered to `src/` and source extensions) which files it refuses to track — a file-exists walker would find the file on the developer's machine and pass, so the question can only be put to git — and it asserts a **denominator** (`ignoreCountEverything() > 0`: uploads, dist and caches *are* ignored), so a run that found nothing ignored cannot pass by vacuity. Proven **RED** by restoring the bare rule and adding a new source file under it, then restored **sha256-identical**. **Also fixed in the same commit:** `guard-registry-delivery.test.ts` asserted the old wording (*"snake_case"*) while the gate now names the rule it broke (*"not a readable permission-surface id"*, with the allowed characters) — the assertion now pins the **reason**, not a stale adjective; `ok: false` was already the behaviour under test. **Proof:** core **1/1** · apps/mercato **5/5** · cli **74 suites / 1,269 tests**, 0 failures. Commit `39dcef67`, pushed to the `code` branch. | ✅ closed |
+| CC-147 | **A CLAIM THAT NEVER FINALISES STAYS `approving` FOREVER — THE LIFECYCLE HOLE THE COMPARE-AND-SET CREATES** — 2026-10-20, opened by `T-05`'s own build rather than left implicit, because the claim state is what makes the race impossible and it introduces a state nothing resolves. **THE MECHANISM:** `approve` claims the row `pending → approving` before executing the command (`pendingActService.ts`, `claim()`), and `commitDue` claims `holding → committing`. If the process dies between the claim and the final write, the row stays `approving` / `committing`: **it can never be re-run** — the guarantee the claim exists for — but **nothing resolves it either**, so it is neither in the pending queue (`list` filters `pending`) nor finished. It carries `resolvedAt` from the claim, which is honest (the decision *was* made; the execution is what did not finish), but a reader has to know to look. **FIX:** in `expireOverdue` — already called by `list()`, so no new scheduler — also fail claim-state rows whose claim is older than a named threshold (`CLAIM_STALE_MS`, one hour) with `failureReason: 'approval-interrupted'`. Terminal, so still never re-run. **GATE:** a stale claim becomes `failed`; a fresh one is left alone; a mutation that removes the threshold check goes RED. **Not urgent, not invisible:** the stuck row is a fact on record, and `T-05`'s correctness does not depend on this row landing. | ☐ open |
 
 ---
 ## 6. Platform study — 11 platforms, every one with its address
@@ -1168,7 +1196,7 @@ is a measured coverage claim, not a typed one.
 
 | Family | What it is | Home (relative to this folder) | ids in home | Carried here |
 |---|---|---|---:|---|
-| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 145 | ✅ **all** — §5 + §4 |
+| `CC-*` | the fine-grained cuts, findings and fixes | **§5, this file** | 146 | ✅ **all** — §5 + §4 |
 | `SR-*` | the architecture requirements, pole by pole | **§7, this file** | 54 | ✅ **all** — §7 |
 | `G-*` | the governance & security floor | `platform_points.md` §G | 21 | 🟡 **9 named** (`G-01/02/03/04/07/09/17/21/22`, the rest only as triggers) — **12 with no row** → §9 |
 | `AH-*` | the agent half — `AH-1`…`AH-12` | `platform_points.md` §E | 12 | 🟡 **1 named** (`AH-1`) — **11 open, no row** → §9 |
@@ -1276,8 +1304,8 @@ repaired before it is re-keyed.**
 
 | Slot | Gate | Findings | Count |
 |---|---|---|---|
-| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20) | 11 |
-| **Slot 0** | before `CC-121` starts | `T-05` `T-06` `T-07` `T-08` `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 10 |
+| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20) | 12 |
+| **Slot 0** | before `CC-121` starts | `T-06` `T-07` `T-08` `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 9 |
 | **Slot 1** | with `W3` (chokepoint + actor-class gate) | `T-18` `T-19` `T-20` `T-21` `T-22` `T-23` `T-25` `T-26` `T-29` `T-34` | 10 |
 | **Slot 2** | with `W5` (durable runs) | `T-43` | 1 |
 | **Slot 3** | with `W7` (first surface) | `T-09` `T-10` `T-12` `T-40` | 4 |

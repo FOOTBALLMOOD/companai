@@ -19,11 +19,12 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 10 spine findings left, before `CC-121` starts.** The ceiling work is finished
-as a unit — screen, token, refusal — and three Slot 0 findings are closed: **`T-27`** (the tenant-scope
+**IN HAND — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts.** The ceiling work is finished
+as a unit — screen, token, refusal — and four Slot 0 findings are closed: **`T-27`** (the tenant-scope
 helper that accepted a foreign tenant whenever the auth object was absent, silently), **`T-35`** (the
-sandbox that advertised an api-call cap it did not enforce) and **`T-04`** (a Function that asked for a
-count and was answered with rows, verified green). **10 remain:** `T-05`, `T-06`, `T-07`, `T-08`,
+sandbox that advertised an api-call cap it did not enforce), **`T-04`** (a Function that asked for a
+count and was answered with rows, verified green) and **`T-05`** (the queue that could approve one act
+twice). **9 remain:** `T-06`, `T-07`, `T-08`,
 `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority
 gate, and that gate cannot yet see **seven modules' commands** (`T-07`) or refuse a missing identity. **The
 spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer
@@ -45,14 +46,46 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after `CC-146`):** register **84 closed · 61 open · 145 total**;
-§4's open rows **14 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
+**THE POSITION, MEASURED — 2026-10-20 (after `T-05`):** register **84 closed · 62 open · 146 total**;
+§4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-20 — `T-05`: an act is approved once, whatever the concurrency
+
+**The row was right, and the file was worse than the row said.** `approve` was `findById` → `if
+(status !== 'pending')` → **run the command** → write `approved`. Two approvers both read `pending`,
+both passed, **both ran the act** — and the window is the command's own execution time, not the gap
+between two statements. **The same shape was in the file twice more:** `reject` wrote unconditionally
+(two vetoes both "succeed"; the second overwrites the first's actor and note), and the A3 `commitDue`
+sweep read `holding` → executed → wrote, so two overlapping sweeps ran it twice and a sweep could run
+an act a veto had just stopped.
+
+**The fix is one primitive.** A compare-and-set claim —
+`nativeUpdate(… WHERE status IN (…))`, whose **matched-row count** is the answer: `1` means this caller
+owns the act, `0` means somebody else moved it first. `approve` claims `pending → approving`, the sweep
+claims `holding → committing`, `reject` writes conditionally on `pending|holding`, and the expiry write
+is conditional too. **Two new states, because a lock nobody can see is not evidence:** an approval
+interrupted mid-execution is a fact on record, and it can never be re-run.
+
+**★ The first mutation survived, and that was the useful result.** It removed `reject`'s early status
+check but the pattern missed the one-line `WHERE`, so the compare-and-set was still there — and the
+veto test stayed green. **The survival proved which guard was actually doing the work:** the CAS alone
+refuses the veto; the early check is a fast path, not the control. A mutation that is not the mutation
+you meant looks exactly like a guard that does nothing. Corrected, it removed both and went RED.
+
+**Proof:** `pendingActService` **29/29**; the neighbouring suites (`.di`, `.ttl`, the approvals page)
+**50/50 across 4 suites**; `tsc` **0** (after the machine's `errno=1455` memory ceiling forced one
+retry — an environment fact, recorded rather than hidden); **four mutations RED** — claim always true
+(1) · claim always false (11) · both veto guards removed (2) · sweep never claims (4) — file restored
+**sha256-identical**. **`CC-147` opened** for the lifecycle gap the claim creates. Record:
+`PLAN-T05-approve-once.md`.
 
 ---
 
