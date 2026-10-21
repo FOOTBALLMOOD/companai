@@ -22,7 +22,7 @@ test.describe('TC-APP-001: App metadata', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'de')
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      'KI-unterstützte, modulare ERP-Basis für Produkt- und Dienstleistungsunternehmen',
+      'Eine Organisation, ein Aufgabenmodell, ein Berechtigungssystem, für Menschen und KI-Mitarbeiter gleichermaßen.',
     )
   })
 

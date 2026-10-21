@@ -112,9 +112,10 @@ describe('RootLayout', () => {
 describe('app metadata (CC-153)', () => {
   const COMPANAI_DESCRIPTION =
     'One organisation, one task model, one authority system — for people and AI workers alike.'
-  // The exact string TC-APP-001 asserts against the de dictionary — written here
-  // so a dictionary edit that breaks the spec turns this suite red first.
-  const GERMAN_DESCRIPTION = 'KI-unterstützte, modulare ERP-Basis für Produkt- und Dienstleistungsunternehmen'
+  // The exact string TC-APP-001 asserts against the de dictionary, written here
+  // so a dictionary edit that breaks the spec turns this suite red first. The
+  // string is the owner-approved German translation of the Companai line.
+  const GERMAN_DESCRIPTION = 'Eine Organisation, ein Aufgabenmodell, ein Berechtigungssystem, für Menschen und KI-Mitarbeiter gleichermaßen.'
 
   afterEach(() => {
     mockI18n.locale = 'en'
