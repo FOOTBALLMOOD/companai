@@ -71,7 +71,10 @@ a *static* `metadata` object. A static export is evaluated once, at build time, 
 context — so `meta[name="description"]` carried the English text into every locale. `TC-APP-001`'s
 German run asserted the de string and got English. `generateMetadata()` runs per request, after
 `detectLocale()`, and reads the same dictionary the `html lang` attribute already resolves per
-request; the Companai line now lives in `en.json`. **② Two committed bins had no execute bit.** Linux
+request; the Companai line now lives in `en.json`. **The critic pass over that fix found its own
+dormant copy:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried upstream's positioning —
+nothing calls the helper, but the fallback fires when a locale's dictionary misses the key, so the
+next caller would have shipped the exact description we had just removed (`0136e043`). **② Two committed bins had no execute bit.** Linux
 refuses to spawn a `100644` bin, so `umes:list/inspect/check` exited 1 with **empty stdout and
 stderr** — a status-null `spawnSync` — which reads like a crash. It was a permission bit, and
 **Windows ignores the bit, so only the git index could answer**: `update-index --chmod=+x`, blob shas
@@ -98,6 +101,8 @@ green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, 
 residual, recorded rather than hidden: `de`/`pl`/`es` still carry upstream's positioning at
 `app.metadata.description` while `en` carries the Companai line — rewording them is a hand-translation
 decision (`CC-142`'s rule), and `TC-APP-001` pins the German string, so the spec changes with it.
+A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in
+all four catalogs of both trees and renders nowhere — the usage checker already counts it as unused.
 
 ---
 
