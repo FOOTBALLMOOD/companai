@@ -5564,3 +5564,43 @@ shows `100755` versus `100644`. The guard asks git, because git is the only plac
 *Cross-ref: `CC-153` ② (the fix + the guard), `CC-146` (two source files no clean checkout could see,
 the same lesson for `.gitignore`), L200 (a check that cannot interpret what it reads answers a question
 nobody asked).*
+
+## L203 — A shell string is not a text channel, and the failure is silent by construction
+
+**What happened, twice in one day.** Editing a register row through `node -e "…"` wrote
+`(bucket C of  §1.4)` where `(bucket C of `PLAN-T-07-command-capabilities.md` §1.4)` was meant, and
+earlier the same shape produced `**FIXED 2026-10-19 the same day** ()`. Both times the command
+**succeeded**: the file was written, no error was raised, and the only symptom was a sentence that had
+quietly lost its subject.
+
+**Why it happens, mechanically.** Inside double quotes, the shell performs **command substitution**
+before any program sees the string. A pair of backticks is not text to bash, it is an instruction: run
+whatever is between them, and put the output here. `PLAN-T-07-command-capabilities.md` is not a
+command, so the substitution yields the empty string and vanishes. The JavaScript is then correct and
+its input is not, which is why nothing reports a problem.
+
+**Why it kept happening.** The content was **Markdown**, where backticks mean inline code and appear in
+almost every sentence, and the edit was **programmatic** (insert a row, replace a line), which tempts an
+inline `node -e`. Two correct habits on their own, and together they hand a shell a string full of
+executable syntax.
+
+**What to do instead.**
+
+1. **Content never travels through a shell string.** File text goes through a tool that takes it as a
+   parameter (Write, Edit), not through `bash -c`. If the edit must be programmatic, write the *script*
+   to a file and run `node script.mjs` with no content in the command line.
+2. **If a heredoc is unavoidable, quote the delimiter** (`<<'EOF'`). That disables every expansion,
+   which is why every commit message in this project has been safe: they all use `-F - <<'EOF'`.
+3. **Escaping is not the fix.** `\`` works and is unreadable, and it fails the moment one pair is
+   missed, which is exactly what happened: in the same edit some backticks were escaped and one pair
+   was not.
+4. **Read back what you wrote, always.** The two occurrences were caught only because the written
+   region was read afterwards. Make that routine for any programmatic edit: assert the expected text is
+   present, do not assume the write landed as intended.
+
+**The general form:** *a channel that interprets its input must never be used to carry content that
+contains the interpreter's own syntax.* The danger is not the backtick, it is that the write reports
+success.
+
+*Cross-ref: L181 (a proof instrument that fails quietly), L194 (a status line written before the
+evidence), and the two affected rows: `CC-132` and `CC-156`.*

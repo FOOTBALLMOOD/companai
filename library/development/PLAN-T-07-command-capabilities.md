@@ -1,8 +1,7 @@
 # PLAN-T-07 — the commands the gate cannot see
 
-**Status:** **BUILT IN PART, 2026-10-21.** §3's declarations and §4's guard are done and verified;
-**the seven mutations are not written**, so the row stays open. §9 records five corrections, and one of
-them changes what the row means.
+**Status:** **BUILT and CLOSED 2026-10-21.** §3's declarations and §4's guard are done and verified;
+**6 of 6 mutations PROVEN**. §9 records five corrections, and one of them changed what the row meant.
 **Row:** `T-07` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** `scripts/measure-t07-command-capabilities.mjs`, read-only, run 2026-10-21.
@@ -146,17 +145,24 @@ nobody re-runs is a measurement that stops being true.
 
 ## 4. The proof
 
+**Rewritten after the build (Rule 13).** The table below was written before the guard existed; three of
+its rows could not go red against what was actually built, and one was void with R2. These are the six
+that were run, and all six are PROVEN (`scripts/verify-t07-mutations.mjs`).
+
 | # | Mutation | Must go RED |
 |---|---|---|
-| M1 | A declared capability is removed from one bucket-A command | R1 |
-| M2 | The route's second feature is restored on one method | R2 |
-| M3 | One of the three agent-invoked commands loses its capability | R3 |
-| M4 | A capability is invented for a command behind an ungated route | R4 |
-| M5 | A dead command is given a capability | R5 |
-| M6 | A declaring module is edited | R6 |
-| M7 | A new command is added with no capability and the floor does not move | R7 |
+| M1 | The collector skips `packages`, so the surface shrinks below the floor | the floor |
+| M2 | A command in a **parked** module loses its capability | no unexplained command |
+| M3 | The factory-mapped command (`sales.returns.update`) loses its capability | no unexplained command |
+| M4 | An exception is declared after all, so its entry is no longer true | every exception real |
+| M5 | An exception's reason is shortened below a sentence | a reason for each exception |
+| M6 | **The original defect**: a hardcoded list of parked modules is skipped again | the floor |
 
-Plus: the guard suite count, the core suite count, and `tsc --noEmit` at 0, as numbers.
+M2 and M6 are the two that matter. The old guard **passed both**: M6 is the defect itself, and M2 is the
+gap it hid. If either one goes green, this row is not fixed.
+
+Plus: the guard suite count, the structural check on the edited files, the core suite count, and
+`tsc --noEmit` at 0, as numbers.
 
 ---
 
@@ -242,7 +248,16 @@ the invariant the edit must preserve: bracket counts identical to `HEAD`, and ev
 well-formed at its own indentation. Result: **81 files, 115 well-formed lines, no structural problems**.
 Two independent parsers (the instrument and the guard) also agree on the count.
 
-### 9.6 Still outstanding
+### 9.6 Closed: the six mutations, and the one that taught the most
 
-**The seven mutations in §4 are not written.** The row stays open until they are, and §4's M2 is void
-with R2, so the table needs rebuilding against what was actually built rather than patched.
+All six are PROVEN, every file restored byte-identically.
+
+**The fourth one survived the first run, and the test was the defect.** "An exception is declared after
+all" added a capability to a command on the exception list and expected the stale check to fire. It did
+not, because that check only asked whether the command **still existed** — so an entry could sit there
+excusing a command that had been fixed, and nothing would say so. The check now reports an entry whose
+command is **gated** as well as one whose command is gone.
+
+That is `LESSONS.md` **L23** again (*a mock that ignores its arguments cannot prove the filter it was
+handed*), in its general form: **a mutation that survives is a statement about the test.** The guard was
+correct for the case it was written for and blind to the one next to it.
