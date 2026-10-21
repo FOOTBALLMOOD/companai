@@ -60,16 +60,19 @@ In the **docs repo**, in this order:
 3. `library/development/MASTER-CHECKLIST.md` **§2** — the canonical "LAST DONE" and "NEXT" lines,
    and §5's register for every open item with its trigger.
 
-**As of 2026-10-19 (night), the position is:** register at **79 closed · 60 open · 139 total**; the
-frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 13 spine
-findings that gate `CC-121`, because that migration re-keys every principal through an authority gate that
-cannot yet see seven modules' commands. **The authority family is complete and closed:** `CC-125` (the
+**As of 2026-10-21 (afternoon), the position is:** register at **90 closed · 66 open · 156 total**; the
+frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 7 spine
+findings that gate `CC-121`, and **`T-08` is next by rank**. Six of the thirteen are closed (`T-27`,
+`T-35`, `T-04`, `T-05`, `T-06`, `T-07`). **The authority family is complete and closed:** `CC-125` (the
 floor), `CC-128` (the ceiling), `CC-134` (the superadmin read), `CC-135` (the ceiling's door), `CC-136` (a
 platform act is a platform act), `CC-137` (one capability means one door), `CC-139` (the ceiling's screen),
-`CC-140` (its write refuses a stale view). **No row on the authority path is waiting on the owner.**
-**`CC-121` does not start until `CC-92` Slot 0 lands** — the 13 spine findings, because that migration
-re-keys every principal through the authority gate (`PREVIEW-AUDIT-TRIAGE.md` §6.2, `MASTER-CHECKLIST.md`
-§9.4).
+`CC-140` (its write refuses a stale view). **No row on the authority path is waiting on the owner** — the
+tenancy ruling of 2026-10-21 emptied the owner queue for the first time since the register was built.
+**`CC-121` does not start until `CC-92` Slot 0 lands** — the remaining 7 findings, because that migration
+re-keys every principal through the authority gate (`PREVIEW-AUDIT-TRIAGE.md` §6.2,
+`MASTER-CHECKLIST.md` §9.4). **Two live rows are worth knowing before anything else:** `CC-156` (three
+endpoints are authenticated but not authorised, so any signed-in user may assign labels or edit sales
+notes) and `CC-157` (six commands nothing can invoke). Both are startable now.
 
 **Treat that paragraph as a signpost, not as the answer.** It was last right on the date it names, and
 it has been wrong before — on 2026-10-19 it still read `63 · 54 · 117` and named a closed item as next.

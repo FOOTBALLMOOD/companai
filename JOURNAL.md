@@ -19,14 +19,16 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts. The CI chain that took the last four days is finished, and this is the work it interrupted.** The ceiling work is finished
-as a unit — screen, token, refusal — and four Slot 0 findings are closed: **`T-27`** (the tenant-scope
+**IN HAND — `CC-92` Slot 0: 7 spine findings left, before `CC-121` starts. The CI chain that took the last four days is finished, and this is the work it interrupted.** The ceiling work is finished
+as a unit — screen, token, refusal — and six Slot 0 findings are closed: **`T-27`** (the tenant-scope
 helper that accepted a foreign tenant whenever the auth object was absent, silently), **`T-35`** (the
 sandbox that advertised an api-call cap it did not enforce), **`T-04`** (a Function that asked for a
-count and was answered with rows, verified green) and **`T-05`** (the queue that could approve one act
-twice). **9 remain:** `T-06`, `T-07`, `T-08`,
-`T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority
-gate, and that gate cannot yet see **seven modules' commands** (`T-07`) or refuse a missing identity. **The
+count and was answered with rows, verified green), **`T-05`** (the queue that could approve one act
+twice), **`T-06`** (the undo record now extends the hash chain, and the chain event says it is a
+reversal) and **`T-07`** (115 commands gained a capability, and the guard that should have caught it was
+rewritten). **7 remain:** `T-08`, `T-15`,
+`T-16`, `T-17`, `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority
+gate, and that gate cannot yet refuse a missing identity. **The
 spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer
 about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the
 checklist as §9.4.

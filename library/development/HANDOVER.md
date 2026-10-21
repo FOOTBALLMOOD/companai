@@ -15,31 +15,26 @@ continue the development work.** Read it top to bottom once (about 20 minutes), 
 follow §2 to actually get working. Everything else in the project is reachable from here.
 
 **Written 2026-10-05, revision 33 (2026-10-14). Owner: Ramzi. Development machine: `BIXMASERVER` (Windows 10 Pro).**
-**★★ CURRENT POSITION — 2026-10-20 (revision 37). Read this paragraph, then go to the box.**
+**★★ CURRENT POSITION — 2026-10-21 (revision 38). Read this paragraph, then go to the box.**
 The authority family is **complete and closed**: `CC-125` (the machine floor) · `CC-128` (the tenant
 ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) · `CC-135` (the ceiling's
 route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
-**Register: 88 closed · 62 open · 150 total**, counted from `MASTER-CHECKLIST.md` §5 by
-`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 9 spine findings left** before
-`CC-121`, and `T-06` is next; the box at the top of [`../../JOURNAL.md`](../../JOURNAL.md) names it with
-its steps. **The ONE NUMBER is 78 / 321 units (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
-**★ What is new since revision 36, and it changes how you work:** the repositories are now on a remote
-(`FOOTBALLMOOD/companai`, one repository, two branches) and **CI runs on every push** — see the section
-*"The remote, the branches, and CI"* below, which is the part this page was missing. The first CI runs
-found **three** defects no local run could see (`CC-141`, `CC-146`, `CC-148`, `CC-149` are the fixes;
-`CC-143` was the probe): a build export, two gitignored source files, 21 i18n keys, and an integration
-harness that had never run a test. **Treat CI as a gate, not a formality** — and read its log before
-believing any claim about the state of the tree.
-**★ And one repair revision 36 made, because it would have stranded you:** the box was **missing**.
-Both this page and `START-PROMPT.md` pointed at it and neither was allowed to state a task itself, so the
-two documents a newcomer is told to read first both led nowhere. **The box is restored, and it is the only
-place a live task is written.** If you find it gone again, restoring it is the fix — not adding a task
-line here.
-**What has NOT moved:** the ONE NUMBER is **78 / 321 = 24.3%** — re-derived 2026-10-19 by
-`node scripts/derive-counts.mjs`, which prints `MATCHES the claimed 78/321`. *(Rule 13: this page's
-revision-33 text below says `75/321 = 23%`; that was true on 14 October and is superseded — the box
-below §2 and `platform_points.md`'s appendix are the authority.)* None of the six closed rows above
+**Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
+`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 7 spine findings left** before
+`CC-121`, and **`T-08` is next**; the box at the top of [`../../JOURNAL.md`](../../JOURNAL.md) names it
+with its steps. **The ONE NUMBER is 78 / 321 units (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
+**★ What is new since revision 37, and it changes what "the queue" means:** the tenancy ruling emptied the
+owner queue for the first time (one Hermes serves every tenant of one deployment; separation is the
+platform's job, deployment-per-company is the business layer), so `CC-11`, `CC-51`, `CC-65` and `CC-120`
+became work by Rule 13 rather than questions. **And Slot 0 closed three findings** — `T-06` (the undo
+record now extends the hash chain) and `T-07` (115 commands gained a capability) — **while `T-07`'s
+measurement changed what its own row meant:** the seven modules it named are **parked**, so the gap was
+prospective, and the guard meant to catch it had been excluding them **by hand** for months while its own
+docblock promised it would not. **Treat that as the standing lesson:** a control that cannot see what it
+guards is not a control, and this project has now found the same shape three times (`CC-101`, `CC-132`,
+`T-07`). **What has NOT moved:** the ONE NUMBER is **78 / 321 = 24.3%** — re-derived 2026-10-21 by
+`node scripts/derive-counts.mjs`, which prints `MATCHES the claimed 78/321`.
 moved a LIST row, because they are the authority spine, not a feature. The Hermes switchover
 (`P2-9b`) is still the next *product* build once the spine work is done, and its gate is **closed**
 (owner, 2026-10-16: Option 1 — keep the 2,400 s ceiling).
