@@ -41,6 +41,21 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
+**LAST DONE, 2026-10-21 (latest): `T-15` is BUILT and CLOSED — the confirm path applies the binding's
+narrowing.** An agent is bound to a principal with a narrowing, a tool allowlist and a required-feature
+list. The two dispatch paths compute and enforce it; the confirm path did neither, so a binding narrowed
+at dispatch was executed at confirm as though it had never been narrowed, and an approval silently widened
+what was approved. **Two defects, fixed together because they compound:** the route resolved the agent with
+`getAgent` from the **global registry**, so a tenant-authored type was invisible there and a narrowing
+computed from the wrong definition would be wrong in the direction of permission; and it never computed the
+scope. It now resolves through `resolveAgentDefinition` (code-first, tenant-row-second, as `chat` and
+`run-object` already do) and enforces both halves with a **403** naming which one refused. A human approver
+is **not** special-cased: the narrowing belongs to the binding, not to the caller's kind. **Proof:** 21
+tests, **5/5 mutations PROVEN**, `ai-assistant` 143 suites / 2,141 tests, `tsc` 0. **Two things the build
+taught:** one mutation was wrong (an empty allowlist is a *stricter* narrowing, which the test cannot
+distinguish from an enforced one), and a `mockResolvedValueOnce(null)` leaked between tests because
+`clearAllMocks` does not clear once-queues. **90 closed · 66 open · 156 total.**
+
 **LAST DONE, 2026-10-21 (latest): `T-08` is BUILT and CLOSED — trust demotion finally has a caller.**
 `demoteIfEvidenceDemands` had **zero production callers** while `promote` had one, so authority could be
 raised on evidence and never lowered, and a principal whose acts keep being reversed stayed at their tier
@@ -460,8 +475,8 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 6 spine findings left, before `CC-121` starts.** `T-15` is the next one by
-rank, and it has not been measured yet, so it is measured before it is built. Then `T-16`, `T-17`,
+**▶ NEXT — `CC-92` Slot 0: 5 spine findings left, before `CC-121` starts.** `T-16` is the next one by
+rank, and it has not been measured yet, so it is measured before it is built. Then `T-17`,
 `T-28`, `T-30`, `T-33`. **Measure each from source before building
 it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07` and `T-08` all needed the audit's own sentence corrected,
 and `T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
@@ -1394,8 +1409,8 @@ repaired before it is re-keyed.**
 
 | Slot | Gate | Findings | Count |
 |---|---|---|---|
-| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21), `T-08` (2026-10-21) | 15 |
-| **Slot 0** | before `CC-121` starts | `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 6 |
+| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21), `T-08` (2026-10-21), `T-15` (2026-10-21) | 16 |
+| **Slot 0** | before `CC-121` starts | `T-16` `T-17` `T-28` `T-30` `T-33` | 5 |
 | **Slot 1** | with `W3` (chokepoint + actor-class gate) | `T-18` `T-19` `T-20` `T-21` `T-22` `T-23` `T-25` `T-26` `T-29` `T-34` | 10 |
 | **Slot 2** | with `W5` (durable runs) | `T-43` | 1 |
 | **Slot 3** | with `W7` (first surface) | `T-09` `T-10` `T-12` `T-40` | 4 |

@@ -1,7 +1,7 @@
 # PLAN-T-15 — the confirm path drops the binding's narrowing
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** **BUILT and CLOSED 2026-10-21.** **21 tests, 5/5 mutations PROVEN.** §3 is the requirement,
+§4 is the proof, §8 is what was built.
 **Row:** `T-15` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** read from source on 2026-10-21, at the lines named below.
@@ -113,3 +113,31 @@ Plus: the `ai_assistant` module suite count, and `tsc --noEmit` at 0, as numbers
 |---|---|
 | The same `getAgent` global-registry lookup may exist on other confirm-adjacent paths | It is the same defect class, but each path needs its own measurement; this row measures the one the audit names |
 | `computeBoundRunScope` reads `binding.toolAllowlist === null` as "all declared tools", so a null allowlist is the permissive case | It is the documented semantics and changing it would widen every existing binding |
+
+---
+
+## 8. What was built
+
+One file: `ai_assistant/api/ai/actions/[id]/confirm/route.ts`.
+
+1. **The agent is resolved through the catalogue.** `resolveAgentDefinition({ agentId, scope: { tenantId },
+em })` replaces `getAgent(row.agentId)`, which read only the global registry and was therefore blind to
+a tenant-authored type. An unresolvable agent keeps the **404 `agent_unknown`** the recheck used to
+produce, rather than gaining a new code.
+2. **The scope is computed and both halves are enforced.** `computeBoundRunScope({ agent, binding })`
+after the binding re-check, then a **403** naming which half refused: `tool_not_allowed_by_binding` for a
+tool outside the allowlist, `binding_features_missing` for a feature the caller lacks.
+
+A human approver is **not** special-cased: the narrowing belongs to the binding, not to the caller's kind.
+
+**Three existing tests encoded the old registry lookup** and now mock the catalogue. While fixing them I
+found a latent trap: one test left a `mockResolvedValueOnce(null)` queued, and `clearAllMocks` does not
+clear once-queues, so it leaked into the next test and produced `agent_not_bound`. Removed with a
+`mockReset()` in `beforeEach` rather than worked around.
+
+**One mutation was wrong and was fixed rather than the test.** The first M1 set `allowedTools: []`, which
+is a *stricter* narrowing, and the test cannot tell that from an enforced one. Replaced with a scope that
+permits everything, which is what "no narrowing" actually means.
+
+**Proof:** 21 tests in the route suite, **5/5 mutations PROVEN** with every file restored
+byte-identically, `ai-assistant` **143 suites / 2,141 tests**, `tsc --noEmit` 0.
