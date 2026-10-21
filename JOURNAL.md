@@ -46,9 +46,9 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-21 (after `CC-153`):** register **90 closed · 62 open · 152
-total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
-trigger**.
+**THE POSITION, MEASURED — 2026-10-21 (after `CC-153`, with `CC-154`/`CC-155` opened by its critic
+pass):** register **90 closed · 64 open · 154 total**; §4's open rows **17 startable · 1 needs a live
+database · 4 need the owner · 42 blocked on a trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
@@ -105,6 +105,31 @@ were red are green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather 
 decision (`CC-142`'s rule), and `TC-APP-001` pins the German string, so the spec changes with it.
 A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in
 all four catalogs of both trees and renders nowhere — the usage checker already counts it as unused.
+
+---
+
+## 2026-10-21 — the critic pass over `CC-153` opens `CC-154` and `CC-155`
+
+**A pass whose job is to break a conclusion earns its keep when it breaks one.** The `CC-153` fix was
+green — all 15 shards — and the same pass found three more things in the neighbourhood of its own
+work. **The first was inside the fix:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried
+upstream's positioning. Dead code today (nothing calls it), but the fallback fires the moment a
+locale's dictionary misses the key, so the next caller would have shipped the exact description the
+row removed — fixed as `0136e043`, and the reason it survived one review is the lesson `CC-153`
+already carries: the check and the thing it guards can be one file apart.
+
+**The other two were pre-existing, measured on files this change never touched, and are now rows
+rather than footnotes.** `CC-154`: the scaffolded app's tests run nowhere in this repository — the
+root jest fails every one with `TS5011`, the template's own config fails with a ts-jest `ConfigSet`
+error, both reproduced on `global-error.test.tsx`, so template code can break and nothing here
+notices until a customer scaffolds. `CC-155`: the todo example's two copies have drifted — the app's
+`commands/todos.ts` has the redo and team-scope wiring the template's copy lacks, no parity test
+covers that file, and the scaffold a customer runs is the smaller copy. Both startable; neither
+caused by this work; both recorded with what a fix would be.
+
+**What is not claimed:** that these two rows should be fixed now. They are rows because a gap that
+lives inside a closed row is a gap that gets forgotten — `CC-138`'s lesson, applied to the pass that
+was auditing for exactly that.
 
 ---
 
