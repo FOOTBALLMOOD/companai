@@ -19,6 +19,25 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
+**★ WHERE THE NEXT AGENT STARTS: `library/development/ROUTE.md` — read it before anything else (2026-10-21).**
+It is the entry point, and the only plan document that is **checked**: `scripts/check-route.mjs` reads its
+step marker against the register and fails the build when they disagree, so an agent cannot quietly work two
+waves ahead. **The current step is `W0.2`** — `SR-39`/`CC-109`, the one-truth check whose **SKIP path exits
+0**, which makes it a check that reports success when it did not run. **Measured first, then build:** read
+`scripts/check-one-truth.mjs` and find every path that exits 0 without comparing anything; the fix is that a
+skipped comparison fails the build, and the baseline of what it currently reports is committed so the number
+can only go down. **Proof:** a mutation that restores the skip path goes red. **STOP after W0.2** and report
+the number.
+
+**The waves, in order, so nobody has to guess:** W0 the three inert ratchets (`CC-109` · `CC-110` · `CC-114`)
+→ **W0b the Business IR gets a Function** — the owner's own test is *send a prompt, save a function, apply a
+database change*, and measured 2026-10-21 **a Function is never saved: no entity, no registry, the pipeline
+ends at "run"** → W1 the core (`CC-119`'s two checks → `CC-121` → `CC-122` → `SR-02` slice 2 + `SR-07` →
+`SR-13`) → W2 authority as data → W3 tenancy → W4 durability → W5 the surfaces (chat → workspaces →
+automation → widgets) → W6 Hermes → W7 the ratchets wired. **One wave per session. STOP after each. The
+front-end acceptance test is part of "done" — a capability with no caller is not a capability.**
+
+**▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
 **▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
 startable behind `CC-119`.** What was repaired: the tenant-scope helper that accepted a foreign tenant
 silently (`T-27`), the sandbox that advertised a cap it did not enforce (`T-35`), a Function asking for a count

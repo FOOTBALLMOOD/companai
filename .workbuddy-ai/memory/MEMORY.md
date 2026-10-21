@@ -80,17 +80,20 @@ test) are **open and startable**.
 
 **★ `CC-92` SLOT 0 IS COMPLETE (2026-10-21) — all thirteen spine findings built: `T-27`, `T-35`, `T-04`,
 `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`.**
-**★ THE DEVELOPMENT ORDER IS `library/development/PLAN-development-order-SR-core.md` (2026-10-21).**
-`CC-121` (the authority re-key) is startable behind `CC-119` — and **`CC-119`'s first check already passed**
-(`DEPLOY-2026-10-20.md`: whole schema from zero on real PostgreSQL 17 + pgvector, app serves); **two checks
-remain**: the `down()` path and the schema-vs-entities diff (settles `CC-100` too). Order: **Wave 0 the three
-inert ratchets** (`SR-39`/`CC-109` skip-exits-0 · `SR-41`/`CC-110` 202 holes, gate called by nothing ·
-`SR-46`/`CC-114` 89 settings read twice, no baseline) **+ `SR-08`** (no prerequisite) — they are the only rows
-that make the next row *verifiable*; **Wave 1 the core** (`CC-119` checks → `CC-121` → `CC-122` → `SR-02`
-slice 2 + `SR-07` → `SR-13`); **Wave 2 the authority rows as data** (`SR-03`·`SR-04`·`SR-05`·`SR-22`/`CC-63`·
-`SR-26`); **Wave 3 tenancy then durability** (`SR-12` → `SR-10`/`SR-11` → `SR-19`…`SR-21`); **Wave 4
-composition** (`SR-27`→`SR-29`→`SR-32`→`SR-36`). Startable now: `CC-156` (3 endpoints authenticated but not
-authorised), `CC-157` (6 commands with no caller).
+**★ THE ROUTE IS `library/development/ROUTE.md` — THE ENTRY POINT, AND IT IS CHECKED (2026-10-21).**
+`START-PROMPT.md` points at it and at nothing else. `scripts/check-route.mjs` reads its step marker and
+fails the build when the marker and the register disagree; `scripts/__tests__/check-route.mutations.mjs`
+proves that check can fail (5 mutations, all red); both run in `docs.yml`. **The rule: when the marker and
+the register disagree, the register wins and the marker is wrong.** Waves: **W0 the three inert ratchets**
+(`CC-109` one-truth skip-exits-0 · `CC-110` 202 holes/169 unnamed · `CC-114` 89 settings read twice) —
+`CC-101` already wired 5 checker steps but only 2 as gates, so W0 is "turn reports into gates by shrinking
+the number to zero" · **W0b the Business IR gets a Function** — **measured: the IR IS wired
+(`business-ir-pack` is in `aiTools`) but a Function is NEVER SAVED — no entity, no registry; the pipeline
+ends at "run"** (`CC-13` is the closest row) · **W1 the core** (`CC-119` checks → `CC-121` → `CC-122` →
+`SR-02` slice2 + `SR-07` → `SR-13`) · **W2 authority as data** · **W3 tenancy** · **W4 durability** ·
+**W5 surfaces: chat → workspaces (does not exist) → automation → widgets** · **W6 Hermes (`P2-9b`)** ·
+**W7 ratchets wired**. **One wave at a time; STOP after each; the front-end acceptance test is part of
+"done" — the owner will test prompts, saving functions and database changes through the UI.**
 **★ THE LESSON OF THE SLOT — ten of thirteen rows needed the audit's sentence corrected, and the corrections
 were never pedantry.** `T-28`: the shape was real, the reachability was not. `T-30`: it reported a
 **designed, documented, tested** contract as a fail-open; fixing that branch would have made a safety

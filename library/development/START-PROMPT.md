@@ -1,5 +1,14 @@
 # Start prompt — paste this to the agent that takes over
 
+> **★★ THE ROUTE IS THE ENTRY POINT — read `ROUTE.md` before anything else (2026-10-21).**
+> [`ROUTE.md`](ROUTE.md) is the one document that says **what to build next and in what order**, and it is
+> the only one that is *checked*: `scripts/check-route.mjs` reads its step marker and fails the build when
+> the marker and the register disagree. **You do not choose the next step. The route does.** If you believe
+> the order is wrong, the fix is to edit `ROUTE.md` and say why in its §7 — an unrecorded reorder is the
+> drift the file exists to stop. §0 of the route lists what drift has already cost this project.
+> **Then** the `★ ACTIVE TASK` box at the top of [`../../JOURNAL.md`](../../JOURNAL.md) for the step in
+> hand. The route names the wave; the box names the step.
+
 > **WHERE THE ACTIVE TASK LIVES (read this first, it is the one live fact).**
 > **The task being worked on right now is named in ONE place, and it is not this prompt:** the
 > **`★ ACTIVE TASK` box at the top of [`../../JOURNAL.md`](../../JOURNAL.md)**. Open it to see the

@@ -51,3 +51,16 @@ jobs:
       # stale and it cannot fire at all. It restores the file byte-identical either way.
       - name: Prove the checker can fail (14 mutations, each must be red)
         run: node scripts/__tests__/check-master-checklist.mutations.mjs
+
+      # The route's own drift check. ROUTE.md is the entry point an agent follows; this is what stops it
+      # being the fifth plan that nobody calls. It fails when the step marker names a row that is already
+      # closed (a re-build), when a predecessor is still open (working two waves ahead), or when a step
+      # points at a register row that does not exist. The tie-breaker is in the script's header: when the
+      # marker and the register disagree, the register wins and the marker is wrong.
+      - name: Check the route's step marker against the register
+        run: node scripts/check-route.mjs
+
+      # A check with no proof it can fail is a check nobody should trust — the same discipline the
+      # checklist checker gets, applied one level down.
+      - name: Prove the route check can fail (5 mutations, each must be red)
+        run: node scripts/__tests__/check-route.mutations.mjs
