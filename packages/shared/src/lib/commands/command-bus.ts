@@ -16,6 +16,7 @@ import type {
 } from './types'
 import { defaultUndoToken } from './types'
 import type { ActionLogService } from '@open-mercato/core/modules/audit_logs/services/actionLogService'
+import type { TrustService } from '@open-mercato/core/modules/auth/services/trustService'
 import type { AwilixContainer } from 'awilix'
 import type { DataEngine } from '@open-mercato/shared/lib/data/engine'
 import {
@@ -543,6 +544,9 @@ export class CommandBus {
           logEntry: log,
         })
         await service.markUndone(log.id, this.buildUndoTraceLog(log, ctx))
+        // T-08: the caller demotion never had. After the trace, so the evidence
+        // count includes the reversal that triggered it.
+        await this.demoteTrustAfterUndo(log, ctx)
       })
 
       // Run afterUndo command interceptors
@@ -567,6 +571,56 @@ export class CommandBus {
       // remains retryable instead of being stranded in the `undoing` state.
       await service.releaseUndoClaim(log.id).catch(() => {})
       throw err
+    }
+  }
+
+  /**
+   * T-08: the one caller trust demotion never had.
+   *
+   * `TrustService.demoteIfEvidenceDemands` drops a principal one tier when their
+   * acts keep being reversed, and until now nothing called it, so authority could
+   * be raised on evidence and never lowered. The function's own docblock names the
+   * trigger as *"after an act is reversed"*, and this is the only place in the
+   * platform where an act is reversed.
+   *
+   * Three decisions, each taken because the alternative breaks something:
+   *
+   * - **The original actor, not the undoer.** `evidenceFor` counts
+   *   `action_logs.actor_user_id`, so demoting whoever pressed undo would change a
+   *   different principal's evidence.
+   * - **The capability group is the undone command's module segment.** `evidenceFor`
+   *   matches `command_id like '<group>.%'`, and a command id starts with its
+   *   module. No new vocabulary.
+   * - **A failure never fails the undo.** A reversed act with no record is worse
+   *   than a tier that moves late, so this is best-effort and logs.
+   */
+  private async demoteTrustAfterUndo(log: ActionLog, ctx: CommandRuntimeContext): Promise<void> {
+    const actorId = log.actorUserId
+    // A system or key-only act has no principal to demote.
+    if (!actorId) return
+    const capabilityGroup = log.commandId?.split('.')[0]
+    if (!capabilityGroup) return
+
+    let trust: TrustService | null = null
+    try {
+      trust = (ctx.container.resolve('trustService') as TrustService | undefined) ?? null
+    } catch {
+      // Not every deployment registers the auth module.
+      return
+    }
+    if (!trust || typeof trust.demoteIfEvidenceDemands !== 'function') return
+
+    try {
+      await trust.demoteIfEvidenceDemands(actorId, capabilityGroup, {
+        tenantId: log.tenantId ?? ctx.auth?.tenantId ?? null,
+      })
+    } catch (err) {
+      logger.error('Trust demotion after undo failed', {
+        err,
+        commandId: log.commandId,
+        actorId,
+        capabilityGroup,
+      })
     }
   }
 
