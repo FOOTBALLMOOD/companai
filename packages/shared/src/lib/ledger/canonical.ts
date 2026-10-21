@@ -199,7 +199,15 @@ function stringifyOpaque(value: unknown, seen: WeakSet<object> = new WeakSet()):
  * Adding a field here changes every future hash and none of the past ones, which
  * is correct — but it also means an old event can no longer be re-verified with
  * the new code unless the version is recorded. That is what `v` is for: bump it
- * when the covered set changes, and keep the old branch in the verifier.
+ * when the covered set changes, **and keep the old branch in the verifier**
+ * (`computeLedgerHashV1` below, called by `verifyTenantChain` for version-1 rows).
+ *
+ * **`T-33` — what version 2 changed, and why the note above had to become true.** `resourceKind` and
+ * `resourceId` were written to the row but were **not** covered by this type, so they were the chain's only
+ * pointer to the business object and could be rewritten without breaking anything. This docblock used to
+ * say *"Every field the event carries is covered"* — which was false, and was the sentence a reviewer read
+ * instead of the field list. Version 2 covers them; version 1 did not, and the verifier still has both
+ * branches so existing events keep verifying.
  */
 export type LedgerEventHashInput = {
   v: number
@@ -214,17 +222,60 @@ export type LedgerEventHashInput = {
   correlationId: string | null
   causationId: string | null
   visibility: string
+  /** `T-33` — the business object this event is about. Covered from version 2. */
+  resourceKind: string | null
+  /** `T-33` — the business object this event is about. Covered from version 2. */
+  resourceId: string | null
   payload: CanonicalValue
 }
 
-export const LEDGER_HASH_VERSION = 1
+/** The version-1 covered set: everything above **except** the two resource fields. */
+export type LedgerEventHashInputV1 = Omit<
+  LedgerEventHashInput,
+  'v' | 'resourceKind' | 'resourceId'
+>
+
+export const LEDGER_HASH_VERSION = 2
 
 /**
  * The hash of an event, given its content and its predecessor.
  *
- * Every field the event carries is covered. A field left out of this input is a
- * field an attacker may change without breaking the chain.
+ * Every field the event carries is covered **from version 2**. A field left out of this input is a field an
+ * attacker may change without breaking the chain — which is exactly what `resourceKind`/`resourceId` were
+ * before `T-33`.
  */
 export function computeLedgerHash(input: LedgerEventHashInput): string {
   return canonicalDigest(input as unknown as CanonicalValue)
+}
+
+/**
+ * `T-33` — the **version-1** hash, kept so existing events keep verifying.
+ *
+ * The docblock on `LedgerEventHashInput` has always said to bump `v` when the covered set changes *and keep
+ * the old branch in the verifier*. There was no old branch, and `verifyTenantChain` refused any row whose
+ * version was not the current constant — so adding the resource fields without this function would have
+ * reported **every historical event as broken**, which is the one failure an integrity tool cannot afford.
+ *
+ * **The covered object is built field by field, not by spreading the input.** My first version spread it,
+ * which silently hashed whatever extra fields the caller happened to pass — so a v1 hash would have changed
+ * with the resource fields, defeating the point of having a version at all. The test
+ * *"the version-1 hash is reproducible and differs from version 2"* caught it, which is the only reason it
+ * is written that way now.
+ */
+export function computeLedgerHashV1(input: LedgerEventHashInputV1): string {
+  return canonicalDigest({
+    v: 1,
+    tenantId: input.tenantId,
+    seq: input.seq,
+    prevHash: input.prevHash,
+    ts: input.ts,
+    eventType: input.eventType,
+    actorKind: input.actorKind,
+    actorId: input.actorId,
+    organizationId: input.organizationId,
+    correlationId: input.correlationId,
+    causationId: input.causationId,
+    visibility: input.visibility,
+    payload: input.payload,
+  } as unknown as CanonicalValue)
 }

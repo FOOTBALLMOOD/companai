@@ -4,7 +4,9 @@ import {
   LEDGER_HASH_VERSION,
   canonicalDigest,
   computeLedgerHash,
+  computeLedgerHashV1,
   type CanonicalValue,
+  type LedgerEventHashInputV1,
 } from '@open-mercato/shared/lib/ledger/canonical'
 import { createLogger } from '@open-mercato/shared/lib/logger'
 
@@ -150,6 +152,11 @@ export class LedgerService {
       correlationId: input.correlationId ?? null,
       causationId: input.causationId ?? null,
       visibility,
+      // `T-33` — the pointer to the business object is inside the hash from version 2. These two fields
+      // were written to the row and left out of the covered set, so the chain could be re-pointed at a
+      // different record without breaking.
+      resourceKind: input.resourceKind ?? null,
+      resourceId: input.resourceId ?? null,
       payload,
     })
 
@@ -204,6 +211,10 @@ export class LedgerService {
         actor_kind: string | null
         actor_id: string | null
         organization_id: string | null
+        // `T-33` — fetched so the v2 branch can cover them. Before this the verifier could not see the
+        // chain's only pointer to the business object, so no hash comparison could have included it.
+        resource_kind: string | null
+        resource_id: string | null
         correlation_id: string | null
         causation_id: string | null
         visibility: string
@@ -215,7 +226,7 @@ export class LedgerService {
         // the worst outcome it has: it is exactly the thing nobody will believe
         // the second time.
         `select seq::text as seq_text, prev_hash, hash, hash_version, ts, event_type, actor_kind, actor_id,
-                organization_id, correlation_id, causation_id, visibility, payload
+                organization_id, resource_kind, resource_id, correlation_id, causation_id, visibility, payload
            from ledger_events
           where tenant_id = ? and seq > ?
           order by seq asc
@@ -248,18 +259,25 @@ export class LedgerService {
           }
         }
 
-        if (row.hash_version !== LEDGER_HASH_VERSION) {
+        if (row.hash_version !== 2 && row.hash_version !== 1) {
           return {
             ok: false,
             tenantId,
             checked,
             brokenAtSeq: row.seq_text,
-            reason: `Unknown hash version ${row.hash_version}; this build verifies version ${LEDGER_HASH_VERSION}.`,
+            reason: `Unknown hash version ${row.hash_version}; this build verifies versions 1 and 2.`,
           }
         }
 
-        const recomputed = computeLedgerHash({
-          v: LEDGER_HASH_VERSION,
+        // `T-33` — **two branches, because the covered set changed at version 2.** A version-1 row was hashed
+        // without the resource fields, so it must be recomputed without them; a version-2 row must include
+        // them, or a rewritten `resource_id` would still verify. Refusing anything that is not the current
+        // constant — which is what this did before — would have reported every historical event as broken the
+        // moment the version was bumped.
+        //
+        // The annotation is not decoration: without it `uncovered` and `recomputed` are inferred through their
+        // own spreads and `tsc` reports TS7022 (the same shape `T-06` hit with a narrowing lost in a closure).
+        const uncovered: LedgerEventHashInputV1 = {
           tenantId,
           seq: Number(seq),
           prevHash: row.prev_hash,
@@ -272,7 +290,16 @@ export class LedgerService {
           causationId: row.causation_id,
           visibility: row.visibility,
           payload: (row.payload ?? {}) as CanonicalValue,
-        })
+        }
+        const recomputed: string =
+          row.hash_version === 2
+            ? computeLedgerHash({
+                ...uncovered,
+                v: 2,
+                resourceKind: row.resource_kind ?? null,
+                resourceId: row.resource_id ?? null,
+              })
+            : computeLedgerHashV1(uncovered)
 
         if (recomputed !== row.hash) {
           return {

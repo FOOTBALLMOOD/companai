@@ -12,6 +12,7 @@ import {
   canonicalDigest,
   canonicalize,
   computeLedgerHash,
+  computeLedgerHashV1,
   digestOpaque,
   type LedgerEventHashInput,
 } from '../canonical'
@@ -87,6 +88,11 @@ describe('computeLedgerHash — every field is covered', () => {
     actorKind: 'human',
     actorId: 'user-1',
     organizationId: 'org-1',
+    // `T-33` — these were missing from the fixture because they were missing from the covered set, which
+    // is exactly how the gap survived: a test that lists "every field" and leaves two out asserts that the
+    // two it left out are covered.
+    resourceKind: 'sales.order',
+    resourceId: 'order-1',
     correlationId: null,
     causationId: null,
     visibility: 'tenant',
@@ -113,6 +119,9 @@ describe('computeLedgerHash — every field is covered', () => {
     ['actor kind', { actorKind: 'ai_worker' }],
     ['actor id', { actorId: 'user-2' }],
     ['organization', { organizationId: 'org-2' }],
+    // `T-33` — the two that were never in this list, and so were never covered.
+    ['resource kind', { resourceKind: 'customers.company' }],
+    ['resource id', { resourceId: 'order-2' }],
     ['correlation', { correlationId: 'cor-1' }],
     ['causation', { causationId: 'evt-1' }],
     ['visibility', { visibility: 'private' }],
@@ -131,6 +140,22 @@ describe('computeLedgerHash — every field is covered', () => {
     const withNull = computeLedgerHash({ ...base, correlationId: null })
     const withValue = computeLedgerHash({ ...base, correlationId: 'null' })
     expect(withNull).not.toBe(withValue)
+  })
+
+  it('★ T-33: the version-1 hash is reproducible and differs from version 2', () => {
+    // The verifier needs this to recompute an existing event exactly as it was written. If the v1 helper
+    // drifted from what v1 actually hashed, every historical event would report as broken — the false alarm
+    // the branch exists to prevent.
+    const { v: _v, resourceKind: _k, resourceId: _r, ...uncovered } = base
+    const v1 = computeLedgerHashV1(uncovered)
+
+    expect(v1).toBe(computeLedgerHashV1({ ...uncovered }))
+    expect(v1).not.toBe(computeLedgerHash(base))
+    // Version 1 did not cover the resource fields, so a caller that passes extra fields cannot change a v1
+    // hash — the covered object is built field by field, not spread. (My first version of the helper spread
+    // its input, which silently hashed whatever extra fields arrived; this assertion is what caught it.)
+    const withExtra = { ...uncovered, resourceId: 'order-9' } as unknown as LedgerEventHashInputV1
+    expect(computeLedgerHashV1(withExtra)).toBe(v1)
   })
 })
 

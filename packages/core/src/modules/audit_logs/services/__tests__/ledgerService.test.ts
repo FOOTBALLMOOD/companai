@@ -10,7 +10,7 @@
 
 import type { EntityManager } from '@mikro-orm/postgresql'
 import { LedgerService } from '../ledgerService'
-import { LEDGER_HASH_VERSION, computeLedgerHash } from '@open-mercato/shared/lib/ledger/canonical'
+import { LEDGER_HASH_VERSION, computeLedgerHash, computeLedgerHashV1 } from '@open-mercato/shared/lib/ledger/canonical'
 
 type StoredRow = {
   seq: string
@@ -22,6 +22,9 @@ type StoredRow = {
   actor_kind: string | null
   actor_id: string | null
   organization_id: string | null
+  /** `T-33` — the chain's pointer to the business object, covered by the hash from version 2. */
+  resource_kind: string | null
+  resource_id: string | null
   correlation_id: string | null
   causation_id: string | null
   visibility: string
@@ -81,6 +84,8 @@ function createFakeChain() {
           actor_kind: (entity.actorKind as string | null) ?? null,
           actor_id: (entity.actorId as string | null) ?? null,
           organization_id: (entity.organizationId as string | null) ?? null,
+          resource_kind: (entity.resourceKind as string | null) ?? null,
+          resource_id: (entity.resourceId as string | null) ?? null,
           correlation_id: (entity.correlationId as string | null) ?? null,
           causation_id: (entity.causationId as string | null) ?? null,
           visibility: entity.visibility as string,
@@ -272,6 +277,11 @@ describe('LedgerService.verifyTenantChain', () => {
       actorKind: row.actor_kind,
       actorId: row.actor_id,
       organizationId: row.organization_id,
+      // `T-33` — the forged hash must be built with the SAME covered set the verifier uses, including the
+      // resource fields. Omitting them (as this did before the version bump) makes row 2 fail its own hash
+      // check, and the break gets reported one row early — a different defect wearing the test's name.
+      resourceKind: row.resource_kind ?? null,
+      resourceId: row.resource_id ?? null,
       correlationId: row.correlation_id,
       causationId: row.causation_id,
       visibility: row.visibility,
@@ -327,5 +337,115 @@ describe('LedgerService.verifyTenantChain', () => {
     const result = await service.verifyTenantChain('tenant-1', { batchSize: 5 })
 
     expect(result).toMatchObject({ ok: true, checked: 12 })
+  })
+})
+
+/**
+ * `T-33` — the ledger's pointer to the business object was outside the hash.
+ *
+ * `resourceKind`/`resourceId` were written to the row and left out of `LedgerEventHashInput`, so the chain's
+ * only pointer to *what the event was about* could be rewritten without breaking anything. Adding them means
+ * bumping the hash version — and **the version bump is the dangerous half**: `verifyTenantChain` refused any
+ * row whose version was not the current constant, so a naive fix would have reported every historical event
+ * as broken. The docblock has always said to keep the old branch; there was none.
+ *
+ * These four tests are the four ways that can go wrong.
+ */
+describe('T-33 — the resource pointer is covered, and old events still verify', () => {
+  /** Append one event through the real service, so the hash is computed by the code under test. */
+  async function appendWithResource(service: LedgerService, resourceId: string) {
+    return service.append({
+      tenantId: 'tenant-1',
+      eventType: 'orders.created',
+      actorKind: 'human',
+      actorId: 'user-1',
+      organizationId: 'org-1',
+      resourceKind: 'sales.order',
+      resourceId,
+      payload: { note: 'x' },
+      ts: new Date('2026-08-09T10:00:00.000Z'),
+    })
+  }
+
+  it('★ a rewritten resource_id breaks the chain (version 2 covers it)', async () => {
+    const chain = createFakeChain()
+    const service = new LedgerService(chain.em)
+    await appendWithResource(service, 'order-1')
+
+    // The rewrite a tamperer would make: same event, pointed at a different object.
+    chain.rows[0].resource_id = 'order-2'
+
+    const result = await service.verifyTenantChain('tenant-1')
+
+    expect(result.ok).toBe(false)
+    expect(result.brokenAtSeq).toBe('1')
+    expect(result.reason).toContain('modified after it was written')
+  })
+
+  it('★ an intact version-2 event verifies — the fix did not make every event red', async () => {
+    const chain = createFakeChain()
+    const service = new LedgerService(chain.em)
+    await appendWithResource(service, 'order-1')
+
+    const result = await service.verifyTenantChain('tenant-1')
+
+    expect(result).toMatchObject({ ok: true, checked: 1 })
+    expect(chain.rows[0].hash_version).toBe(2)
+  })
+
+  it('★ an EXISTING version-1 event still verifies — the old branch, which did not exist', async () => {
+    // A row written before this change: hashed without the resource fields, and its resource columns may
+    // hold anything. Recomputing it with the v2 covered set would report it broken; that is the false alarm
+    // this branch exists to prevent.
+    const chain = createFakeChain()
+    const v1Hash = computeLedgerHashV1({
+      tenantId: 'tenant-1',
+      seq: 1,
+      prevHash: null,
+      ts: '2026-08-09T10:00:00.000Z',
+      eventType: 'orders.created',
+      actorKind: 'human',
+      actorId: 'user-1',
+      organizationId: 'org-1',
+      correlationId: null,
+      causationId: null,
+      visibility: 'tenant',
+      payload: { note: 'x' },
+    })
+    chain.rows.push({
+      seq: '1',
+      prev_hash: null,
+      hash: v1Hash,
+      hash_version: 1,
+      ts: new Date('2026-08-09T10:00:00.000Z'),
+      event_type: 'orders.created',
+      actor_kind: 'human',
+      actor_id: 'user-1',
+      organization_id: 'org-1',
+      resource_kind: 'sales.order',
+      resource_id: 'order-1',
+      correlation_id: null,
+      causation_id: null,
+      visibility: 'tenant',
+      payload: { note: 'x' },
+    })
+
+    const service = new LedgerService(chain.em)
+    const result = await service.verifyTenantChain('tenant-1')
+
+    expect(result).toMatchObject({ ok: true, checked: 1 })
+  })
+
+  it('★ an UNKNOWN version still fails closed — the old branch is not a wildcard', async () => {
+    const chain = createFakeChain()
+    const service = new LedgerService(chain.em)
+    await appendWithResource(service, 'order-1')
+
+    chain.rows[0].hash_version = 3
+
+    const result = await service.verifyTenantChain('tenant-1')
+
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('Unknown hash version 3')
   })
 })
