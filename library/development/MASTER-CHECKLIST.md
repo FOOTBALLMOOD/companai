@@ -576,7 +576,23 @@ before that commit. **72 closed · 62 open · 134 total.**
 identity. **The order was the point:** a migration through a gate with holes produces a clean answer about a
 partial system, and `T-07` had left seven modules' commands invisible to it. **`CC-121` is gated on
 `CC-119`** (the database rebuild milestone) — that gate is the only thing between the spine work and the
-re-key, and it is the next row to measure. **What Slot 0 taught, and the reason it took thirteen rows to
+re-key, and it is the next row to measure.
+**★ THE ORDER THE REST OF THE WORK LANDS IN is `PLAN-development-order-SR-core.md` (2026-10-21), and it was
+re-derived rather than inherited.** The SRS's own chain (`08-THE-SRS.md` §4) puts tooling first, then identity
+→ tenancy → durability → composition; the direction holds, but the register shows **most SR rows have no
+recorded prerequisite at all** — their *Extends* column reads `—`. They are not unblocked, they are
+**unordered**, which is worse. The measured order is: **Wave 0 the three inert ratchets** (`SR-39`/`CC-109`
+whose SKIP exits 0 · `SR-41`/`CC-110`, 202 holes and a gate nothing calls · `SR-46`/`CC-114`, 89 settings read
+twice with no baseline) plus `SR-08`, which has no prerequisite — because those are the only rows that make
+the next row *verifiable*; **Wave 1 the core** (`CC-119`'s two remaining checks → `CC-121` → `CC-122` →
+`SR-02` slice 2 + `SR-07` → `SR-13`); **Wave 2 the authority rows become data** (`SR-03` · `SR-04` · `SR-05`
+· `SR-22`/`CC-63` · `SR-26`); **Wave 3 tenancy then durability** (`SR-12` → `SR-10`/`SR-11` → `SR-19` …
+`SR-21`); **Wave 4 composition** (`SR-27` → `SR-29` → `SR-32` → `SR-36`). **★ And a re-measured number the
+frontier was carrying stale: `CC-119`'s FIRST check already passed** — the fresh deployment built the whole
+schema from zero on real PostgreSQL 17 + pgvector and the app serves (`DEPLOY-2026-10-20.md`). Two checks
+remain: the `down()` path and the generated-schema-vs-entities diff, which also settles `CC-100`. So
+`CC-121`'s gate is one third clear, not closed and not unstarted.
+**What Slot 0 taught, and the reason it took thirteen rows to
 close:** **ten of the thirteen needed the audit's own sentence corrected**, and the corrections were not
 pedantry — `T-28`'s was about **reachability** (the shape was real, the scenario was not demonstrated on an
 enabled route), `T-30`'s reported a **designed, documented, tested** contract as a fail-open and would have

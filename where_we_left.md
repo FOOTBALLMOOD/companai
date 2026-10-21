@@ -158,6 +158,18 @@ only against throwaway containers, never applied to a project-shaped database, a
 that the MikroORM snapshot is stale and consumed. The milestone is defined in the register; do not
 start it early, and do not assume the migration chain is sound because the individual SQL was.
 
+**★ Re-measured 2026-10-21, and the row is now a third clear.** The fresh deployment built the whole
+schema **from zero on real PostgreSQL 17 + pgvector** and the app serves (`DEPLOY-2026-10-20.md`) —
+that is the check this paragraph used to say had never happened. **Two remain:** the `down()` path,
+and the generated-schema-vs-entities diff (which also settles `CC-100`). So `CC-121`'s gate is
+neither closed nor unstarted.
+
+**★ And the order the rest of the SR work lands in** is `library/development/PLAN-development-order-SR-core.md`:
+the three inert ratchets (`SR-39`/`SR-41`/`SR-46`) and `SR-08` first — they are the only rows that make the
+next row *verifiable* — then the core (`CC-119`'s two checks → `CC-121` → `CC-122` → `SR-02` slice 2 +
+`SR-07` → `SR-13`), then the authority rows as data (`SR-03` · `SR-04` · `SR-05` · `SR-22` · `SR-26`), then
+tenancy (`SR-12` → `SR-10`/`SR-11`), then durability (`SR-19`…`SR-21`), then composition (`SR-27`…`SR-36`).
+
 ---
 
 ## 1. What this is, in one paragraph

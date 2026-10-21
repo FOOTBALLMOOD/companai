@@ -21,7 +21,11 @@ ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) ·
 route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
 **`CC-92` Slot 0 is COMPLETE — all thirteen spine findings are built**, so **`CC-121` (the authority re-key)
-is startable behind `CC-119`** (the database rebuild milestone). That gate is the next row to measure.
+is startable behind `CC-119`** (the database rebuild milestone). That gate is the next row to measure — and
+**its first check already passed** (the fresh deployment built the whole schema from zero on real PostgreSQL
+17 + pgvector, `DEPLOY-2026-10-20.md`); two checks remain, the `down()` path and the schema-vs-entities diff.
+**The order the rest of the work lands in is `PLAN-development-order-SR-core.md`** — ratchets first, then the
+core, then the authority rows, tenancy, durability, composition.
 **Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
 `scripts/check-master-checklist.mjs`. **The ONE NUMBER is 78 / 321 units
 (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
