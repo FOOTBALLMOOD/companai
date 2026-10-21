@@ -433,13 +433,17 @@ with the requirement broke `explicit-sort-comparators.test.ts` because only the 
 before that commit. **72 closed · 62 open · 134 total.**
 
 **▶ NEXT — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts.** `T-06` is the next one by
-rank: the approvals queue can approve the same act twice, a read-then-act with no compare-and-set, and
-every approval built later inherits the race. Then `T-06` (the one record the tamper-evident chain does
-not cover), `T-07` (seven modules' commands invisible to the gate), `T-08`, `T-15`, `T-16`, `T-17`, `T-28`,
-`T-30`, `T-33`. **Measure each from source before building it** — `T-27`, `T-35` and `T-04` all needed the
-audit's own sentence corrected. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried
-here as §9.4. Behind Slot 0: `CC-121` (behind `CC-119`, the database rebuild milestone), then `CC-122`;
-`CC-138` rides `W3`; **`CC-133`** stays deferred by the owner's trigger.
+rank: **`undo` writes the one record the tamper-evident chain does not cover**, so the ledger has a
+known gap and a ledger with a known gap stops being evidence. Then `T-07` (seven modules' commands
+invisible to the gate, measured and mapped on 2026-10-21), `T-08`, `T-15`, `T-16`, `T-17`, `T-28`,
+`T-30`, `T-33`. **Rule 13, corrected 2026-10-21:** this sentence named `T-06` while describing
+**`T-05`'s** race (*"the approvals queue can approve the same act twice, a read-then-act with no
+compare-and-set"*), which closed on 2026-10-20, and then listed `T-06` a second time. The description
+was left behind when `T-05` closed. **Measure each from source before building it**: `T-27`, `T-35`
+and `T-04` all needed the audit's own sentence corrected. The findings and their slots are
+`PREVIEW-AUDIT-TRIAGE.md` §6, carried here as §9.4. Behind Slot 0: `CC-121` (behind `CC-119`, the
+database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
+owner's trigger.
 **No row on the authority path is waiting on you:** the four in §4 that still need a decision are the
 long-standing ones.
 
