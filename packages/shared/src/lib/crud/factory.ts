@@ -2568,7 +2568,15 @@ export function makeCrudRoute<TCreate = any, TUpdate = any, TList = any>(opts: C
         const reparsed = action.schema ? action.schema.parse(interceptedBody) : interceptedBody
         let input = action.mapInput ? await action.mapInput({ parsed: reparsed, raw: interceptedBody, ctx }) : reparsed
         const userMetadata = action.metadata ? await action.metadata({ input, parsed: reparsed, raw: interceptedBody, ctx }) : null
-        const candidateId = normalizeIdentifierValue((input as Record<string, unknown> | null | undefined)?.id)
+        const candidateId = normalizeIdentifierValue(
+          // `T-28` — DELETE has carried these three fallbacks since the command path existed; PUT carried
+          // only the first, so a PUT whose id arrives in the URL or the query ran with `candidateId: null`
+          // and **skipped the entire guard set below** — mutation guards and the optimistic-lock check,
+          // which lives inside `crudMutationGuardService` (`di/container.ts:203`). One rule for both verbs.
+          (input as Record<string, unknown> | null | undefined)?.id
+            ?? (Object.fromEntries(new URL(request.url).searchParams.entries()) as Record<string, unknown>).id
+            ?? (body as Record<string, unknown> | null | undefined)?.id
+        )
 
         // Sync before-event (*.updating) — command path
         const updateLifecycleCmd = deriveLifecycleEventIds(opts.events as CrudEventsConfig | undefined, 'updated')
@@ -2627,6 +2635,18 @@ export function makeCrudRoute<TCreate = any, TUpdate = any, TList = any>(opts: C
             input = { ...input as Record<string, unknown>, ...guardResult.modifiedPayload }
           }
           cmdUpdateGuardAfterCallbacks = guardResult.afterSuccessCallbacks
+        } else if (updateAllGuards.length && ctx.auth.tenantId) {
+          // `T-28` — **the guard set exists, the request is authenticated, and nothing names the record.**
+          // The guards cannot run without a `resourceId` (that is what they reason about), so they still do
+          // not run — but the skip used to be silent, which is how a route shaped like this could lose its
+          // entire guard set and its optimistic lock without anything noticing. Now it is one line an
+          // operator can find, naming the command and the method.
+          logger.warn('CRUD update ran without its guard set: no candidate id', {
+            commandId: action.commandId,
+            method: 'PUT',
+            resourceKind,
+            guardsRegistered: updateAllGuards.length,
+          })
         }
         const baseMetadata: CommandLogMetadata = {
           tenantId: ctx.auth?.tenantId ?? null,

@@ -2,6 +2,21 @@ jest.mock('@open-mercato/cache', () => ({
   runWithCacheTenant: async (_tenantId: string | null, fn: () => Promise<unknown>) => fn(),
 }), { virtual: true })
 
+// `T-28` — the factory now says so when it runs an update without its guard set, and a signal that cannot
+// be observed in a test is a signal nobody will keep. Same shape the `scope` suite uses: one mocked child
+// that every `createLogger(...)` call returns.
+jest.mock('@open-mercato/shared/lib/logger', () => {
+  const mocked = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    child: jest.fn(),
+  }
+  mocked.child.mockImplementation(() => mocked)
+  return { createLogger: jest.fn(() => mocked) }
+})
+
 import { makeCrudRoute } from '@open-mercato/shared/lib/crud/factory'
 import { registerApiInterceptors } from '@open-mercato/shared/lib/crud/interceptor-registry'
 import { registerMutationGuards } from '@open-mercato/shared/lib/crud/mutation-guard-store'
@@ -978,5 +993,139 @@ describe('CRUD Factory — optimistic-lock auto-registration', () => {
       organizationId: 'org-1',
     })
     expect(safe).toBeNull()
+  })
+})
+
+/**
+ * `T-28` — the PUT command path skipped its whole guard set when the id was not on the parsed input.
+ *
+ * DELETE has derived the candidate id from `input.id ?? query.id ?? body.id` since the command path
+ * existed. PUT derived it from `input.id` alone, and `candidateId` gates the guard block — so a PUT whose
+ * id arrives in the URL or the query ran **no mutation guard and no optimistic-lock check**, because the
+ * lock lives inside `crudMutationGuardService` (`di/container.ts:203`), which is one of those guards.
+ *
+ * **What these tests do and do not claim.** They prove the shape and the fix. They do not claim an enabled
+ * route is shaped this way today — every command-update route I measured carries its id in the body — so
+ * this is the `CC-101` class: a control that silently does not run, openable by the next route. The skip is
+ * now logged, which is what makes it a recorded limitation instead of an invisible one.
+ */
+describe('T-28 — the PUT command path derives its candidate id the way DELETE does', () => {
+  // The mock above returns one object for every `createLogger(...).child(...)`, so this is the same `warn`
+  // the factory writes to.
+  const { warn } = jest.requireMock('@open-mercato/shared/lib/logger').createLogger() as { warn: jest.Mock }
+
+  beforeEach(() => {
+    warn.mockClear()
+  })
+
+  const escalation = {
+    gate: 'A3',
+    rule: 'example.review-required',
+    because: 'Todo edits above the threshold need sign-off.',
+  }
+
+  function commandRoute() {
+    return makeCrudRoute({
+      metadata: { PUT: { requireAuth: true } },
+      orm: { entity: Todo, idField: 'id', orgField: 'organizationId', tenantField: 'tenantId', softDeleteField: 'deletedAt' },
+      indexer: { entityType: 'example.todo' },
+      actions: {
+        update: {
+          commandId: 'example.todo.update',
+          // The passthrough shape that makes this reachable: nothing is required, so `id` may be absent.
+          schema: z.object({}).passthrough(),
+          response: ({ result }: { result: unknown }) => ({ ok: true, result }),
+        },
+      },
+    })
+  }
+
+  /** A guard that always escalates, so "the guard ran" is visible as a 202 rather than a write. */
+  function escalatingGuard(validate: jest.Mock) {
+    const guard: MutationGuard = {
+      id: 'example.t28',
+      targetEntity: 'example.todo',
+      operations: ['update'],
+      priority: 10,
+      validate,
+    }
+    registerMutationGuards([{ moduleId: 'example', guards: [guard] }])
+    return guard
+  }
+
+  function skipWarnings(): unknown[][] {
+    return warn.mock.calls.filter((call) => String(call[0]).includes('without its guard set'))
+  }
+
+  it('★ an id in the QUERY string still runs the guard set — the DELETE shape, now shared', async () => {
+    const validate = jest.fn().mockResolvedValue({ ok: true, escalation })
+    escalatingGuard(validate)
+
+    const res = await commandRoute().PUT(new Request('http://x/api/example/todos?id=todo-query-1', {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'Renamed' }),
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    expect(res.status).toBe(202)
+    expect(validate).toHaveBeenCalledWith(expect.objectContaining({
+      operation: 'update',
+      resourceId: 'todo-query-1',
+    }))
+    expect(skipWarnings()).toHaveLength(0)
+  })
+
+  it('an id in the BODY still runs it — the normal shape did not break', async () => {
+    const validate = jest.fn().mockResolvedValue({ ok: true, escalation })
+    escalatingGuard(validate)
+
+    const res = await commandRoute().PUT(new Request('http://x/api/example/todos', {
+      method: 'PUT',
+      body: JSON.stringify({ id: 'todo-body-1', title: 'Renamed' }),
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    expect(res.status).toBe(202)
+    expect(validate).toHaveBeenCalledWith(expect.objectContaining({ resourceId: 'todo-body-1' }))
+    expect(skipWarnings()).toHaveLength(0)
+  })
+
+  it('★ no id anywhere still executes, and now SAYS the guard set was skipped', async () => {
+    // The guards cannot run without a `resourceId` — that is what they reason about — so the request still
+    // goes through. What must not happen is going through *silently*: that is how a route loses its guards
+    // and its lock without anyone noticing.
+    const validate = jest.fn().mockResolvedValue({ ok: true, escalation })
+    escalatingGuard(validate)
+    commandBus.execute.mockResolvedValue({ result: { ok: true }, logEntry: { id: 'log-1' } })
+
+    const res = await commandRoute().PUT(new Request('http://x/api/example/todos', {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'No id at all' }),
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    expect(res.status).toBe(200)
+    expect(validate).not.toHaveBeenCalled()
+    const warnings = skipWarnings()
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0][1]).toMatchObject({
+      commandId: 'example.todo.update',
+      method: 'PUT',
+      resourceKind: 'example.todo',
+    })
+  })
+
+  it('★ a normal PUT logs nothing — the signal has to mean what it says', async () => {
+    const validate = jest.fn().mockResolvedValue({ ok: true })
+    escalatingGuard(validate)
+    commandBus.execute.mockResolvedValue({ result: { ok: true }, logEntry: { id: 'log-2' } })
+
+    await commandRoute().PUT(new Request('http://x/api/example/todos', {
+      method: 'PUT',
+      body: JSON.stringify({ id: 'todo-quiet-1', title: 'Renamed' }),
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    expect(skipWarnings()).toHaveLength(0)
   })
 })
