@@ -104,7 +104,7 @@ Sorted by rank, then by the audit's own priority. "Src" is the `preview/` docume
 | **T-30** | 08 §12 L-1 | Optimistic locking is client-opt-in **and the reader fails open** (five early `ok: true` returns) | 🔬 CONFIRMED (shape) | medium | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-30-malformed-lock-token.md`. **The audit is wrong twice:** there are **eight** early passes, not five, and the "reader-null fail-open" is **additive, documented and tested** (a deliberate opt-in), so it is not a fail-open at all. The real defect is that *no token* and *an unreadable token* shared one branch: a client that **sent** a token asked for a conditional write and got an unconditional one in silence. Now a 400 naming the token; an absent token still passes. |
 | **T-31** | 08 §13 A1-08 | The autonomy matrix exempts humans entirely | 🔬 CONFIRMED, **but deliberate** | small | postponed | DOCUMENT |
 | **T-32** | 08 §13 A1-09 | `UUID_PATTERN` rejects UUIDv7, so locked records are writable | 🔬 CONFIRMED | small | urgent | ✅ **BUILT** `13c6206f` — see §2.4 |
-| **T-33** | 08 §13 A1-11 | `resourceKind`/`resourceId` are unhashed in the ledger | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
+| **T-33** | 08 §13 A1-11 | `resourceKind`/`resourceId` are unhashed in the ledger | 🔬 CONFIRMED | medium | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-33-ledger-resource-fields.md`. They now join the hash at **version 2**. **And the audit missed the half that decided the fix:** the version bump it implies would have reported every historical event as broken, because `verifyTenantChain` refused any version that was not the current constant — the docblock had said to keep an old branch, and there was none. Both branches exist now. |
 | **T-34** | 08 §13 A1-14 | `authorityPolicyProblems` has zero production callers | 🔬 CONFIRMED | small | scheduled | EXECUTE |
 | **T-35** | 08 §13 A2-06 | The sandbox's `maxOutputSize` and `maxApiCalls` are declared and dropped | 🔬 CONFIRMED | small | **done** | ✅ **BUILT 2026-10-19** — `PLAN-T35-sandbox-caps-real.md`. The audit's sentence understated it: one cap was already enforced **in the caller**, not the sandbox, so the sandbox was the component that could not enforce what it advertised; the other was implemented nowhere and nothing wanted it. |
 | **T-36** | 08 §13 A2-07 | The capability-coverage test's denominator excludes the AI package | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
@@ -424,7 +424,7 @@ anything shipped outside `packages/core`; the row's own defect, fixed under a di
 undo record the chain did not cover) · **`T-07` `3b633189`** (115 commands gated, and the guard that
 could not see them) · **`T-08` `34488c07`** (trust demotion has a caller) · **`T-15` `e25904f5`** (the confirm path applies the narrowing) · **`T-16` `c0b84f3c`** (both doors answer a missing dependency the same way).
 
-### 6.2 Slot 0 — before `W1` / `CC-121` starts (1 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30` built)
+### 6.2 Slot 0 — before `W1` / `CC-121` starts (**0 remaining of 13 — the slot is COMPLETE**; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33` built)
 
 The spine's own guarantees. Each is a central promise the pipeline will otherwise build on top of.
 
@@ -440,7 +440,7 @@ The spine's own guarantees. Each is a central promise the pipeline will otherwis
 | **T-27** | high | ✅ **BUILT 2026-10-19** — was: `ensureTenantScope` fails open when `ctx.auth` is absent. Now logged, and closable by `OM_ENFORCE_TENANT_SCOPE_STRICT`. `PLAN-T27-tenant-scope-observability.md`. | — |
 | **T-28** | medium | ✅ **BUILT 2026-10-21** — was: the PUT command path skipped the guard set when the id was not on the parsed input, which also skipped the optimistic lock inside it. PUT now derives the id as DELETE does, and a residual skip is logged. `PLAN-T-28-put-guard-set-skip.md`. | — |
 | **T-30** | medium | ✅ **BUILT 2026-10-21** — was: a lock token sent but unreadable was ignored, so the client got an unconditional write believing it was conditional. Now 400 `optimistic_lock_token_unreadable`; an absent token still passes (the additive contract). `PLAN-T-30-malformed-lock-token.md`. | — |
-| **T-33** | medium | `resourceKind`/`resourceId` are unhashed in the ledger — the record cannot name what was touched and stay tamper-evident | Slot 0 |
+| **T-33** | medium | ✅ **BUILT 2026-10-21** — was: `resourceKind`/`resourceId` unhashed, so the chain could be re-pointed at a different object undetected. Now covered at v2, with the v1 branch kept. `PLAN-T-33-ledger-resource-fields.md`. | — |
 | **T-35** | small | ✅ **BUILT 2026-10-19** — the sandbox enforces the api-call cap it advertises, and the count is reported. `PLAN-T35-sandbox-caps-real.md`. | — |
 
 ### 6.3 Slot 1 — with `W3`, the chokepoint and actor-class gate (10)

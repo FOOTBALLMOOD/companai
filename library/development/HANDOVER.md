@@ -15,16 +15,15 @@ continue the development work.** Read it top to bottom once (about 20 minutes), 
 follow §2 to actually get working. Everything else in the project is reachable from here.
 
 **Written 2026-10-05, revision 33 (2026-10-14). Owner: Ramzi. Development machine: `BIXMASERVER` (Windows 10 Pro).**
-**★★ CURRENT POSITION — 2026-10-21, evening (revision 40). Read this paragraph, then go to the box.**
+**★★ CURRENT POSITION — 2026-10-21, night (revision 41). Read this paragraph, then go to the box.**
 The authority family is **complete and closed**: `CC-125` (the machine floor) · `CC-128` (the tenant
 ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) · `CC-135` (the ceiling's
 route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
+**`CC-92` Slot 0 is COMPLETE — all thirteen spine findings are built**, so **`CC-121` (the authority re-key)
+is startable behind `CC-119`** (the database rebuild milestone). That gate is the next row to measure.
 **Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
-`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 1 spine finding left** before
-`CC-121`, and **`T-33` is the last one: it is NOT measured yet**, so the first step is the measurement, then
-the requirement, then the build. After it the slot is done and `CC-121` is startable. The box at the top
-of [`../../JOURNAL.md`](../../JOURNAL.md) names it with its steps. **The ONE NUMBER is 78 / 321 units
+`scripts/check-master-checklist.mjs`. **The ONE NUMBER is 78 / 321 units
 (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
 **★ What is new since revision 38:** Slot 0 closed **eight** findings in one day — `T-06` (the undo record
 extends the hash chain), `T-07` (115 commands gained a capability, and the guard that should have caught
@@ -38,14 +37,14 @@ binding's narrowing, and resolves the agent through the catalogue rather than th
 **Two live rows are worth knowing beyond the spine:**
 `CC-156` (three endpoints are authenticated but not authorised, so any signed-in user may assign labels or
 edit sales notes) and `CC-157` (six commands nothing can invoke). Both are startable now.
-**★ The standing lesson of the day, for whoever continues:** nine of the rows closed so far needed the
-audit's own sentence corrected, and one (`T-07`) changed what its row *meant* — the modules were parked and
-the guard lied. `T-30`'s correction was the most consequential: it reported a **designed, documented, tested**
-contract ("an entity that registers no reader is not locked") as a fail-open, and aiming a fix at that branch
-would have made the lock mandatory. `T-28`'s was about **reachability**; `T-17`'s named one fail-open where
-there were two plus a route storing the state. **Measure from source before building, every time.** And: a
-control that cannot see what it guards is not a control; this project has now found that shape three times
-(`CC-101`, `CC-132`, `T-07`).
+**★ The standing lesson of the slot, for whoever continues:** ten of the thirteen rows needed the audit's
+own sentence corrected, and the corrections were never pedantry. `T-28`'s was about **reachability** — the
+shape was real, the "two concurrent tab-saves" scenario was not demonstrated on an enabled route. `T-30`'s
+reported a **designed, documented, tested** contract as a fail-open, and fixing that branch would have made
+a safety mechanism mandatory. `T-33`'s named one defect while the half it omitted — the hash-version bump —
+would have reported **every historical ledger event as broken**. **Measure from source before building, every
+time.** And: a control that cannot see what it guards is not a control; this project has now found that shape
+three times (`CC-101`, `CC-132`, `T-07`).
 **What has NOT moved:** the ONE NUMBER is **78 / 321 = 24.3%** — re-derived 2026-10-21 by
 `node scripts/derive-counts.mjs`, which prints `MATCHES the claimed 78/321`. None of the rows closed in
 this slot moved a LIST row, because they are the authority spine, not a feature. The Hermes switchover

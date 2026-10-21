@@ -19,27 +19,29 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 1 spine finding left, before `CC-121` starts.** Twelve of the thirteen are
-closed — **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that
-was never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double
-approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a
-capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller),
-**`T-15`** (the confirm path applies the binding's narrowing), **`T-16`** (both doors answer a missing
-authority dependency the same way), **`T-17`** (a forbidden provider is refused, and an empty model list
-stops meaning "use the default"), **`T-28`** (a PUT carrying its id in the URL now gets its guard set, and
-the optimistic lock inside it) and **`T-30`** (a lock token that was sent but unreadable is refused, instead
-of silently ignored). **1 remains:** `T-33`. `CC-121` re-keys every `principal_id` through the authority
-gate. **The spine is repaired before it is re-keyed:** a migration through a gate with holes produces a
-clean answer about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried
-in the checklist as §9.4.
+**▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
+startable behind `CC-119`.** What was repaired: the tenant-scope helper that accepted a foreign tenant
+silently (`T-27`), the sandbox that advertised a cap it did not enforce (`T-35`), a Function asking for a count
+and answered with rows (`T-04`), the double approve (`T-05`), the undo record that did not extend the hash
+chain (`T-06`), 115 commands invisible to the authority gate (`T-07`), trust demotion with no caller (`T-08`),
+the confirm path that silently widened what was approved (`T-15`), two doors answering a missing dependency in
+opposite directions (`T-16`), a forbidden provider that was used anyway (`T-17`), a PUT that lost its guards
+and its lock (`T-28`), an unreadable lock token that was ignored (`T-30`), and the ledger whose pointer to the
+business object sat outside the hash (`T-33`).
 
-**★ WHERE THE NEXT AGENT STARTS.** `T-33` — `resourceKind`/`resourceId` are unhashed in the ledger, so the
-record cannot name what was touched and stay tamper-evident. **It is NOT measured yet**, so the first step
-is the measurement, not the build: read the row in `PREVIEW-AUDIT-TRIAGE.md` §6, then read the code, because
-**nine of the twelve rows closed so far needed the audit's own sentence corrected** — `T-30`'s was the most
-consequential, reporting a designed, documented, tested contract as a fail-open, and aiming a fix at that
-branch would have made the lock mandatory. Then write the requirement, build it against a mutation list,
-and close the slot. **After `T-33`, Slot 0 is done and `CC-121` is startable.**
+**★ WHAT THE NEXT AGENT SHOULD KNOW ABOVE ALL ELSE.** **Ten of the thirteen rows needed the audit's own
+sentence corrected**, and the corrections were not pedantry. `T-28`'s was about **reachability** — the shape
+was real, the "two concurrent tab-saves" scenario was not demonstrated on any enabled route. `T-30`'s reported
+a **designed, documented, tested** contract as a fail-open; fixing the branch it named would have made the
+lock mandatory and rejected every consumer that never opted in. `T-33`'s named one defect, and the half it
+omitted — the version bump — would have reported **every historical ledger event as broken**. **Measure from
+source before building, every time.** The row's prescribed FIX can be wrong; this project has now found that
+shape `CC-123`, `CC-129`, `CC-125` and ten times in this slot.
+
+**The queue after Slot 0, in order:** `CC-121` (the authority re-key, gated on `CC-119`, the database rebuild
+milestone) → `CC-122` · `CC-138` rides `W3` · `CC-133` stays deferred by the owner's trigger. Two rows found
+while measuring Slot 0 and startable now: `CC-156` (three endpoints are authenticated but not authorised, so
+any signed-in user may assign labels or edit sales notes) and `CC-157` (six commands nothing can invoke).
 
 **What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
 whole platform through CI for the first time, and every run found the next defect — `CC-148` through
@@ -72,6 +74,53 @@ queue is empty for the first time since the register was built.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21, `T-33`: the ledger's pointer to the business object sat outside the hash — **and Slot 0 is complete**
+
+**The thirteenth and last spine finding.** `CC-121`, the authority re-key, is startable behind `CC-119`.
+
+**What it was.** The tamper-evident ledger writes two columns saying what kind of record an event touched and
+which one — and those two columns were **not part of the hash**. So the chain could prove an event happened
+while being unable to prove *what it was about*, and its only pointer to the business object could be rewritten
+without breaking anything. Worse, the file's own docblock said *"Every field the event carries is covered"* —
+which was false, and was the sentence a reviewer read instead of reading the field list. A guarantee asserted
+in a comment and not held by the code is worse than no comment.
+
+**★ And the half the audit did not name, which decided the fix.** Adding the fields means bumping the hash
+version — and `verifyTenantChain` refused **any** row whose version was not the current constant. The docblock
+has always said to bump `v` and *keep the old branch in the verifier*; **there was no old branch**. So the
+obvious fix — add the fields, bump the version — would have reported **every historical ledger event as
+broken**. For an integrity tool that is the worst outcome it has: a false alarm is the thing nobody believes
+the second time. The version bump and the v1 branch shipped together, and there is a test that a pre-existing
+v1 event still verifies.
+
+**Three things the build found, and two of them are mine.**
+
+1. **My own v1 helper spread its input**, so it hashed whatever extra fields the caller passed — meaning a v1
+   hash changed when the resource fields changed, which would have produced *different* hashes from the ones
+   actually written: the very false alarm the branch exists to prevent. The covered object is now built field
+   by field, and the test that caught it says so in its name.
+2. **My first M3 was aimed at dead code.** I widened the *recompute branch* and it stayed green, because the
+   version **gate** above it decides first. A mutation that cannot fail is not a proof. The honest mutation
+   removes the gate, and it goes red.
+3. **An existing test's forged hash broke, and the fixture was the defect.** It rebuilt a row's hash with the
+   **old field set**, so after the bump that row failed its own check and the break was reported one sequence
+   early — a different defect wearing that test's name. The fixture now forges with the same covered set the
+   verifier uses.
+
+**Proof.** 4 tests (a rewritten resource id breaks the chain · an intact v2 verifies · an existing v1 still
+verifies · an unknown version fails closed) · **4/4 mutations RED**, files restored checksum-verified;
+shared **212 suites / 2,630 tests, 0 failures**; core **663 suites / 5,845 tests** with **one pre-existing
+failure** — `dialog-ds-compliance` builds its paths from the repo root instead of the package dir, **proven
+pre-existing by stashing this change and re-running it**. `tsc` 0 for both packages.
+
+**★ And the lesson of the slot, which is the reason it took thirteen rows.** **Ten of the thirteen needed the
+audit's own sentence corrected**, and the corrections were never pedantry. `T-28`'s was about reachability;
+`T-30`'s reported a designed contract as a bug and would have made a safety mechanism mandatory; `T-33`'s named
+one defect while the half it omitted would have broken every historical record. **A row's prescribed FIX can
+be wrong — measure from source, every time.**
 
 ---
 

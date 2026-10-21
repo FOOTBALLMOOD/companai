@@ -78,15 +78,19 @@ it. `CC-154` (the template's app tests run nowhere: root jest TS5011, the templa
 ConfigSet error) and `CC-155` (the example todo command drifted between app and template, no parity
 test) are **open and startable**.
 
-**★ IN HAND — `CC-92` Slot 0: 1 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
-`T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`. **Next: `T-33`** (`resourceKind`/
-`resourceId` unhashed in the ledger) — **not measured yet**, so measure first. **After `T-33` the slot is
-done and `CC-121` is startable.**
-**Measure each from source first**: nine of the twelve closed needed the audit's sentence corrected, and
-`T-30`'s was the most consequential — it reported a **designed, documented, tested** contract as a
-fail-open, and aiming a fix there would have made the lock mandatory. `T-28`'s was about **reachability**
-(the shape was real, the "two concurrent tab-saves" scenario was not demonstrated on an enabled route).
-Schedule: `PREVIEW-AUDIT-TRIAGE.md` §6 = §9.4.
+**★ `CC-92` SLOT 0 IS COMPLETE (2026-10-21) — all thirteen spine findings built: `T-27`, `T-35`, `T-04`,
+`T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. `CC-121` (the authority
+re-key) is startable behind `CC-119` (the DB rebuild milestone).** Then `CC-122`; `CC-138` rides `W3`;
+`CC-133` deferred by the owner. Two rows found while measuring Slot 0, startable now: `CC-156` (three
+endpoints authenticated but not authorised) and `CC-157` (six commands with no caller).
+**★ THE LESSON OF THE SLOT — ten of thirteen rows needed the audit's sentence corrected, and the corrections
+were never pedantry.** `T-28`: the shape was real, the reachability was not. `T-30`: it reported a
+**designed, documented, tested** contract as a fail-open; fixing that branch would have made a safety
+mechanism mandatory. `T-33`: it named one defect, and the half it omitted (the hash-version bump) would have
+reported **every historical ledger event as broken**. **A row's prescribed FIX can be wrong — measure from
+source, every time.** And three of my own defects were caught only by running the mutation: a helper that
+spread its input and hashed extra fields, a mutation aimed at dead code, and a test fixture that forged a
+hash with the old field set.
 **★ `T-07` CLOSED 2026-10-21 (`3b633189`/`9fd67e90`/`80bc4c0`), and the row was wrong in two ways.** The
 seven modules are **parked** (only `communication_channels` is enabled and it has no commands), so the
 gap was prospective; and the guard meant to catch it carried a **hardcoded parked list** naming six of

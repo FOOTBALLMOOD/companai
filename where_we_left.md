@@ -60,11 +60,13 @@ In the **docs repo**, in this order:
 3. `library/development/MASTER-CHECKLIST.md` **§2** — the canonical "LAST DONE" and "NEXT" lines,
    and §5's register for every open item with its trigger.
 
-**As of 2026-10-21 (evening), the position is:** register at **90 closed · 66 open · 156 total**; the
-frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the last spine
-finding that gates `CC-121`, **`T-33`: it is not measured yet**, so measure it from source first, then write
-the requirement, then build. After it the slot is done and `CC-121` is startable. Twelve of the thirteen are
-closed (`T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`).
+**As of 2026-10-21 (night), the position is:** register at **90 closed · 66 open · 156 total**; the
+frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **`CC-92` Slot 0 is COMPLETE — all thirteen
+spine findings are built** (the last, `T-33`, on 2026-10-21), so **`CC-121` (the authority re-key) is
+startable behind `CC-119`** (the database rebuild milestone), and `CC-119` is the next row to measure.
+Behind it: `CC-122`; `CC-138` rides `W3`; `CC-133` stays deferred by the owner's trigger. **Two rows found
+while measuring Slot 0 and startable now:** `CC-156` (three endpoints are authenticated but not authorised,
+so any signed-in user may assign labels or edit sales notes) and `CC-157` (six commands nothing can invoke).
 **The authority family is complete and closed:** `CC-125` (the
 floor), `CC-128` (the ceiling), `CC-134` (the superadmin read), `CC-135` (the ceiling's door), `CC-136` (a
 platform act is a platform act), `CC-137` (one capability means one door), `CC-139` (the ceiling's screen),

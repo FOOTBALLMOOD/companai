@@ -41,7 +41,27 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE, 2026-10-21 (latest): `T-30` is BUILT and CLOSED — a lock token that was sent but could not
+**LAST DONE, 2026-10-21 (latest): `CC-92` Slot 0 is COMPLETE — all thirteen spine findings are built, and
+`CC-121` is startable.** `T-33` was the last one. **What it was:** the tamper-evident ledger records what kind
+of record was touched and which one, but those two fields sat **outside the hash** — so the chain could prove
+an event happened while being unable to prove *what it was about*, and its only pointer to the business object
+could be rewritten without breaking anything. The file's own docblock said *"every field the event carries is
+covered"*, which was false, and was the sentence a reviewer read instead of the field list. **★ And the audit
+missed the half that decided the fix.** Adding the fields means bumping the hash version — and
+`verifyTenantChain` refused **any** row whose version was not the current constant. The docblock has always
+said to bump `v` and *keep the old branch in the verifier*; **there was no old branch**, so the obvious fix
+would have reported **every historical ledger event as broken**. For an integrity tool a false alarm is the
+worst outcome it has — it is the thing nobody believes the second time. **Proof:** both branches, 4 tests
+(rewritten resource id breaks the chain · an intact v2 verifies · an existing v1 still verifies · an unknown
+version fails closed) · **4/4 mutations RED**, files restored checksum-verified; shared **212 suites / 2,630
+tests**, core **663 suites / 5,845 tests** (one pre-existing path failure, proven by stashing); `tsc` 0 for
+both. **★ Three things the build found:** my own v1 helper **spread its input** and so hashed whatever extra
+fields arrived — which would have produced *different* hashes from the ones written, the very false alarm the
+branch exists to prevent · my first M3 was **aimed at dead code** (the version gate decides before the branch
+I mutated) and could not fail · and an existing test forged row 2's hash with the **old field set**, so it
+broke and reported the break one sequence early — the fixture was the defect, not the fix.
+
+**LAST DONE, 2026-10-21: `T-30` is BUILT and CLOSED — a lock token that was sent but could not
 be read is refused, and the two silences behind it are named.** The row said *"optimistic locking is
 client-opt-in and the reader fails open (five early `ok: true` returns)"*. Measured: **the audit is wrong
 twice.** There are **eight** early passes, not five; and the "reader-null fail-open" is **additive,
@@ -444,9 +464,9 @@ checksum-verified; auth **103 suites / 910 tests**; core **657 suites / 5,779 te
 **PREVIOUSLY — 2026-10-19: `CC-92` is SCHEDULED — the preview audit's 45 findings now have gates
 instead of a queue.** The row had said *"the rest are queued"* since 16 October, which named no slot,
 so nothing in §4 could start any of them. The schedule is `PREVIEW-AUDIT-TRIAGE.md` **§6**, carried here
-as **§9.4**, and it is **by gate, not date**: **Slot 0 = 1 finding before `CC-121` starts** — twelve of the
-thirteen built (`T-27`/`T-35` on 2026-10-19, `T-04`/`T-05` on 2026-10-20,
-`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17`/`T-28`/`T-30` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
+as **§9.4**, and it is **by gate, not date**: **Slot 0 = COMPLETE — all thirteen findings built** (`T-27`/`T-35` on 2026-10-19,
+`T-04`/`T-05` on 2026-10-20, `T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17`/`T-28`/`T-30`/`T-33` on
+2026-10-21), so `CC-121` is startable behind `CC-119`; `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
 for the count, because a running total written here drifts ·
 Slot 1 = 10 with `W3` · Slot 2 = 1 with `W5` · Slot 3 = 4 with `W7` · Slot 4 = 3 with `W8` · Slot 5 = 2
 with `P2-9b` · 4 deferred by name. **★ The revisit point is Slot 0, and the reason is specific:** `CC-121`
@@ -550,24 +570,21 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 1 spine finding left, before `CC-121` starts.** `T-33` is the last one and is
-**not yet measured**: the ledger's `resourceKind`/`resourceId` are unhashed, so the record cannot name what
-was touched and stay tamper-evident. Measure it from source first, then write the requirement, build it
-against a mutation list, and close the slot. **Measure each from source before building it**: `T-27`,
-`T-35`, `T-04`, `T-06`, `T-07`, `T-08`, `T-17`, `T-28` and `T-30` all needed the
-audit's own sentence corrected — `T-30`'s was the most consequential, because it reported a **designed,
-documented, tested** contract ("an entity that registers no reader is not locked") as a fail-open, and
-aiming a fix at that branch would have made the lock mandatory. `T-28`'s correction was about
-**reachability**: the shape is real, but "two concurrent tab-saves both succeed" needs a route that puts the
-id in the URL, and no enabled one measured does. `T-17`'s row was the widest miss, naming **one** fail-open
-where there were **two** plus a route storing the state that caused the second. `T-07`'s correction was the
-largest, because the seven modules it named are **parked** and the guard meant to catch it had been
-excluding them by hand. **Rule 13,
-corrected 2026-10-21:** this sentence twice named `T-06` while describing **`T-05`'s** race (*"the approvals
-queue can approve the same act twice"*), which closed on 2026-10-20. The description was left behind
-when `T-05` closed. The findings and their slots are
+**▶ NEXT — `CC-121`: the authority re-key, now that the spine it re-keys through is repaired.** Slot 0 is
+**complete** — all thirteen findings built, the last of them `T-33` on 2026-10-21. `CC-121` re-keys every
+`principal_id` through the authority gate, and the gate can now see every command and refuse a missing
+identity. **The order was the point:** a migration through a gate with holes produces a clean answer about a
+partial system, and `T-07` had left seven modules' commands invisible to it. **`CC-121` is gated on
+`CC-119`** (the database rebuild milestone) — that gate is the only thing between the spine work and the
+re-key, and it is the next row to measure. **What Slot 0 taught, and the reason it took thirteen rows to
+close:** **ten of the thirteen needed the audit's own sentence corrected**, and the corrections were not
+pedantry — `T-28`'s was about **reachability** (the shape was real, the scenario was not demonstrated on an
+enabled route), `T-30`'s reported a **designed, documented, tested** contract as a fail-open and would have
+made the lock mandatory, and `T-33`'s named one defect while the half it omitted would have broken every
+historical ledger event. **Measure from source before building, every time.** A row whose prescribed FIX can
+be wrong is `CC-123`/`CC-129`/`CC-125` again, in a new place. The findings and their gates are
 `PREVIEW-AUDIT-TRIAGE.md` §6, carried here as §9.4. Behind Slot 0: `CC-121` (behind `CC-119`, the
-database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
+database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
 owner's trigger.
 **No row on the authority path is waiting on you:** the four in §4 that still need a decision are the
 long-standing ones.
