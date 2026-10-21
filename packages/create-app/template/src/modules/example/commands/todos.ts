@@ -16,6 +16,8 @@ import type { EntityData, EntityManager, FilterQuery } from '@mikro-orm/postgres
 import { resolveTranslations } from '@open-mercato/shared/lib/i18n/server'
 import { z } from 'zod'
 import { Todo } from '../data/entities'
+import ceEntities from '../ce'
+import { validateValuesAgainstDefs } from '@open-mercato/shared/modules/entities/validation'
 
 const ENTITY_ID = 'example:todo' as const
 import type { CommandRuntimeContext } from '@open-mercato/shared/lib/commands'
@@ -36,6 +38,46 @@ export const todoUpdateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   is_done: z.boolean().optional(),
 })
+
+// `ce.ts` declares the custom-field rules (`gte`/`lte`/`regex`/…) on each
+// field; the CRUD form reads them for its blur check, but the form is a
+// convenience — the command is where every write funnels (API, the
+// example_customers_sync bridge, redo), so the declared rules are enforced
+// here too. CC-153: a POST with `cf_priority: 8` used to return 201, because
+// nothing between the request and the database ever read the declaration.
+//
+// The evaluator expects the DB `CustomFieldDef` shape (rules under
+// `configJson.validation`); ce.ts declares them inline. Bridge the two.
+const todoEntitySpec = Array.isArray(ceEntities)
+  ? ceEntities.find((entity) => entity?.id === ENTITY_ID)
+  : undefined
+const todoFieldDefsForValidation = (todoEntitySpec?.fields ?? [])
+  .filter((field) => Array.isArray(field.validation) && field.validation.length > 0)
+  .map((field) => ({
+    key: field.key,
+    kind: field.kind,
+    configJson: { validation: field.validation },
+  }))
+
+/**
+ * Reject a write whose custom-field values break a rule declared in `ce.ts`,
+ * with the declared message, as `400 { error: 'Validation failed', fields }` —
+ * the same response the generic entities records endpoint returns
+ * (TC-ENTITIES-005). Only keys the caller actually sent are checked: a
+ * partial update must not trip `required`, and the sync bridge creates todos
+ * without the optional fields, so server-side requiredness stays a form-level
+ * rule exactly as it was before.
+ */
+function enforceDeclaredCustomFieldRules(custom: Record<string, unknown>): void {
+  const providedDefs = todoFieldDefsForValidation.filter((def) =>
+    Object.prototype.hasOwnProperty.call(custom, def.key)
+  )
+  if (providedDefs.length === 0) return
+  const result = validateValuesAgainstDefs(custom, providedDefs)
+  if (!result.ok) {
+    throw new CrudHttpError(400, { error: 'Validation failed', fields: result.fieldErrors })
+  }
+}
 
 type SerializedTodo = {
   id: string
@@ -82,6 +124,7 @@ const createTodoCommand: CommandHandler<Record<string, unknown>, Todo> = {
   isUndoable: true,
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(todoCreateSchema, rawInput)
+    enforceDeclaredCustomFieldRules(custom)
     const scope = ensureScope(ctx)
     const de = (ctx.container.resolve('dataEngine') as DataEngine)
 
@@ -206,6 +249,7 @@ const updateTodoCommand: CommandHandler<Record<string, unknown>, Todo> = {
   },
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(todoUpdateSchema, rawInput)
+    enforceDeclaredCustomFieldRules(custom)
     const scope = ensureScope(ctx)
     const de = (ctx.container.resolve('dataEngine') as DataEngine)
     const em = (ctx.container.resolve('em') as EntityManager)

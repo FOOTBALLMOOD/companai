@@ -16,10 +16,21 @@ jest.mock('@/bootstrap', () => ({
   bootstrap: jest.fn(),
 }))
 
+// CC-153: the metadata description comes from the dictionary of the locale the
+// request resolved. It used to be a static `metadata` export — evaluated once,
+// with no request context — so the English text went to every locale. The first
+// thing that looked was TC-APP-001's German run: it asserts the de string and
+// got English back. These tests hold the per-request behaviour in place; the
+// holder lets each test choose the locale and the dictionary it resolves.
+const mockI18n = {
+  locale: 'en',
+  dictionary: { common: 'value' } as Record<string, unknown>,
+}
+
 jest.mock('@open-mercato/shared/lib/i18n/server', () => ({
   registerAppDictionaryLoader: jest.fn(),
-  detectLocale: jest.fn(async () => 'en'),
-  loadDictionary: jest.fn(async () => ({ common: 'value' })),
+  detectLocale: jest.fn(async () => mockI18n.locale),
+  loadDictionary: jest.fn(async () => mockI18n.dictionary),
 }))
 
 jest.mock('@/components/AppProviders', () => ({
@@ -95,5 +106,52 @@ describe('RootLayout', () => {
 
     expect(appProviders).not.toBeNull()
     expect(appProviders?.props.noticeBarsEnabled).toBe(true)
+  })
+})
+
+describe('app metadata (CC-153)', () => {
+  const COMPANAI_DESCRIPTION =
+    'One organisation, one task model, one authority system — for people and AI workers alike.'
+  // The exact string TC-APP-001 asserts against the de dictionary — written here
+  // so a dictionary edit that breaks the spec turns this suite red first.
+  const GERMAN_DESCRIPTION = 'KI-unterstützte, modulare ERP-Basis für Produkt- und Dienstleistungsunternehmen'
+
+  afterEach(() => {
+    mockI18n.locale = 'en'
+    mockI18n.dictionary = { common: 'value' }
+  })
+
+  it('exports no static metadata — a static export freezes the description at build time', async () => {
+    const layout = (await import('../layout')) as Record<string, unknown>
+
+    expect(layout.metadata).toBeUndefined()
+    expect(typeof layout.generateMetadata).toBe('function')
+  })
+
+  it('describes the app in the locale the request resolved', async () => {
+    mockI18n.locale = 'de'
+    mockI18n.dictionary = { 'app.metadata.description': GERMAN_DESCRIPTION }
+
+    const { generateMetadata } = await import('../layout')
+    const metadata = await generateMetadata()
+
+    expect(metadata.description).toBe(GERMAN_DESCRIPTION)
+    expect(metadata.title).toBe('Companai')
+    expect(metadata.icons).toEqual({
+      icon: [
+        { url: '/companai.svg', type: 'image/svg+xml' },
+        { url: '/favicon.ico', sizes: 'any' },
+      ],
+    })
+  })
+
+  it('falls back to the Companai line when the dictionary carries no description', async () => {
+    mockI18n.locale = 'de'
+    mockI18n.dictionary = {}
+
+    const { generateMetadata } = await import('../layout')
+    const metadata = await generateMetadata()
+
+    expect(metadata.description).toBe(COMPANAI_DESCRIPTION)
   })
 })

@@ -157,7 +157,11 @@ describe('example todos update', () => {
     const { ctx, nativeUpdate, findOne } = createCtx()
     const handler = getCommand('example.todos.update')
 
-    const result = await handler.execute({ id: '11111111-1111-4111-8111-111111111111', cf_priority: 8 }, ctx)
+    // cf_priority 4, not 8: since CC-153 the command enforces the ce.ts rules
+    // server-side, and 8 breaks `lte: 5` (see todos.custom-field-rules.test.ts).
+    // What this test is about — a custom-field-only update skipping the native
+    // UPDATE — is orthogonal to the value.
+    const result = await handler.execute({ id: '11111111-1111-4111-8111-111111111111', cf_priority: 4 }, ctx)
 
     expect(nativeUpdate).not.toHaveBeenCalled()
     expect(findOne).toHaveBeenCalled()

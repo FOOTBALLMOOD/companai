@@ -7,21 +7,35 @@ import { detectLocale, loadDictionary } from '@open-mercato/shared/lib/i18n/serv
 import { resolveForcedLocale } from '@open-mercato/shared/lib/i18n/locale'
 import { resolveTextDirection } from '@open-mercato/shared/lib/i18n/direction'
 
-export const metadata: Metadata = {
-  title: 'Companai',
-  // Not upstream's "modular ERP foundation" — that describes a different
-  // product. Companai is an operating platform where people and AI workers act
-  // under one org model, one task model and one authority system.
-  description: 'One organisation, one task model, one authority system — for people and AI workers alike.',
-  icons: {
-    // The SVG is the master and what modern browsers use. The `.ico` is the
-    // fallback for the places that still insist on one — older browsers, some
-    // bookmark and feed readers.
-    icon: [
-      { url: '/companai.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
-  },
+// CC-153: the description follows the locale. A static `metadata` export is
+// evaluated once, with no request context, so `meta[name="description"]` carried
+// the English text into every locale — visible only once the example module's
+// specs finally ran (TC-APP-001 expects the de string). `generateMetadata` runs
+// per request after `detectLocale`, exactly like the `html lang` attribute the
+// RootLayout below already resolves per request.
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await detectLocale()
+  const dict = await loadDictionary(locale)
+  return {
+    title: 'Companai',
+    // Not upstream's "modular ERP foundation" — that describes a different
+    // product. Companai is an operating platform where people and AI workers act
+    // under one org model, one task model and one authority system. The en
+    // dictionary carries this line (the other locales still carry upstream's
+    // wording — see register row CC-153); the fallback covers a dictionary that
+    // has not loaded.
+    description: dict['app.metadata.description']
+      ?? 'One organisation, one task model, one authority system — for people and AI workers alike.',
+    icons: {
+      // The SVG is the master and what modern browsers use. The `.ico` is the
+      // fallback for the places that still insist on one — older browsers, some
+      // bookmark and feed readers.
+      icon: [
+        { url: '/companai.svg', type: 'image/svg+xml' },
+        { url: '/favicon.ico', sizes: 'any' },
+      ],
+    },
+  }
 }
 
 export default async function RootLayout({
