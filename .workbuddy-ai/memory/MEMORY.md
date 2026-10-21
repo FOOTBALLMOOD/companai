@@ -78,12 +78,15 @@ it. `CC-154` (the template's app tests run nowhere: root jest TS5011, the templa
 ConfigSet error) and `CC-155` (the example todo command drifted between app and template, no parity
 test) are **open and startable**.
 
-**★ IN HAND — `CC-92` Slot 0: 2 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
-`T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`. **Next: `T-30`** (optimistic locking is
-client-opt-in and the reader fails open) — **not measured yet**, so measure first. Then `T-33`.
-**Measure each from source first**: eight of the eleven closed needed the audit's sentence corrected, and
-`T-28`'s correction was about **reachability** — the shape was real, the "two concurrent tab-saves"
-scenario was not demonstrated on an enabled route. Schedule: `PREVIEW-AUDIT-TRIAGE.md` §6 = §9.4.
+**★ IN HAND — `CC-92` Slot 0: 1 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
+`T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`. **Next: `T-33`** (`resourceKind`/
+`resourceId` unhashed in the ledger) — **not measured yet**, so measure first. **After `T-33` the slot is
+done and `CC-121` is startable.**
+**Measure each from source first**: nine of the twelve closed needed the audit's sentence corrected, and
+`T-30`'s was the most consequential — it reported a **designed, documented, tested** contract as a
+fail-open, and aiming a fix there would have made the lock mandatory. `T-28`'s was about **reachability**
+(the shape was real, the "two concurrent tab-saves" scenario was not demonstrated on an enabled route).
+Schedule: `PREVIEW-AUDIT-TRIAGE.md` §6 = §9.4.
 **★ `T-07` CLOSED 2026-10-21 (`3b633189`/`9fd67e90`/`80bc4c0`), and the row was wrong in two ways.** The
 seven modules are **parked** (only `communication_channels` is enabled and it has no commands), so the
 gap was prospective; and the guard meant to catch it carried a **hardcoded parked list** naming six of

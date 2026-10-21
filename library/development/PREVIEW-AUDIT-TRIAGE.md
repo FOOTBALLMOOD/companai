@@ -101,7 +101,7 @@ Sorted by rank, then by the audit's own priority. "Src" is the `preview/` docume
 | **T-27** | 08 §12 S-2/S-6 | `ensureTenantScope` fails open when `ctx.auth` is absent | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-19** — `PLAN-T27-tenant-scope-observability.md`. The allow is unchanged (load-bearing, pinned by a test); the **silence** is not. See §1.5 `C-08`/`C-09` for the audit sentence being half wrong. |
 | **T-28** | 08 §12 S-4 | The PUT command path skips the guard set when the candidate id is not on the parsed input | 🔬 CONFIRMED (shape) | medium | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-28-put-guard-set-skip.md`. PUT now derives the id the way DELETE always has (`input.id ?? query.id ?? body.id`), so the guard set — **and the optimistic lock inside it** — runs for a PUT whose id arrives in the URL. The residual skip is logged. **The audit's "two concurrent tab-saves both succeed" is true of a route shaped this way; I could not show an enabled route is shaped this way today**, so this is `CC-101`'s class: a control that silently did not run. |
 | **T-29** | 08 §12 C-1 | The C6 command contract is dead at runtime — zero declarations | 🔬 CONFIRMED (shape) | medium | scheduled | EXECUTE |
-| **T-30** | 08 §12 L-1 | Optimistic locking is client-opt-in **and the reader fails open** (five early `ok: true` returns) | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
+| **T-30** | 08 §12 L-1 | Optimistic locking is client-opt-in **and the reader fails open** (five early `ok: true` returns) | 🔬 CONFIRMED (shape) | medium | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-30-malformed-lock-token.md`. **The audit is wrong twice:** there are **eight** early passes, not five, and the "reader-null fail-open" is **additive, documented and tested** (a deliberate opt-in), so it is not a fail-open at all. The real defect is that *no token* and *an unreadable token* shared one branch: a client that **sent** a token asked for a conditional write and got an unconditional one in silence. Now a 400 naming the token; an absent token still passes. |
 | **T-31** | 08 §13 A1-08 | The autonomy matrix exempts humans entirely | 🔬 CONFIRMED, **but deliberate** | small | postponed | DOCUMENT |
 | **T-32** | 08 §13 A1-09 | `UUID_PATTERN` rejects UUIDv7, so locked records are writable | 🔬 CONFIRMED | small | urgent | ✅ **BUILT** `13c6206f` — see §2.4 |
 | **T-33** | 08 §13 A1-11 | `resourceKind`/`resourceId` are unhashed in the ledger | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
@@ -424,7 +424,7 @@ anything shipped outside `packages/core`; the row's own defect, fixed under a di
 undo record the chain did not cover) · **`T-07` `3b633189`** (115 commands gated, and the guard that
 could not see them) · **`T-08` `34488c07`** (trust demotion has a caller) · **`T-15` `e25904f5`** (the confirm path applies the narrowing) · **`T-16` `c0b84f3c`** (both doors answer a missing dependency the same way).
 
-### 6.2 Slot 0 — before `W1` / `CC-121` starts (2 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28` built)
+### 6.2 Slot 0 — before `W1` / `CC-121` starts (1 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30` built)
 
 The spine's own guarantees. Each is a central promise the pipeline will otherwise build on top of.
 
@@ -439,7 +439,7 @@ The spine's own guarantees. Each is a central promise the pipeline will otherwis
 | **T-17** | medium | ✅ **BUILT 2026-10-21** — was: the model allowlist fails open on the provider axis. Now: a forbidden provider with no permitted replacement is refused; an empty model list means no models permitted; the state is named. `PLAN-T-17-model-allowlist-fails-open.md`. | — |
 | **T-27** | high | ✅ **BUILT 2026-10-19** — was: `ensureTenantScope` fails open when `ctx.auth` is absent. Now logged, and closable by `OM_ENFORCE_TENANT_SCOPE_STRICT`. `PLAN-T27-tenant-scope-observability.md`. | — |
 | **T-28** | medium | ✅ **BUILT 2026-10-21** — was: the PUT command path skipped the guard set when the id was not on the parsed input, which also skipped the optimistic lock inside it. PUT now derives the id as DELETE does, and a residual skip is logged. `PLAN-T-28-put-guard-set-skip.md`. | — |
-| **T-30** | medium | Optimistic locking is client-opt-in **and the reader fails open** (five early `ok: true` returns) | Slot 0 |
+| **T-30** | medium | ✅ **BUILT 2026-10-21** — was: a lock token sent but unreadable was ignored, so the client got an unconditional write believing it was conditional. Now 400 `optimistic_lock_token_unreadable`; an absent token still passes (the additive contract). `PLAN-T-30-malformed-lock-token.md`. | — |
 | **T-33** | medium | `resourceKind`/`resourceId` are unhashed in the ledger — the record cannot name what was touched and stay tamper-evident | Slot 0 |
 | **T-35** | small | ✅ **BUILT 2026-10-19** — the sandbox enforces the api-call cap it advertises, and the count is reported. `PLAN-T35-sandbox-caps-real.md`. | — |
 

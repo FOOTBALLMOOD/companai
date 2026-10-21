@@ -19,26 +19,27 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 2 spine findings left, before `CC-121` starts.** Eleven of the thirteen are
+**IN HAND — `CC-92` Slot 0: 1 spine finding left, before `CC-121` starts.** Twelve of the thirteen are
 closed — **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that
 was never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double
 approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a
 capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller),
 **`T-15`** (the confirm path applies the binding's narrowing), **`T-16`** (both doors answer a missing
 authority dependency the same way), **`T-17`** (a forbidden provider is refused, and an empty model list
-stops meaning "use the default") and **`T-28`** (a PUT carrying its id in the URL now gets its guard set,
-and the optimistic lock inside it). **2 remain:** `T-30`, `T-33` — neither measured yet.
-`CC-121` re-keys every `principal_id` through the authority gate. **The spine is repaired before it is
-re-keyed:** a migration through a gate with holes produces a clean answer about a partial system. The
-findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the checklist as §9.4.
+stops meaning "use the default"), **`T-28`** (a PUT carrying its id in the URL now gets its guard set, and
+the optimistic lock inside it) and **`T-30`** (a lock token that was sent but unreadable is refused, instead
+of silently ignored). **1 remains:** `T-33`. `CC-121` re-keys every `principal_id` through the authority
+gate. **The spine is repaired before it is re-keyed:** a migration through a gate with holes produces a
+clean answer about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried
+in the checklist as §9.4.
 
-**★ WHERE THE NEXT AGENT STARTS.** `T-30` — optimistic locking is client-opt-in **and the reader fails
-open** (five early `ok: true` returns). **It is NOT measured yet**, so the first step is the measurement,
-not the build: read the row in `PREVIEW-AUDIT-TRIAGE.md` §6, then read the code, because **eight of the
-eleven rows closed so far needed the audit's own sentence corrected** — `T-28`'s was about *reachability*
-(the shape is real; the "two concurrent tab-saves" scenario needs a route that puts the id in the URL, and
-no enabled one measured does). Then write the requirement, build it against a mutation list, and close it.
-Behind `T-30`: `T-33`.
+**★ WHERE THE NEXT AGENT STARTS.** `T-33` — `resourceKind`/`resourceId` are unhashed in the ledger, so the
+record cannot name what was touched and stay tamper-evident. **It is NOT measured yet**, so the first step
+is the measurement, not the build: read the row in `PREVIEW-AUDIT-TRIAGE.md` §6, then read the code, because
+**nine of the twelve rows closed so far needed the audit's own sentence corrected** — `T-30`'s was the most
+consequential, reporting a designed, documented, tested contract as a fail-open, and aiming a fix at that
+branch would have made the lock mandatory. Then write the requirement, build it against a mutation list,
+and close the slot. **After `T-33`, Slot 0 is done and `CC-121` is startable.**
 
 **What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
 whole platform through CI for the first time, and every run found the next defect — `CC-148` through
@@ -71,6 +72,46 @@ queue is empty for the first time since the register was built.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21, `T-30`: a lock token that was sent but unreadable is refused, not ignored
+
+**Slot 0, finding 12 of 13. One left: `T-33`.**
+
+**The row said *"optimistic locking is client-opt-in and the reader fails open (five early `ok: true`
+returns)"*. Measured, the audit is wrong twice, and both errors change what the fix should be.**
+
+- **There are eight early passes, not five.** The two it never names: `currentRaw == null` (the record is
+  gone, so the CRUD route's 404 should fire — deliberate and documented) and `currentIso == null` (the
+  stored value is not a date — genuinely silent).
+- **"the reader-null fail-open is not additive and is not [documented]" — both halves are false.** It is
+  additive, the contract is stated in the file's own docblock, and it is pinned by a test whose name says
+  *"strict-additive opt-in"*. **Reporting a designed, documented, tested contract as a fail-open is how a
+  fix gets aimed at the wrong branch** — and this one would have made the lock mandatory.
+
+**★ The real defect is that two different requests shared one answer.** A client that sends **no** token did
+not ask for a conditional write; passing is correct. A client that sends a token we **cannot parse** *did*
+ask, and got an unconditional write **in silence** — believing it was protected at exactly the moment it was
+not. Branch 5 in the code held both, which is precisely how the second hid behind the first.
+
+**What shipped.** The branch splits: an absent token still passes (the additive contract), an unreadable
+token is a **400** `optimistic_lock_token_unreadable` naming what arrived, and a stored value that is not a
+date still passes but **logs**. The eight-branch map is now written into the docblock, so the next audit
+counts eight and can tell the designed passes from the accidental one.
+
+**★ And the test that asserted the defect as intent.** `it('passes when the client header is malformed
+(non-ISO)')` — the name states a bug as a design decision, which is why nobody looked again. This is the
+third time this month the same shape has appeared (`T-16`'s conflated test names, `T-17`'s empty-list test,
+now this). It is rewritten and renamed: it asserts the refusal.
+
+**Proof.** 4 tests (unreadable token · absent token · stored value + log · mismatch still 409) · **4/4
+mutations RED** — unreadable passes again (1) · absent refused (3) · log silenced (1) · 409 instead of 400
+(1) — files restored checksum-verified; `tsc` 0; shared **212 suites / 2,627 tests, 0 failures**.
+
+**★ M2 is the one that proves the boundary.** Refusing an absent token breaks **three** tests at once: the
+documented opt-in, its allow-list twin, and the additive contract's own case. Without the split, the fix
+would have turned a lenient guard into a mandatory one and 400'd every consumer that never sent a token.
 
 ---
 

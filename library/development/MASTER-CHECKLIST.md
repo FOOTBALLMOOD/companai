@@ -41,7 +41,26 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE, 2026-10-21 (latest): `T-28` is BUILT and CLOSED — a PUT that carries its id in the URL now
+**LAST DONE, 2026-10-21 (latest): `T-30` is BUILT and CLOSED — a lock token that was sent but could not
+be read is refused, and the two silences behind it are named.** The row said *"optimistic locking is
+client-opt-in and the reader fails open (five early `ok: true` returns)"*. Measured: **the audit is wrong
+twice.** There are **eight** early passes, not five; and the "reader-null fail-open" is **additive,
+documented in the file's own docblock and pinned by a test whose name says "strict-additive opt-in"** — a
+deliberate contract, not a fail-open. Reporting a designed contract as a bug is how a fix gets aimed at the
+wrong branch. **★ The real defect is that two different requests shared one answer:** a client that sends
+**no** token did not ask for a conditional write (passing is correct), while a client that sends a token we
+**cannot parse** did ask, and was given an unconditional write **in silence** — believing it was protected
+at exactly the moment it was not. The branches are now split: no token still passes (the additive contract,
+and M2 breaks three tests if it stops), an unreadable token is a **400** `optimistic_lock_token_unreadable`
+naming what arrived, and a stored value that is not a date still passes but **logs**. **The branch map is
+written into the docblock**, so the next audit counts eight and can tell the designed passes from the
+accidental one. **Proof:** 4 tests (unreadable token · absent token · stored value + log · mismatch still
+409) · **4/4 mutations RED**, files restored checksum-verified; `tsc` 0; shared **212 suites / 2,627 tests,
+0 failures**. **★ And the test that asserted the defect as intent** — `passes when the client header is
+malformed (non-ISO)` — is rewritten and renamed: a name that states a bug as a design decision is why nobody
+looked again. **90 closed · 66 open · 156 total.**
+
+**LAST DONE, 2026-10-21: `T-28` is BUILT and CLOSED — a PUT that carries its id in the URL now
 gets its guards, and the lock that lives inside them.** Two paths derived the same thing two ways: DELETE
 read `input.id ?? query.id ?? body.id`; PUT read `input.id` alone. And `candidateId` gates the whole guard
 block, so a PUT whose id arrives in the URL or the query ran **no mutation guard and no optimistic-lock
@@ -425,9 +444,9 @@ checksum-verified; auth **103 suites / 910 tests**; core **657 suites / 5,779 te
 **PREVIOUSLY — 2026-10-19: `CC-92` is SCHEDULED — the preview audit's 45 findings now have gates
 instead of a queue.** The row had said *"the rest are queued"* since 16 October, which named no slot,
 so nothing in §4 could start any of them. The schedule is `PREVIEW-AUDIT-TRIAGE.md` **§6**, carried here
-as **§9.4**, and it is **by gate, not date**: **Slot 0 = 2 findings before `CC-121` starts** — eleven of the
+as **§9.4**, and it is **by gate, not date**: **Slot 0 = 1 finding before `CC-121` starts** — twelve of the
 thirteen built (`T-27`/`T-35` on 2026-10-19, `T-04`/`T-05` on 2026-10-20,
-`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17`/`T-28` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
+`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17`/`T-28`/`T-30` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
 for the count, because a running total written here drifts ·
 Slot 1 = 10 with `W3` · Slot 2 = 1 with `W5` · Slot 3 = 4 with `W7` · Slot 4 = 3 with `W8` · Slot 5 = 2
 with `P2-9b` · 4 deferred by name. **★ The revisit point is Slot 0, and the reason is specific:** `CC-121`
@@ -531,12 +550,16 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 2 spine findings left, before `CC-121` starts.** `T-30` is next by rank and is
-**not yet measured**, so it is measured before it is built; then `T-33`. **Measure each from
-source before building it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08`, `T-17` and `T-28` all needed the
-audit's own sentence corrected — and `T-28`'s correction was about **reachability**: the shape is real, but
-"two concurrent tab-saves both succeed" needs a route that puts the id in the URL, and no enabled one
-measured does. `T-17`'s row was the widest miss so far, naming **one** fail-open
+**▶ NEXT — `CC-92` Slot 0: 1 spine finding left, before `CC-121` starts.** `T-33` is the last one and is
+**not yet measured**: the ledger's `resourceKind`/`resourceId` are unhashed, so the record cannot name what
+was touched and stay tamper-evident. Measure it from source first, then write the requirement, build it
+against a mutation list, and close the slot. **Measure each from source before building it**: `T-27`,
+`T-35`, `T-04`, `T-06`, `T-07`, `T-08`, `T-17`, `T-28` and `T-30` all needed the
+audit's own sentence corrected — `T-30`'s was the most consequential, because it reported a **designed,
+documented, tested** contract ("an entity that registers no reader is not locked") as a fail-open, and
+aiming a fix at that branch would have made the lock mandatory. `T-28`'s correction was about
+**reachability**: the shape is real, but "two concurrent tab-saves both succeed" needs a route that puts the
+id in the URL, and no enabled one measured does. `T-17`'s row was the widest miss, naming **one** fail-open
 where there were **two** plus a route storing the state that caused the second. `T-07`'s correction was the
 largest, because the seven modules it named are **parked** and the guard meant to catch it had been
 excluding them by hand. **Rule 13,
