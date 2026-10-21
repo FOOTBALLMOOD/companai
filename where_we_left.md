@@ -60,15 +60,18 @@ In the **docs repo**, in this order:
 3. `library/development/MASTER-CHECKLIST.md` **§2** — the canonical "LAST DONE" and "NEXT" lines,
    and §5's register for every open item with its trigger.
 
-**As of 2026-10-21 (afternoon), the position is:** register at **90 closed · 66 open · 156 total**; the
-frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 7 spine
-findings that gate `CC-121`, and **`T-08` is next by rank**. Six of the thirteen are closed (`T-27`,
-`T-35`, `T-04`, `T-05`, `T-06`, `T-07`). **The authority family is complete and closed:** `CC-125` (the
+**As of 2026-10-21 (evening), the position is:** register at **90 closed · 66 open · 156 total**; the
+frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 4 spine
+findings that gate `CC-121`, and **`T-17` is IN HAND: its requirement is written** (commit `fe5fd08`,
+`library/development/PLAN-T-17-model-allowlist-fails-open.md`) **and nothing is built yet**, so the next
+agent starts at §3 of that plan. Behind it: `T-28`, `T-30`, `T-33`. Nine of the thirteen are closed
+(`T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`). **The authority family is
+complete and closed:** `CC-125` (the
 floor), `CC-128` (the ceiling), `CC-134` (the superadmin read), `CC-135` (the ceiling's door), `CC-136` (a
 platform act is a platform act), `CC-137` (one capability means one door), `CC-139` (the ceiling's screen),
 `CC-140` (its write refuses a stale view). **No row on the authority path is waiting on the owner** — the
 tenancy ruling of 2026-10-21 emptied the owner queue for the first time since the register was built.
-**`CC-121` does not start until `CC-92` Slot 0 lands** — the remaining 7 findings, because that migration
+**`CC-121` does not start until `CC-92` Slot 0 lands** — the remaining 4 findings, because that migration
 re-keys every principal through the authority gate (`PREVIEW-AUDIT-TRIAGE.md` §6.2,
 `MASTER-CHECKLIST.md` §9.4). **Two live rows are worth knowing before anything else:** `CC-156` (three
 endpoints are authenticated but not authorised, so any signed-in user may assign labels or edit sales

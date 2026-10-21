@@ -487,10 +487,12 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts.** `T-17` is the next one by
-rank, and it has not been measured yet, so it is measured before it is built. Then
-`T-28`, `T-30`, `T-33`. **Measure each from source before building
-it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07` and `T-08` all needed the audit's own sentence corrected,
+**▶ NEXT — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts.** **`T-17` is IN HAND: measured,
+requirement written (commit `fe5fd08`, `PLAN-T-17-model-allowlist-fails-open.md`), and NOT yet built.** The
+next agent starts at §3 of that plan: four requirements against five mutations, and no code is written.
+Behind it: `T-28`, `T-30`, `T-33`. **Measure each from source before building
+it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08` and `T-17` all needed the audit's own sentence
+corrected (T-17's row understated two fail-opens as one),
 and `T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
 meant to catch it had been excluding them by hand. **Rule 13,
 corrected 2026-10-21:** this sentence twice named `T-06` while describing **`T-05`'s** race (*"the approvals

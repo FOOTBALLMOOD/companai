@@ -19,19 +19,9 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 7 spine findings left, before `CC-121` starts. The CI chain that took the last four days is finished, and this is the work it interrupted.** The ceiling work is finished
-as a unit — screen, token, refusal — and six Slot 0 findings are closed: **`T-27`** (the tenant-scope
-helper that accepted a foreign tenant whenever the auth object was absent, silently), **`T-35`** (the
-sandbox that advertised an api-call cap it did not enforce), **`T-04`** (a Function that asked for a
-count and was answered with rows, verified green), **`T-05`** (the queue that could approve one act
-twice), **`T-06`** (the undo record now extends the hash chain, and the chain event says it is a
-reversal) and **`T-07`** (115 commands gained a capability, and the guard that should have caught it was
-rewritten). **7 remain:** `T-08`, `T-15`,
-`T-16`, `T-17`, `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority
-gate, and that gate cannot yet refuse a missing identity. **The
-spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer
-about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the
-checklist as §9.4.
+**IN HAND — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts. `T-17` is the current one: its requirement is written and nothing is built yet.** Nine of the thirteen are closed — **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that was never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller), **`T-15`** (the confirm path applies the binding's narrowing) and **`T-16`** (both doors answer a missing authority dependency the same way). **4 remain:** `T-17` (in hand), `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority gate. **The spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the checklist as §9.4.
+
+**★ WHERE THE NEXT AGENT STARTS.** `T-17` — the model allowlist fails open on the provider axis. The requirement exists and is complete: `library/development/PLAN-T-17-model-allowlist-fails-open.md` (commit `fe5fd08`), measured from source, four requirements (§3), five mutations (§4). **No code is written.** The next step is to build §3 against §4 and prove it. Two fail-opens are measured: `enforceAllowlist` keeps a forbidden provider when no permitted replacement is configured (its own comment says the api-key gate will catch the misconfiguration, but a configured provider has its key by definition), and `pickAllowedModel` returns the default model for an **empty** allowlist, which means *no models permitted*, while `undefined` means *nothing configured*.
 
 **What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
 whole platform through CI for the first time, and every run found the next defect — `CC-148` through
