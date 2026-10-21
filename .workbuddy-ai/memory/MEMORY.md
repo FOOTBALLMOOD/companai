@@ -78,14 +78,19 @@ it. `CC-154` (the template's app tests run nowhere: root jest TS5011, the templa
 ConfigSet error) and `CC-155` (the example todo command drifted between app and template, no parity
 test) are **open and startable**.
 
-**★ IN HAND — `CC-92` Slot 0: 8 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
-`T-05`, `T-06`. **Next by rank: `T-07`**, and it is **measured** (`scripts/measure-t07-command-capabilities.mjs`,
-2026-10-21): 128 command handlers with no capability across 7 modules, **109 mappable**, **19 needing a
-decision** (9 no route, 7 route declares no feature, 3 route declares two). One cross-module oddity:
-`catalog.offers.*` is gated by `sales.channels.manage`, a feature `catalog` does not declare. Then
-`T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source first**: `T-27`,
-`T-35`, `T-04` and `T-06` all needed the audit's sentence corrected. Schedule:
+**★ IN HAND — `CC-92` Slot 0: 7 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
+`T-05`, `T-06`, `T-07`. **Next by rank: `T-08`** (trust demotion is never triggered). Then `T-15`,
+`T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source first**: `T-27`,
+`T-35`, `T-04`, `T-06` and `T-07` all needed the audit's sentence corrected. Schedule:
 `PREVIEW-AUDIT-TRIAGE.md` §6 = checklist §9.4.
+**★ `T-07` CLOSED 2026-10-21 (`3b633189`/`9fd67e90`/`80bc4c0`), and the row was wrong in two ways.** The
+seven modules are **parked** (only `communication_channels` is enabled and it has no commands), so the
+gap was prospective; and the guard meant to catch it carried a **hardcoded parked list** naming six of
+them, with a docblock promising un-parking would make it fail, which it cannot. **The guard now checks
+every module**, reads the command's own block (not a 400-char window) and both quote styles (24 handlers
+use double quotes). **115 commands declare a capability**, 13 have a recorded reason, 6/6 mutations.
+**★ And nothing compiled the 115 lines**: `tsc` excludes parked modules and no suite runs them, so they
+were verified structurally (bracket counts identical to HEAD) and by two independent parsers.
 **★ WHY SLOT 0 BEFORE W1:** `CC-121` re-keys every `principal_id` through a gate that cannot see seven
 modules' commands and once accepted a missing identity. **The spine is repaired before it is re-keyed.**
 
