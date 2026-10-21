@@ -1,5 +1,20 @@
 # Handover — start here if you have just inherited this project
 
+> **★★ READ `ROUTE.md` FIRST — it is the entry point, and it is the only plan that is checked
+> (2026-10-21).** [`ROUTE.md`](ROUTE.md) says **what to build next and in what order**, and
+> `scripts/check-route.mjs` fails the build when its step marker and the register disagree. **You do not
+> choose the next step — the route does.** Every other plan (`PLAN-2026-10-18-one-agent.md`,
+> `PLAN-development-order-SR-core.md`, the SRS's chain) is **input to the route, never a rival to it.**
+> Its §0 lists what drift has already cost this project; read that before you decide anything.
+>
+> **★ AND IF YOU DISAGREE WITH THE ROUTE, CHALLENGE IT — DO NOT DRIFT AROUND IT.** The owner's instruction,
+> 2026-10-21, and it is the whole point of the route: *"if disagrees on something challenge by reporting
+> back not by drifting in its own."* Concretely — if the order looks wrong, or a step's prescribed fix looks
+> wrong, or you think a row should be skipped or resequenced: **write the disagreement down, with the
+> measurement that produced it, and report back. Do not quietly work a different step.** An unrecorded
+> reorder is the exact failure this project has now paid for five times (see `ROUTE.md` §0). The route is
+> editable by anyone — but the edit is part of the work, not a substitute for it.
+
 > **WHERE THE ACTIVE TASK LIVES (read this first, it is the one live fact).**
 > **The task being worked on right now is named in ONE place, and it is not this page:** the
 > **`★ ACTIVE TASK` box at the top of [`../../JOURNAL.md`](../../JOURNAL.md)**. Open it to see the

@@ -164,11 +164,18 @@ that is the check this paragraph used to say had never happened. **Two remain:**
 and the generated-schema-vs-entities diff (which also settles `CC-100`). So `CC-121`'s gate is
 neither closed nor unstarted.
 
-**★ And the order the rest of the SR work lands in** is `library/development/PLAN-development-order-SR-core.md`:
-the three inert ratchets (`SR-39`/`SR-41`/`SR-46`) and `SR-08` first — they are the only rows that make the
-next row *verifiable* — then the core (`CC-119`'s two checks → `CC-121` → `CC-122` → `SR-02` slice 2 +
-`SR-07` → `SR-13`), then the authority rows as data (`SR-03` · `SR-04` · `SR-05` · `SR-22` · `SR-26`), then
-tenancy (`SR-12` → `SR-10`/`SR-11`), then durability (`SR-19`…`SR-21`), then composition (`SR-27`…`SR-36`).
+**★ And the order the rest of the work lands in is `library/development/ROUTE.md` — READ IT FIRST, it is the
+entry point and the only plan that is checked.** `scripts/check-route.mjs` reads its step marker against the
+register and fails the build when they disagree, so an agent cannot quietly work two waves ahead; both it and
+its mutation suite run in CI. **If you disagree with the route, challenge it in writing and report back — do
+not drift around it** (owner, 2026-10-21). `PLAN-development-order-SR-core.md` is an *input* to the route,
+not a rival: where the two differ, the route wins, because the route is the one that is checked.
+
+The waves: **W0 the three inert ratchets** (`CC-109` · `CC-110` · `CC-114`) → **W0b the Business IR gets a
+Function** — measured 2026-10-21, the IR is wired but **a Function is never saved: no entity, no registry,
+the pipeline ends at "run"** → **W1 the core** (`CC-119`'s two checks → `CC-121` → `CC-122` → `SR-02` slice 2
++ `SR-07` → `SR-13`) → **W2 authority as data** → **W3 tenancy** → **W4 durability** → **W5 the surfaces**
+(chat → workspaces → automation → widgets) → **W6 Hermes** → **W7 the ratchets wired**.
 
 ---
 

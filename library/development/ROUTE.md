@@ -229,7 +229,11 @@ produces a clean answer about a partial system.
 5. **A checker is not a control until something calls it.** If you add a check, wire it.
 6. **If the marker and the register disagree, the register wins.**
 7. **Do not reorder without writing the reason here.** The order is the plan; an unrecorded reorder is the
-   drift this file exists to stop.
+   drift this file exists to stop. **★ And the owner's instruction, 2026-10-21: if you disagree with this
+   route, CHALLENGE it — do not drift around it.** Write the disagreement down with the measurement that
+   produced it, and report back. The route is editable by anyone, but the edit is part of the work, not a
+   substitute for it. Quietly working a different step is the one behaviour that has cost this project the
+   most, and it is what `scripts/check-route.mjs` exists to make visible.
 
 ---
 
