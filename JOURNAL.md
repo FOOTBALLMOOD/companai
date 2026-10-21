@@ -46,7 +46,7 @@ checklist as §9.4.
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-20 (after `CC-152`):** register **89 closed · 62 open · 151
+**THE POSITION, MEASURED — 2026-10-21 (after `CC-153`):** register **90 closed · 62 open · 152
 total**; §4's open rows **15 startable · 1 needs a live database · 4 need the owner · 42 blocked on a
 trigger**.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
@@ -55,6 +55,49 @@ trigger**.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21 — `CC-153`: the run that confirmed `CC-152` found four real defects, and none was a test
+
+**The flag worked. That is how the module's own defects finally became visible.** Run `39504503223` —
+the run for `CC-152`'s fix commit — came back **11 of 15 shards green**: the 404s were gone, and every
+spec that had failed on a missing page passed. The 4 red shards carried **8 failures, and every one was
+a defect the example module always had**, which CI could never see because the module had never run.
+This is the pattern the register keeps meeting: **the fix that makes a thing run also makes it fail.**
+
+**① The description on the one page every locale shares was frozen in English.** `layout.tsx` exported
+a *static* `metadata` object. A static export is evaluated once, at build time, with no request
+context — so `meta[name="description"]` carried the English text into every locale. `TC-APP-001`'s
+German run asserted the de string and got English. `generateMetadata()` runs per request, after
+`detectLocale()`, and reads the same dictionary the `html lang` attribute already resolves per
+request; the Companai line now lives in `en.json`. **② Two committed bins had no execute bit.** Linux
+refuses to spawn a `100644` bin, so `umes:list/inspect/check` exited 1 with **empty stdout and
+stderr** — a status-null `spawnSync` — which reads like a crash. It was a permission bit, and
+**Windows ignores the bit, so only the git index could answer**: `update-index --chmod=+x`, blob shas
+unchanged, and a guard that asks `git ls-files -s` (`CC-146`'s rule, third place). **③ `TC-UMES-020`
+needs routes that cannot exist.** The payment demo reads `payment_gateways` — parked by owner decision,
+"an operating system, not an ERP" — so its pages and session API are generated for no configuration.
+The spec now **declares** the dependency (`CC-151`'s fix), and discovery excludes it until the module
+is un-parked. **④ The todo command validated nothing.** The CRUD form enforced `priority <= 5` on blur;
+**the command — where every write funnels — enforced nothing**, so an API write stored 8. The rule was
+declared in `ce.ts` all along; the create and update commands now read it, for the keys the caller
+actually sent.
+
+**Proof, two routes each.** Metadata: layout suite **5/5**, and restoring the static export goes
+**3 RED** (sha256-identical restore). Exec bit: guard **5/5**, and the index read directly. Parked
+dependency: discovery on the real repo **33 → 32 specs**, `TC-UMES-020` gone from both trees while its
+`.spec.ts` still sits on disk, **0 real specs** with the flag unset, suite **10/10**. Validation:
+**5 cases** (reject 8 with the declared 400 and no entity write · accept 5 · accept the sync shape ·
+the update half of each), the pre-existing fixture that had asserted the **old defective behaviour**
+amended, module **13 suites / 60 tests** with the sync bridge green, **two mutations RED individually**
+(create-path call removed · update-path call removed).
+
+**What is not claimed:** that CI is now green. The next run is the confirmation — the four shards
+green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority 400. And a
+residual, recorded rather than hidden: `de`/`pl`/`es` still carry upstream's positioning at
+`app.metadata.description` while `en` carries the Companai line — rewording them is a hand-translation
+decision (`CC-142`'s rule), and `TC-APP-001` pins the German string, so the spec changes with it.
 
 ---
 

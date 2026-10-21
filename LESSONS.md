@@ -5506,3 +5506,60 @@ module) and `CC-149` (a dependency check that read directories) fell into — tw
 
 *Cross-ref: `CC-152` (the fix: guard-aware discovery + `OM_ENABLE_EXAMPLES` in the integration job),
 `CC-149` and `CC-132` (the same trap in the directory scan), L197 (a green run proves the file exists).*
+
+---
+
+## L201
+
+**A rule enforced in exactly one place is enforced in the place that doesn't matter.**
+
+`CC-153`, 2026-10-21. The example module's todo form enforced `priority <= 5` on blur — the field showed
+its red message and a human at a browser could not submit an 8. The command behind it,
+`commands/todos.ts`, parsed the payload, wrote the row, and validated **nothing**. An API caller sent
+`cf_priority: 8` and got **201 created**. The rule was declared in `ce.ts` the whole time, in the same
+shape the generic entities endpoint already reads; the one place that could not see it was the place
+every write funnels through. The form is a convenience for one kind of caller; the command is the truth
+for all of them.
+
+**The rules.**
+1. **A validation is a property of the write, not of the screen.** If a rule matters, it belongs where
+   the data changes — the form check is UX layered on top, never the check itself.
+2. **Ask what else writes, before believing the rule is enforced.** The todo entity had three writers
+   (HTTP, the `example_customers_sync` bridge, redo) and one check on a fourth path (the browser).
+   Enumerate the writers; then decide where the rule lives.
+3. **Declared beats duplicated.** `ce.ts` already held the rule, so the fix reads the declaration
+   through the shared validator instead of writing a second copy. A rule enforced twice is a rule that
+   disagrees with itself the day one copy changes.
+
+*Cross-ref: `CC-153` ④ (the fix + its 5-case guard), L197 (the module's specs had never run, so
+neither the pass nor the failure was visible).*
+
+---
+
+## L202
+
+**A permission bit is invisible in code, in the working tree and on Windows — only the git index
+records it.**
+
+`CC-153`, 2026-10-21. Two committed spawn targets (`packages/cli/bin/mercato`,
+`packages/create-app/bin/create-mercato-app`) carried no execute bit. Every content check passes — the
+bytes are identical, the node shebang is there, the file exists — and Windows runs them anyway, so
+every local run was green. Linux **refuses to spawn them**: the CLI exited 1 with **empty stdout and
+stderr** (a status-null `spawnSync`), so the failure looked like a crash inside the tool rather than a
+property of the file. A `git diff` can hide a mode-only change from a casual reading; `git ls-files -s`
+shows `100755` versus `100644`. The guard asks git, because git is the only place the answer lives.
+
+**The rules.**
+1. **If a fact can live outside the bytes, find out where it is recorded and ask there.** For a
+   permission bit that is the index; for an ignored file, `git check-ignore` (`CC-146`); for a symlink,
+   the index entry. A file-exists walker sees none of them.
+2. **Empty stderr is not a crash.** A subprocess that fails with no output at all was usually
+   *refused*, not run — EACCES, a missing interpreter, a bad shebang. Read the spawn status before
+   reading the logs.
+3. **A guard for an invisible property must name its instrument.** `bin-executable-bit.test.ts`
+   shells out to git and asserts both the mode and the shebang, so the test says where the truth lives
+   and no future reader re-derives it from the working tree.
+
+*Cross-ref: `CC-153` ② (the fix + the guard), `CC-146` (two source files no clean checkout could see —
+the same lesson for `.gitignore`), L200 (a check that cannot interpret what it reads answers a question
+nobody asked).*
