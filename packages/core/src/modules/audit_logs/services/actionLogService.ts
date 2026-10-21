@@ -283,6 +283,12 @@ export class ActionLogService {
     const context = isRecord(data.context) ? data.context : null
     const correlationId = context && typeof context.correlationId === 'string' ? context.correlationId : null
     const causationId = context && typeof context.causationId === 'string' ? context.causationId : null
+    // T-06: a reversal must be readable as one. The trace row already carries
+    // these two (`buildUndoTraceLog`), and the chain has to say what the record
+    // says: an undo whose event type is the original command id is otherwise
+    // indistinguishable from the act it reverses.
+    const historyAction = context && typeof context.historyAction === 'string' ? context.historyAction : null
+    const sourceLogId = context && typeof context.sourceLogId === 'string' ? context.sourceLogId : null
 
     await this.ledgerService.append({
       tenantId: log.tenantId,
@@ -304,6 +310,9 @@ export class ActionLogService {
         actionLabel: data.actionLabel ?? null,
         snapshotBeforeDigest: data.snapshotBefore === undefined ? null : digestOpaque(data.snapshotBefore),
         snapshotAfterDigest: data.snapshotAfter === undefined ? null : digestOpaque(data.snapshotAfter),
+        // Absent on an ordinary write, so those events stay byte-identical.
+        ...(historyAction ? { historyAction } : {}),
+        ...(sourceLogId ? { sourceLogId } : {}),
       },
     })
   }
@@ -733,22 +742,49 @@ export class ActionLogService {
     return affected === 1
   }
 
+  /**
+   * Records that an act was reversed (T-06).
+   *
+   * **The trace is chained, exactly like every other journal row.** Before this,
+   * the trace was created with `createLogEntity` on a forked EntityManager and
+   * flushed, and `appendToLedger` was never called: the one record saying "this
+   * was undone" lived only in the editable journal, so deleting it left the chain
+   * intact and still verifying. A ledger with a known gap stops being evidence.
+   *
+   * Two things changed, and both are the rule rather than the symptom:
+   *
+   * - **`this.em`, not `this.em.fork()`.** The state change, the trace row and
+   *   its chain event must commit with the reversal that produced them, or not at
+   *   all. `appendToLedger` already states that requirement; a fork was the one
+   *   thing that could break it.
+   * - **`appendToLedger` runs**, with the trace's own context, so the event
+   *   carries `historyAction: 'undo'` and `sourceLogId` and is distinguishable
+   *   from the act it reverses.
+   *
+   * Redo needed no change: it re-executes through the command bus, which reaches
+   * `log()` and chains. This makes undo agree with it.
+   */
   async markUndone(id: string, traceInput?: ActionLogCreateInput) {
-    const fork = this.em.fork()
-    const log = await fork.findOne(ActionLog, { id, deletedAt: null })
+    const log = await this.em.findOne(ActionLog, { id, deletedAt: null })
     if (!log) return null
 
     log.executionState = 'undone'
     log.undoToken = null
 
-    const traceLog = traceInput ? this.createLogEntity(fork, this.parseCreateInput(traceInput)) : null
+    const parsed = traceInput ? this.parseCreateInput(traceInput) : null
+    const traceLog = parsed ? this.createLogEntity(this.em, parsed) : null
     if (traceLog) {
-      fork.persist(traceLog)
+      this.em.persist(traceLog)
     }
 
-    await fork.flush()
+    await this.em.flush()
     await this.decryptEntries(log)
-    if (traceLog) await this.decryptEntries(traceLog)
+    if (traceLog && parsed) {
+      await this.decryptEntries(traceLog)
+      // The raw subject, not the stored one: `actor_user_id` is a uuid column
+      // and cannot say whether the actor was human or a machine.
+      await this.appendToLedger(traceLog, parsed, parsed.actorUserId ?? null)
+    }
 
     return log
   }

@@ -495,6 +495,10 @@ export class CommandBus {
     if (!handler.undo || this.isUndoable(handler) === false) {
       throw new Error(`Command ${log.commandId} is not undoable`)
     }
+    // Hoisted out of the guard above: the narrowing on `handler.undo` does not
+    // survive into the transaction closure below, and an assertion would silence
+    // the compiler without saying why.
+    const undoHandler = handler.undo
 
     // Atomically claim the action-log row before running any undo side effects.
     // Two concurrent requests holding the same undo token can both pass
@@ -528,12 +532,18 @@ export class CommandBus {
         undoInterceptorMetadata = beforeResult.metadataByInterceptor
       }
 
-      await handler.undo({
-        input: log.commandPayload as Parameters<NonNullable<typeof handler.undo>>[0]['input'],
-        ctx,
-        logEntry: log,
+      // T-06: the reversal and its record commit together, or neither does.
+      // `markUndone` now extends the chain, so the trace row, its ledger event
+      // and the business reversal are three writes that must not split. This is
+      // the same transaction boundary `execute` uses for the forward direction.
+      await this.runInTransaction(ctx, async () => {
+        await undoHandler({
+          input: log.commandPayload as Parameters<NonNullable<typeof handler.undo>>[0]['input'],
+          ctx,
+          logEntry: log,
+        })
+        await service.markUndone(log.id, this.buildUndoTraceLog(log, ctx))
       })
-      await service.markUndone(log.id, this.buildUndoTraceLog(log, ctx))
 
       // Run afterUndo command interceptors
       if (allInterceptors.length) {

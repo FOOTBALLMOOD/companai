@@ -36,6 +36,21 @@ export type LedgerVerificationResult = {
 }
 
 /**
+ * Whether the journal's reversals and the chain agree (T-06).
+ *
+ * A missing undo event is invisible to the hash walk, which is why this is a
+ * separate answer rather than another field on the walk's result.
+ */
+export type UndoCoverageResult = {
+  ok: boolean
+  tenantId: string
+  /** Journal rows claiming `undone` with no chained undo event naming them. */
+  undoneWithoutEvent: string[]
+  /** Chained undo events whose source row is not `undone`. */
+  eventWithoutUndone: string[]
+}
+
+/**
  * Turns a UUID into the two 32-bit integers `pg_advisory_xact_lock` wants.
  *
  * The lock only needs to be *consistent* per tenant, not collision-free across
@@ -285,6 +300,47 @@ export class LedgerService {
       'select distinct tenant_id from ledger_events order by tenant_id',
     )
     return rows.map((row) => row.tenant_id)
+  }
+
+  /**
+   * Whether the journal's reversals and the chain agree (T-06, R3).
+   *
+   * The hash walk above cannot answer this question. A missing event is not a
+   * broken link: the chain stays internally consistent and simply never mentions
+   * the undo, so deleting the trace row from the journal leaves a chain that
+   * still verifies. This check compares the two records against each other.
+   *
+   * Both directions are reported, because either one alone can be satisfied by
+   * editing the other: a row claiming `undone` with no event, and an event whose
+   * source row is not `undone`.
+   */
+  async verifyUndoCoverage(tenantId: string): Promise<UndoCoverageResult> {
+    const connection = this.em.getConnection()
+
+    const undone = await connection.execute<Array<{ id: string }>>(
+      `select id from action_logs
+        where tenant_id = ? and execution_state = 'undone' and deleted_at is null`,
+      [tenantId],
+    )
+
+    const reversed = await connection.execute<Array<{ source_id: string | null }>>(
+      `select payload->>'sourceLogId' as source_id from ledger_events
+        where tenant_id = ? and payload->>'historyAction' = 'undo'`,
+      [tenantId],
+    )
+
+    const undoneIds = new Set(undone.map((row) => row.id))
+    const eventSourceIds = new Set(reversed.map((row) => row.source_id).filter((id): id is string => Boolean(id)))
+
+    const undoneWithoutEvent = [...undoneIds].filter((id) => !eventSourceIds.has(id)).sort((a, b) => a.localeCompare(b))
+    const eventWithoutUndone = [...eventSourceIds].filter((id) => !undoneIds.has(id)).sort((a, b) => a.localeCompare(b))
+
+    return {
+      ok: undoneWithoutEvent.length === 0 && eventWithoutUndone.length === 0,
+      tenantId,
+      undoneWithoutEvent,
+      eventWithoutUndone,
+    }
   }
 }
 
