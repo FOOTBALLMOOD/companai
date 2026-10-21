@@ -19,7 +19,7 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts.** The ceiling work is finished
+**IN HAND — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts. The CI chain that took the last four days is finished, and this is the work it interrupted.** The ceiling work is finished
 as a unit — screen, token, refusal — and four Slot 0 findings are closed: **`T-27`** (the tenant-scope
 helper that accepted a foreign tenant whenever the auth object was absent, silently), **`T-35`** (the
 sandbox that advertised an api-call cap it did not enforce), **`T-04`** (a Function that asked for a
@@ -30,6 +30,12 @@ gate, and that gate cannot yet see **seven modules' commands** (`T-07`) or refus
 spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer
 about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the
 checklist as §9.4.
+
+**What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
+whole platform through CI for the first time, and every run found the next defect — `CC-148` through
+`CC-153`, plus the two rows the critic pass opened (`CC-154`, `CC-155`). That work was not a change of
+plan: a red build is the gate that blocks shipping, and each fix was forced by the run before it. It is
+now closed — run `39555453111` green end to end — and the queue above is live again.
 
 **The steps, in order:**
 
