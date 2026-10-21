@@ -160,10 +160,14 @@ describe('the authority gate can bind every live command', () => {
   })
 
   it('keeps every documented exception real', () => {
-    // The other direction: an entry left behind after its command was gated or
-    // deleted turns this list into folklore.
+    // Two ways an entry stops being true, and the first one was missing until a
+    // mutation survived: a command that was **gated** after all is no longer an
+    // exception, and a command that no longer **exists** is not one either. The
+    // original test only checked the second, so an entry could sit there
+    // excusing a command that had been fixed.
     const ids = new Set(commands.map((command) => command.id))
-    const stale = Object.keys(DELIBERATELY_UNGATED).filter((id) => !ids.has(id))
+    const gatedIds = new Set(commands.filter((command) => command.gated).map((command) => command.id))
+    const stale = Object.keys(DELIBERATELY_UNGATED).filter((id) => gatedIds.has(id) || !ids.has(id))
 
     expect(stale).toEqual([])
   })
