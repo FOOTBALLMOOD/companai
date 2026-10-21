@@ -23,6 +23,21 @@
  * `buildOptimisticLockHeader`) gain protection without any per-deployment
  * env change.
  *
+ * **`T-30` — the eight branches that pass, and which of them are designed.** An
+ * audit counted five and reported the designed ones as fail-opens, so the map is
+ * here to be checked against the code:
+ *   1. `mode === 'off'`                      — the operator disabled it
+ *   2. operation is not update/delete        — nothing to lock on a create
+ *   3. entity is not on the allow-list       — the allow-list's purpose
+ *   4. no reader registered for the entity   — **strict-additive opt-in**, by design
+ *   5. **no token sent at all**              — **the documented opt-in**, by design
+ *   6. `currentRaw == null`                  — the record is gone; the CRUD route's 404 should fire
+ *   7. stored value is not a date            — no comparison possible; **logged** (it used to be silent)
+ *   8. ~~token sent but unreadable~~         — **no longer passes: 400** `optimistic_lock_token_unreadable`
+ * Branch 8 was the defect: a client that sent a token asked for a conditional
+ * write, and got an unconditional one in silence. Branches 5 and 8 shared one
+ * answer, which is how the second hid behind the first.
+ *
  * Cannot be registered as a static `data/guards.ts` `MutationGuard` because
  * the static `validate(input)` receives only `MutationGuardInput` — no
  * container / em access. Stateful checks that need to read current DB state
@@ -41,6 +56,8 @@ import {
   OPTIMISTIC_LOCK_CONFLICT_ERROR,
   OPTIMISTIC_LOCK_ENV_VAR,
   OPTIMISTIC_LOCK_HEADER_NAME,
+  OPTIMISTIC_LOCK_TOKEN_UNREADABLE_CODE,
+  OPTIMISTIC_LOCK_TOKEN_UNREADABLE_ERROR,
   type OptimisticLockConflictBody,
 } from './optimistic-lock-headers'
 import { getAllOptimisticLockReaders } from './optimistic-lock-store'
@@ -317,18 +334,36 @@ export function createOptimisticLockGuardService(
     }
 
     const expectedRaw = readHeader(input.requestHeaders, OPTIMISTIC_LOCK_HEADER_NAME)
+    // `T-30` — **branch 5 splits in two here, and that split is the whole fix.** These two requests used to
+    // share one answer:
+    //   • no token at all  → the client did not ask for a conditional write. Passing is the documented,
+    //     additive contract (see this file's docblock, and the test named "strict-additive opt-in").
+    //   • a token present but unreadable → the client DID ask for one, and was given an unconditional write
+    //     in silence. That client believes it is protected at exactly the moment it is not.
+    if (expectedRaw == null) {
+      return { ok: true, shouldRunAfterSuccess: false }
+    }
+
     const resolvedExpected = await resolveExpected({
       expectedFromHeader: expectedRaw,
       resourceKind: input.resourceKind,
       resourceId: input.resourceId,
     })
-    if (resolvedExpected == null) {
-      return { ok: true, shouldRunAfterSuccess: false }
-    }
-
-    const expectedIso = normalizeIsoToken(resolvedExpected)
+    const expectedIso = resolvedExpected == null ? null : normalizeIsoToken(resolvedExpected)
     if (expectedIso == null) {
-      return { ok: true, shouldRunAfterSuccess: false }
+      // A token was sent and cannot be turned into an instant — either the resolver produced nothing or the
+      // value is not a date. Either way the conditional write the client asked for cannot be performed, so
+      // the answer is a refusal that says so, not a silent unconditional write.
+      return {
+        ok: false,
+        status: 400,
+        body: {
+          error: OPTIMISTIC_LOCK_TOKEN_UNREADABLE_ERROR,
+          code: OPTIMISTIC_LOCK_TOKEN_UNREADABLE_CODE,
+          header: OPTIMISTIC_LOCK_HEADER_NAME,
+          received: expectedRaw,
+        },
+      }
     }
 
     const em = opts.getEm()
@@ -343,6 +378,14 @@ export function createOptimisticLockGuardService(
     }
     const currentIso = normalizeIsoToken(currentRaw)
     if (currentIso == null) {
+      // `T-30` — branch 8, the other silent one. The record's stored value is not a date, so no comparison
+      // is possible and the write proceeds. Refusing would break every entity whose timestamp column is a
+      // string, which is a schema fact this guard does not own — but the branch stops being invisible.
+      logger.warn('Optimistic lock could not compare: the stored value is not a date', {
+        resourceKind: input.resourceKind,
+        resourceId: input.resourceId,
+        operation: input.operation,
+      })
       return { ok: true, shouldRunAfterSuccess: false }
     }
 

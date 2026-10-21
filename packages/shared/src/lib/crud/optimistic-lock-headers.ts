@@ -18,6 +18,17 @@ export const OPTIMISTIC_LOCK_CONFLICT_CODE = 'optimistic_lock_conflict'
 
 export const OPTIMISTIC_LOCK_CONFLICT_ERROR = 'record_modified'
 
+/**
+ * `T-30` — a lock token was **sent** and could not be read.
+ *
+ * Distinct from `optimistic_lock_conflict` on purpose: a conflict means the client's token was valid and
+ * stale (retry with fresh data), while this means the token could not be used at all (fix the client). One
+ * code for both would make a broken client look like a race.
+ */
+export const OPTIMISTIC_LOCK_TOKEN_UNREADABLE_CODE = 'optimistic_lock_token_unreadable'
+
+export const OPTIMISTIC_LOCK_TOKEN_UNREADABLE_ERROR = 'lock_token_unreadable'
+
 export const OPTIMISTIC_LOCK_ENV_VAR = 'OM_OPTIMISTIC_LOCK'
 
 export const OPTIMISTIC_LOCK_DEFAULT_PRIORITY = 50

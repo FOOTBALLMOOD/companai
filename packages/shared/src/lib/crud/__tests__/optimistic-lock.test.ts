@@ -8,6 +8,7 @@ import {
   OPTIMISTIC_LOCK_CONFLICT_CODE,
   OPTIMISTIC_LOCK_CONFLICT_ERROR,
   OPTIMISTIC_LOCK_HEADER_NAME,
+  OPTIMISTIC_LOCK_TOKEN_UNREADABLE_CODE,
 } from '../optimistic-lock-headers'
 import type { CrudMutationGuardValidateInput } from '../mutation-guard'
 import { createLogger } from '@open-mercato/shared/lib/logger'
@@ -24,6 +25,8 @@ jest.mock('@open-mercato/shared/lib/logger', () => {
   return { createLogger: jest.fn(() => mocked) }
 })
 const loggerError = createLogger('shared').error as jest.Mock
+// `T-30` — the "stored value is not a date" branch is only worth anything if it can be observed.
+const warn = createLogger('shared').warn as jest.Mock
 
 
 describe('parseOptimisticLockEnv', () => {
@@ -193,7 +196,12 @@ describe('createOptimisticLockGuardService — short-circuits', () => {
     expect(result).toEqual({ ok: true, shouldRunAfterSuccess: false })
   })
 
-  it('passes when the client header is malformed (non-ISO)', async () => {
+  it('★ T-30: REFUSES a token that was sent but cannot be read — it used to pass', async () => {
+    // This test used to be named "passes when the client header is malformed (non-ISO)" and asserted
+    // `ok: true`. That name stated a defect as a design decision, which is why nobody looked again: a
+    // client that sends a lock token HAS asked for a conditional write, and a malformed one was answered
+    // with an unconditional write in silence. An absent token still passes — see the next test — and the
+    // difference between "did not ask" and "asked badly" is the whole of this row.
     const headers = new Headers()
     headers.set(OPTIMISTIC_LOCK_HEADER_NAME, 'not-a-date')
     const service = makeService({
@@ -201,7 +209,55 @@ describe('createOptimisticLockGuardService — short-circuits', () => {
       readers: { 'customers.company': async () => new Date().toISOString() },
     })
     const result = await service.validateMutation(makeInput({ requestHeaders: headers }))
+
+    expect(result).toMatchObject({ ok: false, status: 400 })
+    if (result.ok) throw new Error('expected a refusal')
+    expect(result.body).toMatchObject({
+      code: OPTIMISTIC_LOCK_TOKEN_UNREADABLE_CODE,
+      received: 'not-a-date',
+    })
+  })
+
+  it('★ T-30: an ABSENT token still passes — the additive contract survives the refusal', async () => {
+    // The boundary from the other side. If this ever fails, the fix has made the lock mandatory and every
+    // existing API consumer that never sent a token starts getting 400s.
+    const service = makeService({
+      envValue: 'all',
+      readers: { 'customers.company': async () => new Date().toISOString() },
+    })
+    const result = await service.validateMutation(makeInput())
+
     expect(result).toEqual({ ok: true, shouldRunAfterSuccess: false })
+  })
+
+  it('★ T-30: a stored value that is not a date passes, and now SAYS so', async () => {
+    const headers = new Headers()
+    headers.set(OPTIMISTIC_LOCK_HEADER_NAME, '2026-05-25T08:00:00.000Z')
+    const service = makeService({
+      envValue: 'all',
+      // The column is a string, not a timestamp: no comparison is possible. Refusing would break every
+      // entity shaped like this, so it passes — but silently was the other half of the row.
+      readers: { 'customers.company': async () => 'not-a-timestamp' },
+    })
+    const result = await service.validateMutation(makeInput({ requestHeaders: headers }))
+
+    expect(result).toEqual({ ok: true, shouldRunAfterSuccess: false })
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('stored value is not a date'),
+      expect.objectContaining({ resourceKind: 'customers.company', resourceId: 'company-1' }),
+    )
+  })
+
+  it('★ T-30: a readable token that mismatches is still a 409 — the refusal did not swallow it', async () => {
+    const headers = new Headers()
+    headers.set(OPTIMISTIC_LOCK_HEADER_NAME, '2026-05-25T08:00:00.000Z')
+    const service = makeService({
+      envValue: 'all',
+      readers: { 'customers.company': async () => '2026-05-25T09:00:00.000Z' },
+    })
+    const result = await service.validateMutation(makeInput({ requestHeaders: headers }))
+
+    expect(result).toMatchObject({ ok: false, status: 409 })
   })
 
   it('passes when the record no longer exists (lets the CRUD route 404 fire)', async () => {
