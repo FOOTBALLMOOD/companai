@@ -86,7 +86,7 @@ Sorted by rank, then by the audit's own priority. "Src" is the `preview/` docume
 
 | # | Src | The finding | Validation | Rank | Urgency | Action |
 |---|---|---|---|---|---|---|
-| **T-15** | 08 §8 | The confirm path drops the binding's narrowing (`CC-56` boolean re-check exists; `CC-55` narrowing does not) | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
+| **T-15** | 08 §8 | The confirm path drops the binding's narrowing (`CC-56` boolean re-check exists; `CC-55` narrowing does not) | 🔬 CONFIRMED | medium | scheduled | **REQUIREMENT WRITTEN 2026-10-21** (`PLAN-T-15-confirm-drops-narrowing.md`). Re-measured, and it is TWO compounding defects: the confirm route never calls `computeBoundRunScope` (while `chat:613` and `run-object:199` both do), **and** it resolves the agent with `getAgent` from the **global registry** (`:171`) instead of `resolveAgentDefinition`, which is code-first and tenant-row-second. So a tenant-authored type is invisible there, and a narrowing computed from the wrong definition would be wrong in the direction of permission. **`CC-55` is no longer "dead code"** — the narrowing leg now has two callers; the confirm path is the third place it is missing. |
 | **T-16** | 08 §9 | Two gates fail in opposite directions on a missing dependency | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
 | **T-17** | 08 §10 | The model allowlist fails open on the provider axis | 🔬 CONFIRMED | medium | scheduled | EXECUTE |
 | **T-18** | 08 §11 F2 | `SURFACE_ID_PATTERN` carries a stray `/i`, so uppercase surface ids are accepted | 🔬 CONFIRMED | small | scheduled | EXECUTE |
