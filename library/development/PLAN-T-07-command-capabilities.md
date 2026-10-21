@@ -1,7 +1,8 @@
 # PLAN-T-07 — the commands the gate cannot see
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** **BUILT IN PART, 2026-10-21.** §3's declarations and §4's guard are done and verified;
+**the seven mutations are not written**, so the row stays open. §9 records five corrections, and one of
+them changes what the row means.
 **Row:** `T-07` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** `scripts/measure-t07-command-capabilities.mjs`, read-only, run 2026-10-21.
@@ -179,3 +180,69 @@ Plus: the guard suite count, the core suite count, and `tsc --noEmit` at 0, as n
   invented to fill a hole is a false record, which is worse than a visible gap.
 - **What to do with dead commands:** leave them undeclared and open the dead-code row. The coverage
   number is not the goal; a gate that sees real acts is.
+
+---
+
+## 9. The build record, and five corrections
+
+### 9.1 Rule 13: the seven modules are PARKED, so this row is prospective, not live
+
+The row, the triage and this document all said the commands were *"invisible to the authority gate"* as
+though they were being dispatched today. Measured while building: only **`communication_channels`** of
+the seven is in `enabledModules` (`apps/mercato/src/modules.ts:176`), and it has **no commands**. The
+other six are listed as commented-out entries, which is how that file documents a parked module, and
+`packages/core/jest.config.cjs` treats them as frozen: excluded from tsconfig, tests not run.
+
+So the 128 commands cannot be dispatched today, and the gap is **prospective**. That does not make it
+smaller: it is exactly the gap nobody watches, and `CC-121` re-keys authority across the whole schema.
+
+### 9.2 Rule 13: the LIVE defect was the guard, and its own docblock promised otherwise
+
+`command-capability-coverage.test.ts` carried a hardcoded `PARKED` set naming `catalog`, `customers`,
+`resources`, `sales`, `staff` and `wms`, and said: *"if one is ever un-parked, this test starts failing
+for it, which is the right moment to classify its commands."* **It cannot.** The set is a constant, so
+un-parking a module changes nothing in that file. That promise, not the missing capabilities, is what
+this row should be known for.
+
+The rewrite removes the question: **every module is checked**, because a capability is a property of the
+command, not of whether it can be dispatched today.
+
+### 9.3 Rule 13: R2's premise was wrong, and the route was right
+
+§3's R2 said `sales/api/returns` over-declares (`create + manage` on every method) and that the route
+had to be corrected. Reading it: the route declares **one feature per method** already
+(`POST: create`, `PUT: manage`, `DELETE: manage`), and its factory names each command in its own
+operation block (`actions: { create: { commandId: 'sales.returns.create' } … }`).
+
+**The instrument was over-unioning**: for any factory route it attributed a command to *every* write
+method, so one feature per method looked like two. Fixed by reading the factory's own `commandId`, which
+is a fact in the file. **No route was changed**, and R2 is void rather than done.
+
+### 9.4 Rule 13: the scope was eight modules, not seven
+
+The guard, once it stopped excluding parked modules, found **seven more undeclared commands in
+`checkout`**, which ships in its own package (`@open-mercato/checkout`) and was never in the audit's
+seven. They are recorded in the guard's exception list as the same work when that module is un-parked,
+because the codemod walks `packages/core` and does not reach them.
+
+### 9.5 What was built, and how it was verified
+
+| | |
+|---|---|
+| commands now declaring a capability | **115** (109 codemod, 3 after the factory fix, 3 by hand) |
+| still declaring nothing | **13**, each with a reason and the row that owns it |
+| files touched | **81** |
+| the guard | rewritten: every module, per-block detection, both quote styles, 4 tests |
+| `packages/core` | **663 suites / 5,839 tests green** |
+| `tsc --noEmit` | **0** |
+
+**The verification problem, stated plainly.** `tsc` excludes parked modules and no suite runs them, so
+**nothing compiled or tested the 115 inserted lines**. `scripts/verify-t07-parse.mjs` therefore checks
+the invariant the edit must preserve: bracket counts identical to `HEAD`, and every inserted line
+well-formed at its own indentation. Result: **81 files, 115 well-formed lines, no structural problems**.
+Two independent parsers (the instrument and the guard) also agree on the count.
+
+### 9.6 Still outstanding
+
+**The seven mutations in §4 are not written.** The row stays open until they are, and §4's M2 is void
+with R2, so the table needs rebuilding against what was actually built rather than patched.
