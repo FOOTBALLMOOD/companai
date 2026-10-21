@@ -74,7 +74,7 @@ Sorted by rank, then by the audit's own priority. "Src" is the `preview/` docume
 | **T-05** | 08 §4 | **The approvals queue can approve the same act twice.** Read-then-act, no CAS | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-20** — code `17911238`, docs `7f57f3e`. One claim, three races, and the mutation that survived the first run. **Rule 13, corrected 2026-10-21:** this row and §6.2 still read *urgent / EXECUTE* for a day after the row closed, which is the same stale-row defect `T-06`'s close found in the `NEXT` block |
 | **T-06** | 08 §5 | **`undo` writes the one record the tamper-evident chain does not cover** | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-06-undo-ledger-gap.md`, code `dcc7799`+ the build commit. `markUndone` now appends to the chain and the event says `historyAction: 'undo'` with `sourceLogId`; the fork is gone so the reversal and its proof commit together; `verifyUndoCoverage` compares the journal against the chain in both directions. 12 tests, 5/5 mutations |
 | **T-07** | 08 §6 | **Nine modules' commands are invisible to the authority gate**, one of them enabled | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-07-command-capabilities.md`, code `3b633189`. 115 commands now declare a capability, 13 have a recorded reason, and the guard checks every module instead of a hardcoded parked list. **Re-measured twice:** seven modules, not nine; and the seven are **parked**, so the gap was prospective. 6/6 mutations |
-| **T-08** | 08 §7 | **Trust demotion is never triggered.** `demoteIfEvidenceDemands` has 4 callers, all its own test | 🔬 CONFIRMED | high | scheduled | **REQUIREMENT WRITTEN 2026-10-21** (`PLAN-T-08-trust-demotion-never-triggered.md`). Re-measured: **zero production callers** (`promote` has one, `demote` has one). The trigger the function's own docblock names is **"after an act is reversed"**, and there is exactly one place an act is reversed, `CommandBus.undo`, which `T-06` already touched. So the missing caller is one addition at a site already in the transaction. The evidence it reads is a ratio over `action_logs` (`undone / (done|undone|redone)`, minimum 10 acts), and the same rate that **blocks a promotion** **demands a demotion**. |
+| **T-08** | 08 §7 | **Trust demotion is never triggered.** `demoteIfEvidenceDemands` has 4 callers, all its own test | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-21** (`34488c07`) — `PLAN-T-08-trust-demotion-never-triggered.md`. The missing caller is one call in `CommandBus.undo`, after the trace, inside the transaction. The ORIGINAL actor is demoted, the capability group is the command's module segment, and a failing demotion never fails an undo. 7 tests, 5/5 mutations. **Requirement written 2026-10-21** (`PLAN-T-08-trust-demotion-never-triggered.md`). Re-measured: **zero production callers** (`promote` has one, `demote` has one). The trigger the function's own docblock names is **"after an act is reversed"**, and there is exactly one place an act is reversed, `CommandBus.undo`, which `T-06` already touched. So the missing caller is one addition at a site already in the transaction. The evidence it reads is a ratio over `action_logs` (`undone / (done|undone|redone)`, minimum 10 acts), and the same rate that **blocks a promotion** **demands a demotion**. |
 | **T-09** | 11 §1 | **The design-system lint is broken** (`@typescript-eslint` mixed versions) and all six rules are `warn` | 🔬 CONFIRMED | high | scheduled | EXECUTE |
 | **T-10** | 11 §2 | **Accessibility linting is installed and never switched on** | 🔬 CONFIRMED | high | postponed | DOCUMENT |
 | **T-11** | 11 §3 | **RTL is half-built, and its own source comment says it is finished** | 📐 CONFIRMED | high | scheduled | DOCUMENT |
@@ -415,16 +415,16 @@ logged and closable by `OM_ENFORCE_TENANT_SCOPE_STRICT`, which leaves **12** in 
 `T-36` is **fixed** by
 `CC-132` (`moduleRootFor` + `enabledModules`, measured in the guard).
 
-### 6.1 Already closed — do not re-fix (11)
+### 6.1 Already closed — do not re-fix (12)
 
 `T-01` `fa974bb1` · `T-02` `60a6714f` · `T-03` → `SR-47`/`CC-93` · `T-13`/`T-14` `CC-98` · `T-32` `13c6206f` ·
 `T-45` `CC-97` · **`T-36` — closed by `CC-132`** (the coverage guard's denominator no longer excludes
 anything shipped outside `packages/core`; the row's own defect, fixed under a different row) ·
 **`T-05` `17911238`/`7f57f3e`** (the double approve) · **`T-06` `PLAN-T-06-undo-ledger-gap.md`** (the
 undo record the chain did not cover) · **`T-07` `3b633189`** (115 commands gated, and the guard that
-could not see them).
+could not see them) · **`T-08` `34488c07`** (trust demotion has a caller).
 
-### 6.2 Slot 0 — before `W1` / `CC-121` starts (7 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07` built)
+### 6.2 Slot 0 — before `W1` / `CC-121` starts (6 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08` built)
 
 The spine's own guarantees. Each is a central promise the pipeline will otherwise build on top of.
 

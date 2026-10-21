@@ -41,6 +41,20 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
+**LAST DONE, 2026-10-21 (latest): `T-08` is BUILT and CLOSED — trust demotion finally has a caller.**
+`demoteIfEvidenceDemands` had **zero production callers** while `promote` had one, so authority could be
+raised on evidence and never lowered, and a principal whose acts keep being reversed stayed at their tier
+forever. The missing caller is one call in `CommandBus.undo`, inside the transaction `T-06` already
+opened and after the trace is written, so the evidence count includes the reversal that triggered it.
+Three decisions, each because the alternative breaks something: the **original** actor is demoted and not
+the person pressing undo, because the evidence query counts `action_logs.actor_user_id`; the capability
+group is the undone command's module segment, because the query matches `command_id like '<group>.%'`;
+and a failing demotion never fails an undo, because a reversed act with no record is worse than a tier
+that moves late. **Proof:** 7 tests, **5/5 mutations PROVEN**, core 663 suites / 5,839 tests, `tsc` 0.
+**One false alarm worth knowing:** the shared suite reported a time-based suite as failed with **zero test
+failures**; it passes 8/8 on its own and had been running against a competing `tsc`. A load failure, not a
+code failure, and exactly the shape that reads as nothing. **90 closed · 66 open · 156 total.**
+
 **LAST DONE, 2026-10-21 (later): `T-07` is BUILT and CLOSED, and it changed what its own row meant.**
 115 commands now declare the permission their route already requires, 13 declare nothing with a recorded
 reason each, and the guard that was supposed to catch this was rewritten. **The row was wrong in two
@@ -446,11 +460,11 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 7 spine findings left, before `CC-121` starts.** `T-08` is the next one by
-rank: **trust demotion is never triggered** (`demoteIfEvidenceDemands` has 4 callers, all its own tests).
-Then `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source before building
-it**: `T-27`, `T-35`, `T-04`, `T-06` and `T-07` all needed the audit's own sentence corrected, and
-`T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
+**▶ NEXT — `CC-92` Slot 0: 6 spine findings left, before `CC-121` starts.** `T-15` is the next one by
+rank, and it has not been measured yet, so it is measured before it is built. Then `T-16`, `T-17`,
+`T-28`, `T-30`, `T-33`. **Measure each from source before building
+it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07` and `T-08` all needed the audit's own sentence corrected,
+and `T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
 meant to catch it had been excluding them by hand. **Rule 13,
 corrected 2026-10-21:** this sentence twice named `T-06` while describing **`T-05`'s** race (*"the approvals
 queue can approve the same act twice"*), which closed on 2026-10-20. The description was left behind
@@ -1380,8 +1394,8 @@ repaired before it is re-keyed.**
 
 | Slot | Gate | Findings | Count |
 |---|---|---|---|
-| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21) | 14 |
-| **Slot 0** | before `CC-121` starts | `T-08` `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 7 |
+| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21), `T-08` (2026-10-21) | 15 |
+| **Slot 0** | before `CC-121` starts | `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 6 |
 | **Slot 1** | with `W3` (chokepoint + actor-class gate) | `T-18` `T-19` `T-20` `T-21` `T-22` `T-23` `T-25` `T-26` `T-29` `T-34` | 10 |
 | **Slot 2** | with `W5` (durable runs) | `T-43` | 1 |
 | **Slot 3** | with `W7` (first surface) | `T-09` `T-10` `T-12` `T-40` | 4 |

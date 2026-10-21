@@ -1,7 +1,7 @@
 # PLAN-T-08 — trust demotion is never triggered
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** **BUILT and CLOSED 2026-10-21.** **7 tests, 5/5 mutations PROVEN.** §3 is the requirement,
+§4 is the proof, §8 is what was built.
 **Row:** `T-08` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** read from source on 2026-10-21, at the lines named below.
@@ -129,3 +129,36 @@ Plus: the command-bus suite count, the auth suite count, and `tsc --noEmit` at 0
 |---|---|
 | **Undoing someone else's act improves the undoer's own evidence.** The trace row carries `actor_user_id = ctx.auth.sub` and `execution_state = 'done'`, so the undoer gains a completed act while the original actor gains an overridden one. That is defensible (the undoer did perform an act) but it means a tenant-level undoer can dilute their own override rate by undoing others. | It is a property of how evidence is counted, not of the missing caller. It becomes a row when somebody decides whether the trace should count at all. |
 | The `command_id like '<group>.%'` match means a command whose id does not start with its module is invisible to the evidence query | A convention, already noted in the source (`:95-97`), and changing it changes every tier in the system |
+
+---
+
+## 8. What was built
+
+One private method and one call, in `packages/shared/src/lib/commands/command-bus.ts`:
+
+```ts
+await this.runInTransaction(ctx, async () => {
+  await undoHandler({ ... })
+  await service.markUndone(log.id, this.buildUndoTraceLog(log, ctx))
+  // T-08: the caller demotion never had. After the trace, so the evidence
+  // count includes the reversal that triggered it.
+  await this.demoteTrustAfterUndo(log, ctx)
+})
+```
+
+`demoteTrustAfterUndo` does four things in order: read the **original** actor from the log row and
+return if there is none; derive the capability group from the command id's module segment; resolve
+`trustService` and return if the deployment has none; call `demoteIfEvidenceDemands` inside a
+try/catch that logs and swallows.
+
+The type import is `import type { TrustService }`, the same style `ActionLogService` already uses, so
+`packages/shared` gains no runtime dependency on core.
+
+**Proof:** 7 tests (`command-bus.undo-trust.test.ts`), **5/5 mutations PROVEN** with every file
+restored byte-identical, core **663 suites / 5,839 tests**, `tsc --noEmit` 0 for shared and core.
+
+**One false alarm, recorded because it looked like a defect.** The shared suite reported
+`dynamicLoader.tsconfig.test.ts` failed with **0 test failures**, which is the load-failure signature
+(`CC-99`). It passes **8/8 on its own in 21s**; it ran in 74s while a `tsc --noEmit` was competing for
+memory, and its cases are time-based with real compiles and two-second sleeps. A load failure under
+contention, not a code failure.
