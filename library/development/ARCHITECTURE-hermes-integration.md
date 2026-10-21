@@ -262,6 +262,36 @@ isolation and must never be accepted as evidence of it.
 
 ---
 
+
+### 5.5 The deployment boundary: one Hermes per deployment, and tenants inside it are one company
+
+**The owner's ruling, 2026-10-21.** All tenants of one deployment share the one Hermes that deployment
+runs, and that is deliberate: a deployment is a **solution for one company**, and the tenants inside it are
+that company's branches, departments and units, not separate businesses. The runtime is the company's
+shared home, so the experience compounds, the skills and knowledge built on top of it are built once and
+benefit every part of the company, and there is one thing to swap when a better engine appears.
+
+**The second companies never share a deployment.** A user of company A and a user of company B are never
+tenants of the same deployment. That separation is a **business layer the owner adds on top**, not
+something the code is asked to guarantee: the platform's job is to make tenant isolation inside a
+deployment real and proven, and the deployment boundary is what keeps two companies from ever needing it
+across the wider gap. At this early stage the boundary is drawn at least this strictly.
+
+**Why the boundary sits where it does.** The platform is being built so that users with the right
+permissions can understand and change the platform and tenant architecture itself. That power is the
+product, and it is also the reason the boundary cannot be lax: a mistake made by a privileged user must
+be able to damage one company, never two. Placing the boundary at the deployment also keeps the future
+swap cheap, because there is exactly one Hermes per instance to replace, and the tenants of a company are
+never coupled to a runtime another company depends on.
+
+**What this does NOT change, and raises the stakes of instead.** Everything in 5.1 to 5.4 still holds and
+now matters more, not less: a tenant is still never inferred, the four data kinds are still never
+confused, and isolation between tenants inside one deployment is still proven by adversarial negative
+tests rather than asserted by a folder name. Tenants of one company are different branches of one
+business, and one branch reading another's data is still a leak.
+
+---
+
 ## 6. Lifecycle: admission, scheduling, idempotency
 
 ### 6.1 Admission, in order

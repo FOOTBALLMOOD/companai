@@ -52,9 +52,10 @@ now closed — run `39555453111` green end to end — and the queue above is liv
 2. **`CC-121`** — behind `CC-119` (the database rebuild milestone), then **`CC-122`**.
 3. **`CC-133`** — the platform above its tenants (option B). Deferred by the owner's trigger, not dropped.
 
-**THE POSITION, MEASURED — 2026-10-21 (after `CC-153`, with `CC-154`/`CC-155` opened by its critic
-pass):** register **90 closed · 64 open · 154 total**; §4's open rows **17 startable · 1 needs a live
-database · 4 need the owner · 42 blocked on a trigger**.
+**THE POSITION, MEASURED, 2026-10-21 (after `CC-153`, with `CC-154`/`CC-155` opened by its critic
+pass and the four "needs you" rows ruled on):** register **90 closed · 64 open · 154 total**; §4's open
+rows **20 startable · 1 needs a live database · 0 need the owner · 43 blocked on a trigger**. The owner
+queue is empty for the first time since the register was built.
 `MASTER-CHECKLIST.md` §2 is the canonical last-done/next line and §5 is the register;
 `where_we_left.md` §0 is the six-step resume recipe. **The authority family is complete and closed:**
 `CC-125` (the floor) · `CC-128` (the ceiling) · `CC-134` (the superadmin read) · `CC-135` (the ceiling's
@@ -81,6 +82,21 @@ path is waiting on the owner.**
 **★ OBSERVATION TAKEN 2026-10-21** (run `39549013082`, both fix commits aboard; the run for the first commit was cancelled by the follow-up push): **all 15 shards success**, the four that were red are green (de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority 400). The first green run since this chain began (`39357327101` → `39363070729` → `39418460891` → `39429422803` → `39504503223` → cancelled → green).
 
 **★ TRANSLATION LANDED 2026-10-21 (`bb25eda9`).** The owner's call on the residual: the de, pl and es catalogs now carry the Companai line at `app.metadata.description`, translated by hand for their review and correction, and both copies of `TC-APP-001` moved to the new German string so the spec travels with the dictionary. Arabic stays out of scope; it is `CC-144`'s own row. A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in all four catalogs of both trees and renders nowhere, so it is catalog drift for the owner's sweeps, not a visible surface.
+
+---
+
+## 2026-10-21, the tenancy ruling and four decisions: the owner queue is empty
+
+**The owner ruled on how a deployment maps to a company, and it changes what the platform must guarantee.** One Hermes serves every tenant of one deployment, and that is deliberate: a deployment is a solution for **one company**, and the tenants inside it are that company's branches, departments and units, not separate businesses. The shared runtime is the company's home, so the skills and knowledge built on it are built once and benefit every part of the company, and there is exactly one thing to swap when a better engine appears. **Two companies never share a deployment**, and that separation is a business layer the owner adds on top; at this early stage it is drawn at least this strictly. The reason it sits there is the product itself: the platform is being built so privileged users can understand and reshape the platform and tenant architecture, and that power must never be able to damage two companies at once. Recorded in `ARCHITECTURE-hermes-integration.md` §5.5, which also states what it does not relax: isolation between tenants inside one deployment is still proven by adversarial negative tests, because one branch reading another branch's data is still a leak.
+
+**Four rows that needed the owner are now work, per rule 13: a row whose question has been answered is work, not a question.**
+
+- **`CC-11`** (the structural guard is never armed) is **ruled**: it arms by default on every new tenant, and existing tenants are armed on a scheduled pass once their shadow evidence shows no unexplained refusals, each arming recorded as a per-tenant `enforce` row so it is auditable and reversible. A guard that refuses is the safer default than a guard that only watches, which matters more now that privileged users can reshape the architecture.
+- **`CC-51`** (row 16's team leg, deferred in October) has its **go-ahead**, and the shape is settled by the 2026-10-12 premise correction: the team entities already exist, so it is a new branch in the scope resolver over `StaffTeam`/`StaffTeamMember`, not a new entity with migrations. The tenancy ruling promotes it, because branches and departments are exactly the axis it scopes.
+- **`CC-65`** (`action_logs` grows forever) has its **policy**: 12 months by default, configurable per deployment, the hash-chained ledger never purged, the purge itself recorded. The window suits access history; it must never be applied to the record whose value is that it cannot be rewritten.
+- **`CC-120`** (the machine read axis) has its **ruling**: the axis is the set of registry agents bound to the calling credential, and the minimal consumer is the transcript route. Scheduled **after** `CC-121`, because the re-keying moves every `principal_id` and the axis is keyed on the credential id.
+
+**The queue, in order:** the nine spine findings (starting with `T-07`), then `CC-51`, then `CC-11` and `CC-65`, then `W3` and the re-keying `CC-121`, then `CC-120`, then `CC-133`.
 
 ---
 
