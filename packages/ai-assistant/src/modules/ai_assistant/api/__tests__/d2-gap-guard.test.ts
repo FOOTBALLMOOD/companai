@@ -137,12 +137,16 @@ jest.mock('../../lib/model-factory', () => ({
   resolveAllowRuntimeOverride: () => true,
 }))
 jest.mock('../../lib/model-allowlist', () => ({
+  // `T-17` — this used to be a hand-written list of every export, so adding one to the real module made
+  // the route throw `… is not a function` and surface as a 500 in a suite about something else entirely.
+  // Spreading the actual module means the mock can only ever *override*, never silently omit.
+  ...jest.requireActual('../../lib/model-allowlist'),
   agentOverrideModelAllowlistEnvVarName: () => 'X',
   agentOverrideProviderAllowlistEnvVarName: () => 'Y',
   canonicalProviderId: (id: string) => id,
   hasAllowlistSnapshotRestrictions: () => false,
-  intersectEffectiveAllowlistWithSnapshot: () => ({ providers: [], modelsByProvider: {}, tenantOverridesActive: false }),
-  intersectAllowlists: () => ({ providers: [], modelsByProvider: {}, tenantOverridesActive: false }),
+  intersectEffectiveAllowlistWithSnapshot: () => ({ providers: [], modelsByProvider: {}, tenantOverridesActive: false, noModelsPermitted: [] }),
+  intersectAllowlists: () => ({ providers: [], modelsByProvider: {}, tenantOverridesActive: false, noModelsPermitted: [] }),
   isProviderAllowed: () => true,
   isModelAllowedForProvider: () => true,
   isProviderAllowedInEffective: () => true,
@@ -319,6 +323,31 @@ describe('ai_assistant allowlist — the D2-gap guard is really wired in', () =>
     expect(arg.input.resourceId).toBe('tenant')
     expect(arg.input.operation).toBe('update')
     expect(allowlistUpsertMock).toHaveBeenCalled()
+  })
+
+  it('★ T-17: an empty stored list is reported as "no models permitted", not as unconstrained', async () => {
+    // The route accepted this state before and returned the row as if nothing had been said. The state
+    // means *no models permitted*; the runtime now refuses on it, so the write must say so — otherwise an
+    // operator stores a lockout and reads back a snapshot that looks like a normal constraint.
+    allowlistUpsertMock.mockResolvedValueOnce({
+      id: 'wl-1',
+      tenantId: 'tenant-1',
+      organizationId: 'org-1',
+      allowedProviders: null,
+      allowedModelsByProvider: { openai: [] },
+      updatedAt: new Date(),
+    })
+    const res = await allowlistPut(
+      req('http://x/api/ai_assistant/settings/allowlist', 'PUT', {
+        allowedProviders: null,
+        allowedModelsByProvider: { openai: [] },
+      }) as any,
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.noModelsPermitted).toEqual(['openai'])
+    // And the stored list travels back unchanged — the state is reported, not rewritten.
+    expect(body.allowedModelsByProvider).toEqual({ openai: [] })
   })
 
   it('PUT: a blocked guard stops the allowlist write', async () => {

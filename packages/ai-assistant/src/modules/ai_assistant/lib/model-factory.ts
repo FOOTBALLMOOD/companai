@@ -291,6 +291,13 @@ export interface AiModelFactory {
 export type AiModelFactoryErrorCode =
   | 'no_provider_configured'
   | 'api_key_missing'
+  /**
+   * `T-17` — the resolved (provider, model) is outside the operator's allowlist and no permitted
+   * replacement exists. Before this code existed the pair was used anyway, on the stated reasoning that
+   * "the throw at the api-key gate will surface the misconfiguration" — which is false, because a
+   * configured provider has its key by definition, so that gate never fires.
+   */
+  | 'provider_not_allowed'
 
 export class AiModelFactoryError extends Error {
   readonly code: AiModelFactoryErrorCode
@@ -762,6 +769,11 @@ export function createModelFactory(
         agentDefaultModel: agentModelParsed?.modelId ?? agentModelRaw,
         effective: effectiveAllowlist,
       })
+      // `T-17` — the helper reports a refusal instead of keeping a forbidden pair. The caller throws,
+      // because a request that cannot be sent anywhere the operator allows is not a request to degrade.
+      if (!allowlistResult.ok) {
+        throw new AiModelFactoryError('provider_not_allowed', allowlistResult.refusal)
+      }
 
       const finalProvider = allowlistResult.provider
       const finalModelId = allowlistResult.modelId
@@ -810,12 +822,22 @@ interface EnforceAllowlistInput {
   effective: EffectiveAllowlist
 }
 
-interface EnforceAllowlistResult {
-  provider: LlmProvider
-  modelId: string
-  /** Populated only when the resolved pair was rejected. */
-  fallback: string | null
-}
+/**
+ * `T-17` — a discriminated result, because "clipped to something" and "cannot be clipped" are two
+ * different answers and the old shape could only express the first.
+ *
+ * The function still never throws — the call site decides, so a refusal stays a named error the runtime
+ * can branch on rather than an exception escaping a helper documented as total.
+ */
+type EnforceAllowlistResult =
+  | {
+      ok: true
+      provider: LlmProvider
+      modelId: string
+      /** Populated only when the resolved pair was rejected. */
+      fallback: string | null
+    }
+  | { ok: false; refusal: string }
 
 /**
  * Clips a resolved `(provider, model)` to what the effective allowlist
@@ -852,15 +874,40 @@ function enforceAllowlist(input: EnforceAllowlistInput): EnforceAllowlistResult 
       fallback = `Provider "${provider.id}" is not in ${source}; using "${replacement.id}" instead.`
       logger.warn('Allowlist provider fallback', { reason: fallback })
       provider = replacement
-      modelId = pickAllowedModel({
+      const replacementModel = pickAllowedModel({
         provider,
         preferred: agentDefaultModel,
         effective,
       })
+      // `T-17` — an empty list for the replacement provider means *no models permitted*, and there is
+      // nothing to fall back to: refusing here is the only honest answer.
+      if (replacementModel === null) {
+        return {
+          ok: false,
+          refusal:
+            `Provider "${replacement.id}" is allowed but its model allowlist is empty, which permits no models. ` +
+            `Add a model to ${effective.tenantOverridesActive ? 'the tenant allowlist' : 'OM_AI_AVAILABLE_MODELS_' + replacement.id.toUpperCase()} or remove the entry.`,
+        }
+      }
+      modelId = replacementModel
+    } else {
+      // `T-17` — **the fail-open this row exists for.** The resolved provider is outside the allowlist and
+      // no permitted replacement is configured. This used to keep the resolved provider, reasoning that
+      // "the throw at the api-key gate will surface the misconfiguration to the operator instead of
+      // silently masking it". That reasoning is false: a provider that is configured **has its key by
+      // definition** — that is what `isConfigured` tests — so the api-key gate never fires, and a
+      // data-residency constraint is simply not applied. There is nothing left to fall back to, so the
+      // answer is a refusal naming the constraint.
+      const source = effective.tenantOverridesActive
+        ? 'the effective allowlist (env ∩ tenant)'
+        : 'OM_AI_AVAILABLE_PROVIDERS'
+      return {
+        ok: false,
+        refusal:
+          `Provider "${provider.id}" is not in ${source}, and no permitted replacement provider is configured, ` +
+          `so this request cannot be sent anywhere the operator allows.`,
+      }
     }
-    // If no replacement is configured we keep the resolved provider — the
-    // throw at the api-key gate will surface the misconfiguration to the
-    // operator instead of silently masking it.
   }
 
   if (!isModelAllowedForProviderInEffective(effective, provider.id, modelId)) {
@@ -869,6 +916,19 @@ function enforceAllowlist(input: EnforceAllowlistInput): EnforceAllowlistResult 
       preferred: agentDefaultModel,
       effective,
     })
+    // `T-17` — `null` means the provider's model allowlist is **empty**, which permits no models. The old
+    // code could not tell that from "nothing configured" and answered with the provider's default model.
+    if (replacementModel === null) {
+      const source = effective.tenantOverridesActive
+        ? `the tenant allowlist for "${provider.id}"`
+        : `OM_AI_AVAILABLE_MODELS_${provider.id.toUpperCase()}`
+      return {
+        ok: false,
+        refusal:
+          `Model "${modelId}" is not permitted for provider "${provider.id}", and ${source} is empty — ` +
+          `which permits no models at all. Add a model or remove the entry.`,
+      }
+    }
     if (replacementModel !== modelId) {
       const source = effective.tenantOverridesActive
         ? `the effective allowlist (env ∩ tenant) for "${provider.id}"`
@@ -880,7 +940,7 @@ function enforceAllowlist(input: EnforceAllowlistInput): EnforceAllowlistResult 
     }
   }
 
-  return { provider, modelId, fallback }
+  return { ok: true, provider, modelId, fallback }
 }
 
 function pickAllowedProvider(input: {
@@ -904,17 +964,26 @@ function pickAllowedProvider(input: {
   return null
 }
 
+/**
+ * Pick a model the effective allowlist permits for `provider`, or `null` when it permits none.
+ *
+ * `T-17` — **`undefined` and `[]` are different states and this function used to answer them the same
+ * way.** `undefined` means *no allowlist configured for this provider*, so the preferred model or the
+ * provider's default is right. An **empty array** means *no models permitted*, and returning the default
+ * for it silently turned the strictest possible configuration into no constraint at all.
+ */
 function pickAllowedModel(input: {
   provider: LlmProvider
   preferred: string | null
   effective: EffectiveAllowlist
-}): string {
+}): string | null {
   const { provider, preferred, effective } = input
   const allowed = effective.modelsByProvider[provider.id]
   if (allowed === undefined) {
     return preferred && preferred.length > 0 ? preferred : provider.defaultModel
   }
+  // `[]` reaches the fall-through below and returns null: nothing is permitted.
   if (preferred && allowed.includes(preferred)) return preferred
   if (allowed.includes(provider.defaultModel)) return provider.defaultModel
-  return allowed[0] ?? provider.defaultModel
+  return allowed[0] ?? null
 }

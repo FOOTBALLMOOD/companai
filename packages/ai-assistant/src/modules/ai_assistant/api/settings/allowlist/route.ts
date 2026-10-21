@@ -14,6 +14,7 @@ import {
   isModelAllowedForProvider,
   isProviderAllowed,
   modelAllowlistEnvVarName,
+  providersWithNoModels,
 } from '../../../lib/model-allowlist'
 
 const logger = createLogger('ai_assistant')
@@ -187,12 +188,20 @@ export async function PUT(req: NextRequest) {
       },
     )
     await guard.runAfterSuccess()
+    // `T-17` — an empty list per provider is **allowed to be stored** (refusing would leave an operator
+    // with no way to say "none"), but it is named in the response rather than left to be discovered at
+    // request time. The state means *no models permitted for that provider*, which is not the same thing
+    // as *no constraint on that provider*, and the two used to behave identically.
+    const stored = row.allowedModelsByProvider ?? {}
+    const noModelsPermitted = providersWithNoModels(stored)
     return NextResponse.json({
       id: row.id,
       tenantId: row.tenantId,
       organizationId: row.organizationId,
       allowedProviders: row.allowedProviders ?? null,
-      allowedModelsByProvider: row.allowedModelsByProvider ?? {},
+      allowedModelsByProvider: stored,
+      /** Providers stored with an empty model list — *no models permitted*, not *unconstrained*. */
+      noModelsPermitted,
       updatedAt: row.updatedAt,
     })
   } catch (error) {

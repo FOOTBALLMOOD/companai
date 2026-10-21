@@ -270,6 +270,31 @@ export interface EffectiveAllowlist {
    * vs "we are showing env-only restrictions".
    */
   tenantOverridesActive: boolean
+  /**
+   * `T-17` — providers whose effective model allowlist is an **empty array**, i.e. *no models permitted*.
+   *
+   * This exists because that state used to be indistinguishable from "no constraint" at the point of
+   * use: `pickAllowedModel` answered both with the provider's default model, so the strictest possible
+   * configuration silently behaved as if it had not been set. Naming the providers here makes the state
+   * visible to the runtime (which refuses) and to the settings screen (which reports it), instead of
+   * leaving it as a fact nobody can read.
+   */
+  noModelsPermitted: string[]
+}
+
+/**
+ * `T-17` — the providers whose model list is an **empty array**, i.e. *no models permitted*.
+ *
+ * One implementation, three callers (both intersections and the settings route), because the whole
+ * finding is that this state was being read as *no constraint* wherever it appeared. A second copy of the
+ * rule is how the two states drift apart again.
+ */
+export function providersWithNoModels(
+  allowedModelsByProvider: Record<string, readonly string[]> | null | undefined,
+): string[] {
+  return Object.entries(allowedModelsByProvider ?? {})
+    .filter(([, models]) => Array.isArray(models) && models.length === 0)
+    .map(([providerId]) => providerId)
 }
 
 function intersectIdLists(
@@ -334,6 +359,8 @@ export function intersectAllowlists(
     hasRestrictions:
       providers !== null || Object.keys(modelsByProvider).length > 0,
     tenantOverridesActive,
+    // `T-17` — an empty list is *no models permitted*, and it is named rather than left to be inferred.
+    noModelsPermitted: providersWithNoModels(modelsByProvider),
   }
 }
 
@@ -363,6 +390,9 @@ export function intersectEffectiveAllowlistWithSnapshot(
     modelsByProvider,
     hasRestrictions: true,
     tenantOverridesActive: outer.tenantOverridesActive || hasAllowlistSnapshotRestrictions(inner),
+    // `T-17` — recomputed from the narrowed set, not inherited: the inner snapshot can *create* an empty
+    // list for a provider the outer one left unconstrained.
+    noModelsPermitted: providersWithNoModels(modelsByProvider),
   }
 }
 

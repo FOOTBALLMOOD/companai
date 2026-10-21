@@ -1175,18 +1175,23 @@ describe('Phase 4a — tenantOverride, requestOverride, allowRuntimeOverride (re
       expect(resolution.allowlistFallback).toBeUndefined()
     })
 
-    it('treats an empty tenant model list as "no models permitted" and falls back to provider default', () => {
+    it('treats an empty tenant model list as "no models permitted" — it does NOT fall back to the default', () => {
+      // `T-17`. This test was named for the right rule and asserted the opposite: an empty list means
+      // *no models permitted*, and the body used to accept the provider's default model — the same answer
+      // it gives for "nothing configured". The name was the specification; the body contradicted it, and
+      // the body was what ran.
       const provider = makeProvider({ id: 'openai', defaultModel: 'gpt-5-mini' })
       const factory = createModelFactory(fakeContainer, makeFactoryDeps(provider))
-      const resolution = factory.resolveModel({
-        callerOverride: 'gpt-4o',
-        tenantAllowlist: {
-          allowedProviders: null,
-          allowedModelsByProvider: { openai: [] },
-        },
-      })
-      expect(resolution.modelId).toBe('gpt-5-mini')
-      expect(resolution.allowlistFallback).toBeDefined()
+
+      expect(() =>
+        factory.resolveModel({
+          callerOverride: 'gpt-4o',
+          tenantAllowlist: {
+            allowedProviders: null,
+            allowedModelsByProvider: { openai: [] },
+          },
+        }),
+      ).toThrow(expect.objectContaining({ code: 'provider_not_allowed' }))
     })
 
     it('clipping is the intersection of env and tenant — env stays the outer constraint', () => {
@@ -1383,3 +1388,97 @@ describe('parseTierModel', () => {
     })
   })
 })
+
+/**
+ * `T-17` — the model allowlist fails open on the provider axis.
+ *
+ * Two fail-opens on the same axis, plus a route that stored the state causing the second. The row's own
+ * summary said "fails open on the provider axis", which is accurate and understated.
+ *
+ * **What these tests are for.** The first is the scenario the audit named: a provider outside the
+ * allowlist, no permitted replacement, and the request went to the forbidden provider anyway on the
+ * reasoning that "the api-key gate will surface it" — which cannot happen, because a configured provider
+ * has its key by definition. The second is the same scenario with a replacement available, asserted so
+ * that the refusal does not swallow the working path.
+ */
+describe('T-17 — a forbidden provider is refused, not used', () => {
+  const ANTHROPIC = () => makeProvider({ id: 'anthropic', defaultModel: 'claude-x' })
+  const OPENAI = () => makeProvider({ id: 'openai', defaultModel: 'gpt-5-mini' })
+
+  it('★ refuses when the resolved provider is outside the allowlist and nothing permitted is configured', () => {
+    const { registry } = makeMultiProviderRegistry([ANTHROPIC()])
+    const factory = createModelFactory(fakeContainer, {
+      registry,
+      // The operator's data-residency policy: only openai may be reached.
+      env: { OM_AI_AVAILABLE_PROVIDERS: 'openai' },
+    })
+
+    // The registry resolves to anthropic — configured, and forbidden.
+    let caught: unknown
+    try {
+      factory.resolveModel({})
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toEqual(expect.objectContaining({ code: 'provider_not_allowed' }))
+    // The sentence names the constraint, because the person who reads it is the operator who set it.
+    expect((caught as Error).message).toContain('OM_AI_AVAILABLE_PROVIDERS')
+    expect((caught as Error).message).toContain('anthropic')
+  })
+
+  it('still falls back to a permitted provider when one is configured', () => {
+    // The refusal must not swallow the path that works: with a permitted replacement available, the
+    // request is served by it and the fallback is recorded.
+    const { registry } = makeMultiProviderRegistry([ANTHROPIC(), OPENAI()])
+    const factory = createModelFactory(fakeContainer, {
+      registry,
+      env: { OM_AI_AVAILABLE_PROVIDERS: 'openai' },
+    })
+
+    const resolution = factory.resolveModel({})
+
+    expect(resolution.providerId).toBe('openai')
+    expect(resolution.allowlistFallback).toBeDefined()
+  })
+
+  it('★ an empty model list for the replacement provider is a refusal too, not a default', () => {
+    // The two fail-opens can compose: the provider axis sends you to a permitted provider, and that
+    // provider's allowlist permits no models. Answering with its default model would undo the first
+    // refusal. The empty list comes from the TENANT snapshot — an empty env var means "unset", not "none",
+    // which is the whole reason the two states needed different answers in the first place.
+    const { registry } = makeMultiProviderRegistry([ANTHROPIC(), OPENAI()])
+    const factory = createModelFactory(fakeContainer, {
+      registry,
+      env: { OM_AI_AVAILABLE_PROVIDERS: 'openai' },
+    })
+
+    let caught: unknown
+    try {
+      factory.resolveModel({
+        tenantAllowlist: {
+          allowedProviders: null,
+          allowedModelsByProvider: { openai: [] },
+        },
+      })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toEqual(expect.objectContaining({ code: 'provider_not_allowed' }))
+    expect((caught as Error).message).toContain('permits no models')
+  })
+
+  it('leaves an unconstrained deployment completely alone', () => {
+    // `effective.providers === null` means the operator set no provider allowlist, and nothing here
+    // should change that path.
+    const { registry } = makeMultiProviderRegistry([ANTHROPIC()])
+    const factory = createModelFactory(fakeContainer, { registry, env: {} })
+
+    const resolution = factory.resolveModel({})
+
+    expect(resolution.providerId).toBe('anthropic')
+    expect(resolution.allowlistFallback).toBeUndefined()
+  })
+})
+

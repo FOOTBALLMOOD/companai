@@ -288,3 +288,35 @@ describe('model-allowlist', () => {
     })
   })
 })
+describe('T-17 — an empty model list is a state, and it is named', () => {
+  it('★ intersectAllowlists reports the providers that permit no models', () => {
+    const effective = intersectAllowlists(
+      {},
+      ['openai', 'anthropic'],
+      { allowedProviders: null, allowedModelsByProvider: { openai: [] } },
+    )
+
+    // `undefined` (absent) is *no constraint*; `[]` is *none permitted*. They were one answer before.
+    expect(effective.noModelsPermitted).toEqual(['openai'])
+    expect(effective.modelsByProvider.anthropic).toBeUndefined()
+  })
+
+  it('★ an inner snapshot can create the state the outer one did not have', () => {
+    const outer = intersectAllowlists({}, ['openai'], null)
+    expect(outer.noModelsPermitted).toEqual([])
+
+    const narrowed = intersectEffectiveAllowlistWithSnapshot(outer, ['openai'], {
+      allowedProviders: null,
+      allowedModelsByProvider: { openai: [] },
+    })
+
+    // Recomputed from the narrowed set rather than inherited: inheriting `[]` here would report
+    // "no constraint" for the very state the snapshot created.
+    expect(narrowed.noModelsPermitted).toEqual(['openai'])
+  })
+
+  it('reports nothing when a provider simply has no entry', () => {
+    const effective = intersectAllowlists({}, ['openai'], null)
+    expect(effective.noModelsPermitted).toEqual([])
+  })
+})
