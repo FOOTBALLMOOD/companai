@@ -139,6 +139,7 @@ function getAssignmentIdentifiers(assignment: CustomerLabelAssignment) {
 
 const createLabelCommand: CommandHandler<LabelCreateCommandInput, { labelId: string; slug: string; label: string }> = {
   id: 'customers.labels.create',
+  capability: 'customers.people.manage',
   async execute(rawInput, ctx) {
     const parsed = labelCreateCommandSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)

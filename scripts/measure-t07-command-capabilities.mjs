@@ -29,7 +29,7 @@ const root = join(here, '..')
 const MODULES_DIR = join(root, 'packages', 'core', 'src', 'modules')
 
 /** The seven modules the audit names, re-measured as seven on 2026-10-19. */
-const MODULES = ['catalog', 'communication_channels', 'customers', 'resources', 'sales', 'staff', 'wms']
+const MODULES = ['catalog', 'checkout', 'communication_channels', 'customers', 'resources', 'sales', 'staff', 'wms']
 
 const WRITE_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH']
 
@@ -85,6 +85,18 @@ function methodFeatures(source, method) {
  * every write export is an invoking method.
  */
 function invokingMethods(source, id) {
+  // A factory route names each command in its own operation block:
+  //   actions: { create: { commandId: 'x.y.create', … }, update: { … } }
+  // That is an exact mapping, and reading it is not the identifier heuristic the
+  // capability docblock refuses. Without this, every command behind a factory was
+  // attributed to EVERY write method, which reported `sales.returns.*` as
+  // "route declares two features" when the route declares one per method.
+  const factoryOps = /(create|update|delete):\s*\{\s*commandId:\s*(['"])([a-z0-9_.]+)\2/g
+  let opMatch
+  while ((opMatch = factoryOps.exec(source))) {
+    if (opMatch[3] === id) return [{ create: 'POST', update: 'PUT', delete: 'DELETE' }[opMatch[1]]]
+  }
+
   const direct = []
   const bounds = []
   const exportRe = /export\s+async\s+function\s+(POST|PUT|DELETE|PATCH)\b/g
@@ -130,7 +142,12 @@ function handlersOf(moduleDir) {
       const next = rest.slice(10).search(/\bid:\s*(['"])[a-z0-9_.]+\1/)
       const block = next < 0 ? rest : rest.slice(0, next + 10)
       if (!/\bexecute\s*[:(]/.test(block)) continue
-      handlers.push({ id, file, hasCapability: /\bcapability:\s*\{/.test(block) })
+      // `capability` on a COMMAND is a feature id string (`capability: 'a.b'`),
+      // not the descriptor object an `acl.ts` feature carries (`capability: {`).
+      // Testing for the object form reported every declared command as
+      // undeclared, which is how this instrument first "confirmed" 128 after 109
+      // of them had been given a capability.
+      handlers.push({ id, file, hasCapability: /\bcapability\s*:/.test(block) })
     }
   }
   return handlers

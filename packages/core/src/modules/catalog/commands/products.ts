@@ -1375,6 +1375,7 @@ const createProductCommand: CommandHandler<
   { productId: string }
 > = {
   id: "catalog.products.create",
+  capability: 'catalog.products.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(
       productCreateSchema,
@@ -1649,6 +1650,7 @@ const updateProductCommand: CommandHandler<
   { productId: string }
 > = {
   id: "catalog.products.update",
+  capability: 'catalog.products.manage',
   async prepare(input, ctx) {
     const id = requireId(input, "Product id is required");
     const em = ctx.container.resolve("em") as EntityManager;
@@ -2180,6 +2182,7 @@ const deleteProductCommand: CommandHandler<
   { productId: string }
 > = {
   id: "catalog.products.delete",
+  capability: 'catalog.products.manage',
   async prepare(input, ctx) {
     const id = requireId(input, "Product id is required");
     const em = ctx.container.resolve("em") as EntityManager;

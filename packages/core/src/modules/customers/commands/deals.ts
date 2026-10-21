@@ -411,6 +411,7 @@ async function syncDealCompanies(
 
 const createDealCommand: CommandHandler<DealCreateInput, { dealId: string }> = {
   id: 'customers.deals.create',
+  capability: 'customers.deals.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(dealCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -925,6 +926,7 @@ const updateDealCommand: CommandHandler<DealUpdateInput, { dealId: string }> = {
 const deleteDealCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { dealId: string }> =
   {
     id: 'customers.deals.delete',
+    capability: 'customers.deals.manage',
     async prepare(input, ctx) {
       const id = requireId(input, 'Deal id required')
       const em = (ctx.container.resolve('em') as EntityManager).fork()

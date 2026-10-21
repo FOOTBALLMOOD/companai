@@ -184,6 +184,7 @@ function timeProjectMemberSeedFromSnapshot(snapshot: TimeProjectMemberSnapshot):
 
 const createTimeProjectCommand: CommandHandler<StaffTimeProjectCreateInput, { timeProjectId: string }> = {
   id: 'staff.timesheets.time_projects.create',
+  capability: 'staff.timesheets.projects.manage',
   async execute(rawInput, ctx) {
     const parsed = staffTimeProjectCreateSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -298,6 +299,7 @@ const createTimeProjectCommand: CommandHandler<StaffTimeProjectCreateInput, { ti
 
 const updateTimeProjectCommand: CommandHandler<StaffTimeProjectUpdateInput, { timeProjectId: string }> = {
   id: 'staff.timesheets.time_projects.update',
+  capability: 'staff.timesheets.projects.manage',
   async prepare(rawInput, ctx) {
     const parsed = staffTimeProjectUpdateSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -434,6 +436,7 @@ const updateTimeProjectCommand: CommandHandler<StaffTimeProjectUpdateInput, { ti
 
 const deleteTimeProjectCommand: CommandHandler<{ id?: string }, { timeProjectId: string }> = {
   id: 'staff.timesheets.time_projects.delete',
+  capability: 'staff.timesheets.projects.manage',
   async prepare(input, ctx) {
     const id = input?.id
     if (!id) throw new CrudHttpError(400, { error: 'Time project id is required.' })
@@ -551,6 +554,7 @@ const deleteTimeProjectCommand: CommandHandler<{ id?: string }, { timeProjectId:
 
 const assignTimeProjectMemberCommand: CommandHandler<StaffTimeProjectMemberAssignInput, { timeProjectMemberId: string }> = {
   id: 'staff.timesheets.time_project_members.assign',
+  capability: 'staff.timesheets.projects.manage',
   async execute(rawInput, ctx) {
     const parsed = staffTimeProjectMemberAssignSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -675,6 +679,7 @@ const assignTimeProjectMemberCommand: CommandHandler<StaffTimeProjectMemberAssig
 
 const unassignTimeProjectMemberCommand: CommandHandler<{ id?: string }, { timeProjectMemberId: string }> = {
   id: 'staff.timesheets.time_project_members.unassign',
+  capability: 'staff.timesheets.projects.manage',
   async prepare(input, ctx) {
     const id = input?.id
     if (!id) throw new CrudHttpError(400, { error: 'Time project member id is required.' })

@@ -15,6 +15,7 @@ import {
 
 const createTagCommand: CommandHandler<SalesTagCreateInput, { tagId: string }> = {
   id: 'sales.tags.create',
+  capability: 'sales.orders.manage',
   async execute(rawInput, ctx) {
     const parsed = salesTagCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, parsed.tenantId)
@@ -40,6 +41,7 @@ const createTagCommand: CommandHandler<SalesTagCreateInput, { tagId: string }> =
 
 const updateTagCommand: CommandHandler<SalesTagUpdateInput, { tagId: string }> = {
   id: 'sales.tags.update',
+  capability: 'sales.orders.manage',
   async execute(rawInput, ctx) {
     const parsed = salesTagUpdateSchema.parse(rawInput ?? {})
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -69,6 +71,7 @@ const updateTagCommand: CommandHandler<SalesTagUpdateInput, { tagId: string }> =
 
 const deleteTagCommand: CommandHandler<{ id?: string }, { tagId: string }> = {
   id: 'sales.tags.delete',
+  capability: 'sales.orders.manage',
   async execute(input, ctx) {
     const id = typeof input?.id === 'string' ? input.id : null
     if (!id) throw new CrudHttpError(400, { error: 'Tag id is required' })

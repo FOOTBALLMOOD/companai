@@ -475,6 +475,7 @@ function normalizeHexColor(value: string | null | undefined): string | null {
 
 const createCompanyCommand: CommandHandler<CompanyCreateInput, { entityId: string; companyId: string }> = {
   id: 'customers.companies.create',
+  capability: 'customers.companies.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(companyCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -724,6 +725,7 @@ const createCompanyCommand: CommandHandler<CompanyCreateInput, { entityId: strin
 
 const updateCompanyCommand: CommandHandler<CompanyUpdateInput, { entityId: string }> = {
   id: 'customers.companies.update',
+  capability: 'customers.companies.manage',
   async prepare(rawInput, ctx) {
     const { parsed } = parseWithCustomFields(companyUpdateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -974,6 +976,7 @@ const updateCompanyCommand: CommandHandler<CompanyUpdateInput, { entityId: strin
 const deleteCompanyCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { entityId: string }> =
   {
     id: 'customers.companies.delete',
+    capability: 'customers.companies.manage',
     async prepare(input, ctx) {
       const id = requireId(input, 'Company id required')
       const em = (ctx.container.resolve('em') as EntityManager)

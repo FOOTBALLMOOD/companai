@@ -607,6 +607,7 @@ function buildPersonGraph(
 
 const createPersonCommand: CommandHandler<PersonCreateInput, { entityId: string; personId: string }> = {
   id: 'customers.people.create',
+  capability: 'customers.people.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(personCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -913,6 +914,7 @@ const createPersonCommand: CommandHandler<PersonCreateInput, { entityId: string;
 
 const updatePersonCommand: CommandHandler<PersonUpdateInput, { entityId: string }> = {
   id: 'customers.people.update',
+  capability: 'customers.people.manage',
   async prepare(rawInput, ctx) {
     const { parsed } = parseWithCustomFields(personUpdateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -1214,6 +1216,7 @@ const updatePersonCommand: CommandHandler<PersonUpdateInput, { entityId: string 
 const deletePersonCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { entityId: string }> =
   {
     id: 'customers.people.delete',
+    capability: 'customers.people.manage',
     async prepare(input, ctx) {
       const id = requireId(input, 'Person id required')
       const em = (ctx.container.resolve('em') as EntityManager).fork()

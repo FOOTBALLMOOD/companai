@@ -592,6 +592,7 @@ async function aggregateVariantMediaToProduct(
 
 const createVariantCommand: CommandHandler<VariantCreateInput, { variantId: string; previousDefaultVariantId?: string | null }> = {
   id: 'catalog.variants.create',
+  capability: 'catalog.variants.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(variantCreateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -808,6 +809,7 @@ const createVariantCommand: CommandHandler<VariantCreateInput, { variantId: stri
 
 const updateVariantCommand: CommandHandler<VariantUpdateInput, { variantId: string; previousDefaultVariantId?: string | null }> = {
   id: 'catalog.variants.update',
+  capability: 'catalog.variants.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Variant id is required')
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -1044,6 +1046,7 @@ const deleteVariantCommand: CommandHandler<
   { variantId: string }
 > = {
   id: 'catalog.variants.delete',
+  capability: 'catalog.variants.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Variant id is required')
     const em = (ctx.container.resolve('em') as EntityManager)

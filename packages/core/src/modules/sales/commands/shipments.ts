@@ -437,6 +437,7 @@ function mergeAddressSnapshot(
 
 const createShipmentCommand: CommandHandler<ShipmentCreateInput, { shipmentId: string }> = {
   id: 'sales.shipments.create',
+  capability: 'sales.shipments.manage',
   async execute(rawInput, ctx) {
     const input = shipmentCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, input.tenantId)
@@ -648,6 +649,7 @@ const createShipmentCommand: CommandHandler<ShipmentCreateInput, { shipmentId: s
 
 const updateShipmentCommand: CommandHandler<ShipmentUpdateInput, { shipmentId: string }> = {
   id: 'sales.shipments.update',
+  capability: 'sales.shipments.manage',
   async prepare(rawInput, ctx) {
     const parsed = shipmentUpdateSchema.parse(rawInput ?? {})
     if (!parsed.id) return {}
@@ -903,6 +905,7 @@ const deleteShipmentCommand: CommandHandler<
   { shipmentId: string }
 > = {
   id: 'sales.shipments.delete',
+  capability: 'sales.shipments.manage',
   async prepare(rawInput, ctx) {
     const parsed = shipmentUpdateSchema.parse(rawInput ?? {})
     if (!parsed.id) return {}

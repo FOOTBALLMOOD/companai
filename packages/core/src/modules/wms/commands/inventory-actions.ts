@@ -899,6 +899,7 @@ function enforceNonNegativeBalance(
 
 const reserveInventoryCommand: CommandHandler<InventoryReservationCreateInput, ReservationCommandResult> = {
   id: 'wms.inventory.reserve',
+  capability: 'wms.manage_reservations',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {
@@ -1093,6 +1094,7 @@ const reserveInventoryCommand: CommandHandler<InventoryReservationCreateInput, R
 
 const releaseInventoryReservationCommand: CommandHandler<InventoryReservationReleaseInput, { reservationId: string }> = {
   id: 'wms.inventory.release',
+  capability: 'wms.manage_reservations',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {
@@ -1187,6 +1189,7 @@ const releaseInventoryReservationCommand: CommandHandler<InventoryReservationRel
 
 const allocateInventoryReservationCommand: CommandHandler<InventoryReservationAllocateInput, { reservationId: string; allocationState: 'allocated' }> = {
   id: 'wms.inventory.allocate',
+  capability: 'wms.manage_reservations',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {
@@ -1284,6 +1287,7 @@ const allocateInventoryReservationCommand: CommandHandler<InventoryReservationAl
 
 const adjustInventoryCommand: CommandHandler<InventoryAdjustInput, { movementId: string }> = {
   id: 'wms.inventory.adjust',
+  capability: 'wms.adjust_inventory',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {
@@ -1416,6 +1420,7 @@ const adjustInventoryCommand: CommandHandler<InventoryAdjustInput, { movementId:
 
 const receiveInventoryCommand: CommandHandler<InventoryReceiveInput, { movementId: string }> = {
   id: 'wms.inventory.receive',
+  capability: 'wms.receive_inventory',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {
@@ -1553,6 +1558,7 @@ const receiveInventoryCommand: CommandHandler<InventoryReceiveInput, { movementI
 
 const moveInventoryCommand: CommandHandler<InventoryMoveInput, { movementId: string }> = {
   id: 'wms.inventory.move',
+  capability: 'wms.adjust_inventory',
   // See "WMS Inventory Mutation Commands — Undo Policy" at top of file.
   isUndoable: false,
   async execute(rawInput, ctx) {

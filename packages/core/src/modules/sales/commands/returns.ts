@@ -597,6 +597,7 @@ function normalizeLinesInput(lines: ReturnCreateInput['lines']): ReturnLineInput
 
 const createReturnCommand: CommandHandler<ReturnCreateInput, { returnId: string }> = {
   id: 'sales.returns.create',
+  capability: 'sales.returns.create',
   async execute(rawInput, ctx) {
     const input = returnCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, input.tenantId)
@@ -885,6 +886,7 @@ const createReturnCommand: CommandHandler<ReturnCreateInput, { returnId: string 
 
 const updateReturnCommand: CommandHandler<ReturnUpdateInput, { returnId: string }> = {
   id: 'sales.returns.update',
+  capability: 'sales.returns.manage',
   async prepare(rawInput, ctx) {
     const parsed = returnUpdateSchema.parse(rawInput ?? {})
     const em = ctx.container.resolve('em') as EntityManager
@@ -1011,6 +1013,7 @@ const updateReturnCommand: CommandHandler<ReturnUpdateInput, { returnId: string 
 
 const deleteReturnCommand: CommandHandler<ReturnDeleteInput, { returnId: string }> = {
   id: 'sales.returns.delete',
+  capability: 'sales.returns.manage',
   async prepare(rawInput, ctx) {
     const parsed = returnDeleteSchema.parse(rawInput ?? {})
     const em = ctx.container.resolve('em') as EntityManager

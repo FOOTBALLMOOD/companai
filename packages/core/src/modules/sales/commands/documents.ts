@@ -4520,6 +4520,7 @@ const createQuoteCommand: CommandHandler<
   { quoteId: string }
 > = {
   id: "sales.quotes.create",
+  capability: 'sales.quotes.manage',
   async execute(rawInput, ctx) {
     const generator = ctx.container.resolve(
       "salesDocumentNumberGenerator",
@@ -4905,6 +4906,7 @@ const deleteQuoteCommand: CommandHandler<
   { quoteId: string }
 > = {
   id: "sales.quotes.delete",
+  capability: 'sales.quotes.manage',
   async prepare(input, ctx) {
     const id = requireId(input, "Quote id is required");
     const em = ctx.container.resolve("em") as EntityManager;
@@ -5032,6 +5034,7 @@ const updateQuoteCommand: CommandHandler<
   { quote: SalesQuote }
 > = {
   id: "sales.quotes.update",
+  capability: 'sales.quotes.manage',
   async prepare(input, ctx) {
     const parsed = documentUpdateSchema.parse(input ?? {});
     const em = ctx.container.resolve("em") as EntityManager;
@@ -5264,6 +5267,7 @@ const updateOrderCommand: CommandHandler<
   { order: SalesOrder }
 > = {
   id: "sales.orders.update",
+  capability: 'sales.orders.manage',
   async prepare(input, ctx) {
     const parsed = documentUpdateSchema.parse(input ?? {});
     const em = ctx.container.resolve("em") as EntityManager;
@@ -5508,6 +5512,7 @@ const createOrderCommand: CommandHandler<
   { orderId: string }
 > = {
   id: "sales.orders.create",
+  capability: 'sales.orders.manage',
   async execute(rawInput, ctx) {
     const generator = ctx.container.resolve(
       "salesDocumentNumberGenerator",
@@ -5924,6 +5929,7 @@ const deleteOrderCommand: CommandHandler<
   { orderId: string }
 > = {
   id: "sales.orders.delete",
+  capability: 'sales.orders.manage',
   async prepare(input, ctx) {
     const id = requireId(input, "Order id is required");
     const em = ctx.container.resolve("em") as EntityManager;
@@ -6667,6 +6673,9 @@ const orderLineUpsertCommand: CommandHandler<
   { orderId: string; lineId: string }
 > = {
   id: "sales.orders.lines.upsert",
+  // T-07: no route invokes this one. It is called from `sales/inbox-actions.ts`,
+  // so the capability is the feature that governs the same act on the human path.
+  capability: "sales.orders.manage",
   async prepare(input, ctx) {
     const raw = (input?.body as Record<string, unknown> | undefined) ?? {};
     const orderId = typeof raw.orderId === "string" ? raw.orderId : null;
@@ -7621,6 +7630,7 @@ const orderAdjustmentUpsertCommand: CommandHandler<
   { orderId: string; adjustmentId: string }
 > = {
   id: "sales.orders.adjustments.upsert",
+  capability: 'sales.orders.manage',
   async prepare(input, ctx) {
     const raw = (input?.body as Record<string, unknown> | undefined) ?? {};
     const orderId = typeof raw.orderId === "string" ? raw.orderId : null;
@@ -7915,6 +7925,7 @@ const orderAdjustmentDeleteCommand: CommandHandler<
   { orderId: string; adjustmentId: string }
 > = {
   id: "sales.orders.adjustments.delete",
+  capability: 'sales.orders.manage',
   async prepare(input, ctx) {
     const raw = (input?.body as Record<string, unknown> | undefined) ?? {};
     const orderId = typeof raw.orderId === "string" ? raw.orderId : null;
@@ -8080,6 +8091,7 @@ const quoteAdjustmentUpsertCommand: CommandHandler<
   { quoteId: string; adjustmentId: string }
 > = {
   id: "sales.quotes.adjustments.upsert",
+  capability: 'sales.quotes.manage',
   async prepare(input, ctx) {
     const raw = (input?.body as Record<string, unknown> | undefined) ?? {};
     const quoteId = typeof raw.quoteId === "string" ? raw.quoteId : null;
@@ -8372,6 +8384,7 @@ const quoteAdjustmentDeleteCommand: CommandHandler<
   { quoteId: string; adjustmentId: string }
 > = {
   id: "sales.quotes.adjustments.delete",
+  capability: 'sales.quotes.manage',
   async prepare(input, ctx) {
     const raw = (input?.body as Record<string, unknown> | undefined) ?? {};
     const quoteId = typeof raw.quoteId === "string" ? raw.quoteId : null;
@@ -8551,6 +8564,7 @@ const createInvoiceCommand: CommandHandler<
   { invoiceId: string }
 > = {
   id: "sales.invoices.create",
+  capability: 'sales.invoices.manage',
   async execute(rawInput, ctx) {
     const generator = ctx.container.resolve(
       "salesDocumentNumberGenerator",
@@ -8759,6 +8773,7 @@ const updateInvoiceCommand: CommandHandler<
   { invoiceId: string }
 > = {
   id: "sales.invoices.update",
+  capability: 'sales.invoices.manage',
   async prepare(input, ctx) {
     const id = requireId(input);
     const em = ctx.container.resolve("em") as EntityManager;
@@ -8893,6 +8908,7 @@ const deleteInvoiceCommand: CommandHandler<
   { invoiceId: string }
 > = {
   id: "sales.invoices.delete",
+  capability: 'sales.invoices.manage',
   async prepare(input, ctx) {
     const id = requireId(input);
     const em = ctx.container.resolve("em") as EntityManager;
@@ -9050,6 +9066,7 @@ const createCreditMemoCommand: CommandHandler<
   { creditMemoId: string }
 > = {
   id: "sales.credit_memos.create",
+  capability: 'sales.credit_memos.manage',
   async execute(rawInput, ctx) {
     const generator = ctx.container.resolve(
       "salesDocumentNumberGenerator",
@@ -9266,6 +9283,7 @@ const updateCreditMemoCommand: CommandHandler<
   { creditMemoId: string }
 > = {
   id: "sales.credit_memos.update",
+  capability: 'sales.credit_memos.manage',
   async prepare(input, ctx) {
     const id = requireId(input);
     const em = ctx.container.resolve("em") as EntityManager;
@@ -9395,6 +9413,7 @@ const deleteCreditMemoCommand: CommandHandler<
   { creditMemoId: string }
 > = {
   id: "sales.credit_memos.delete",
+  capability: 'sales.credit_memos.manage',
   async prepare(input, ctx) {
     const id = requireId(input);
     const em = ctx.container.resolve("em") as EntityManager;

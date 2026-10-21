@@ -113,6 +113,7 @@ function offerSeedFromSnapshot(snapshot: OfferSnapshot): Record<string, unknown>
 
 const createOfferCommand: CommandHandler<OfferCreateInput, { offerId: string }> = {
   id: 'catalog.offers.create',
+  capability: 'sales.channels.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(offerCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -252,6 +253,7 @@ const createOfferCommand: CommandHandler<OfferCreateInput, { offerId: string }> 
 
 const updateOfferCommand: CommandHandler<OfferUpdateInput, { offerId: string }> = {
   id: 'catalog.offers.update',
+  capability: 'sales.channels.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Offer id is required.')
     const em = ctx.container.resolve('em') as EntityManager
@@ -431,6 +433,7 @@ const updateOfferCommand: CommandHandler<OfferUpdateInput, { offerId: string }> 
 
 const deleteOfferCommand: CommandHandler<{ id?: string }, { offerId: string }> = {
   id: 'catalog.offers.delete',
+  capability: 'sales.channels.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Offer id is required.')
     const em = ctx.container.resolve('em') as EntityManager

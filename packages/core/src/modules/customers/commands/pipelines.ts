@@ -20,6 +20,7 @@ import { withAtomicFlush } from '@open-mercato/shared/lib/commands/flush'
 
 const createPipelineCommand: CommandHandler<PipelineCreateInput, { pipelineId: string }> = {
   id: 'customers.pipelines.create',
+  capability: 'customers.pipelines.manage',
   async execute(rawInput, ctx) {
     const parsed = pipelineCreateSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -55,6 +56,7 @@ const createPipelineCommand: CommandHandler<PipelineCreateInput, { pipelineId: s
 
 const updatePipelineCommand: CommandHandler<PipelineUpdateInput, void> = {
   id: 'customers.pipelines.update',
+  capability: 'customers.pipelines.manage',
   async execute(rawInput, ctx) {
     const parsed = pipelineUpdateSchema.parse(rawInput)
 
@@ -95,6 +97,7 @@ const updatePipelineCommand: CommandHandler<PipelineUpdateInput, void> = {
 
 const deletePipelineCommand: CommandHandler<PipelineDeleteInput, void> = {
   id: 'customers.pipelines.delete',
+  capability: 'customers.pipelines.manage',
   async execute(rawInput, ctx) {
     const parsed = pipelineDeleteSchema.parse(rawInput)
 

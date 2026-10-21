@@ -145,6 +145,7 @@ function categorySeedFromSnapshot(snapshot: CategorySnapshot): Record<string, un
 
 const createCategoryCommand: CommandHandler<CategoryCreateInput, { categoryId: string }> = {
   id: 'catalog.categories.create',
+  capability: 'catalog.categories.manage',
   async execute(input, ctx) {
     const { parsed, custom } = parseWithCustomFields(categoryCreateSchema, input)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -292,6 +293,7 @@ const createCategoryCommand: CommandHandler<CategoryCreateInput, { categoryId: s
 
 const updateCategoryCommand: CommandHandler<CategoryUpdateInput, { categoryId: string }> = {
   id: 'catalog.categories.update',
+  capability: 'catalog.categories.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Category id is required')
     const em = ctx.container.resolve('em') as EntityManager
@@ -470,6 +472,7 @@ const updateCategoryCommand: CommandHandler<CategoryUpdateInput, { categoryId: s
 
 const deleteCategoryCommand: CommandHandler<{ id?: string }, { categoryId: string }> = {
   id: 'catalog.categories.delete',
+  capability: 'catalog.categories.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Category id is required')
     const em = ctx.container.resolve('em') as EntityManager

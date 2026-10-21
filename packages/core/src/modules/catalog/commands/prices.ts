@@ -292,6 +292,7 @@ function numericStringToNumber(value: string | null | undefined): number | null 
 
 const createPriceCommand: CommandHandler<PriceCreateInput, { priceId: string }> = {
   id: 'catalog.prices.create',
+  capability: 'catalog.pricing.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(priceCreateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -487,6 +488,7 @@ const createPriceCommand: CommandHandler<PriceCreateInput, { priceId: string }> 
 
 const updatePriceCommand: CommandHandler<PriceUpdateInput, { priceId: string }> = {
   id: 'catalog.prices.update',
+  capability: 'catalog.pricing.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Price id is required')
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -814,6 +816,7 @@ const deletePriceCommand: CommandHandler<
   { priceId: string }
 > = {
   id: 'catalog.prices.delete',
+  capability: 'catalog.pricing.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Price id is required')
     const em = (ctx.container.resolve('em') as EntityManager)

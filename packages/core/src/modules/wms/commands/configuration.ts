@@ -646,6 +646,7 @@ const createWarehouseCommand: CommandHandler<
   { warehouseId: string; demotedPrimariesBefore?: PrimaryDemotionSnapshot[] }
 > = {
   id: 'wms.warehouses.create',
+  capability: 'wms.manage_warehouses',
   async execute(rawInput, ctx) {
     const parsed = warehouseCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, parsed.tenantId)
@@ -764,6 +765,7 @@ const updateWarehouseCommand: CommandHandler<
   { warehouseId: string; demotedPrimariesBefore?: PrimaryDemotionSnapshot[] }
 > = {
   id: 'wms.warehouses.update',
+  capability: 'wms.manage_warehouses',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Warehouse')
     const em = resolveEm(ctx)
@@ -920,6 +922,7 @@ const updateWarehouseCommand: CommandHandler<
 
 const deleteWarehouseCommand: CommandHandler<{ id?: string }, { warehouseId: string }> = {
   id: 'wms.warehouses.delete',
+  capability: 'wms.manage_warehouses',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Warehouse')
     const em = resolveEm(ctx)
@@ -1022,6 +1025,7 @@ async function restoreZoneFromSnapshot(em: EntityManager, before: WarehouseZoneS
 
 const createWarehouseZoneCommand: CommandHandler<WarehouseZoneCreateInput, { zoneId: string }> = {
   id: 'wms.zones.create',
+  capability: 'wms.manage_zones',
   async execute(rawInput, ctx) {
     const parsed = warehouseZoneCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, parsed.tenantId)
@@ -1079,6 +1083,7 @@ const createWarehouseZoneCommand: CommandHandler<WarehouseZoneCreateInput, { zon
 
 const updateWarehouseZoneCommand: CommandHandler<WarehouseZoneUpdateInput, { zoneId: string }> = {
   id: 'wms.zones.update',
+  capability: 'wms.manage_zones',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Zone')
     const em = resolveEm(ctx)
@@ -1135,6 +1140,7 @@ const updateWarehouseZoneCommand: CommandHandler<WarehouseZoneUpdateInput, { zon
 
 const deleteWarehouseZoneCommand: CommandHandler<{ id?: string }, { zoneId: string }> = {
   id: 'wms.zones.delete',
+  capability: 'wms.manage_zones',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Zone')
     const em = resolveEm(ctx)
@@ -1214,6 +1220,7 @@ async function restoreLocationFromSnapshot(em: EntityManager, before: WarehouseL
 
 const createWarehouseLocationCommand: CommandHandler<WarehouseLocationCreateInput, { locationId: string }> = {
   id: 'wms.locations.create',
+  capability: 'wms.manage_locations',
   async execute(rawInput, ctx) {
     const parsed = warehouseLocationCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, parsed.tenantId)
@@ -1276,6 +1283,7 @@ const createWarehouseLocationCommand: CommandHandler<WarehouseLocationCreateInpu
 
 const updateWarehouseLocationCommand: CommandHandler<WarehouseLocationUpdateInput, { locationId: string }> = {
   id: 'wms.locations.update',
+  capability: 'wms.manage_locations',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Location')
     const em = resolveEm(ctx)
@@ -1338,6 +1346,7 @@ const updateWarehouseLocationCommand: CommandHandler<WarehouseLocationUpdateInpu
 
 const deleteWarehouseLocationCommand: CommandHandler<{ id?: string }, { locationId: string }> = {
   id: 'wms.locations.delete',
+  capability: 'wms.manage_locations',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Location')
     const em = resolveEm(ctx)
@@ -1616,6 +1625,7 @@ function restoreInventoryLotFromSnapshot(_em: EntityManager, before: InventoryLo
 
 const createInventoryLotCommand: CommandHandler<InventoryLotCreateInput, { lotId: string }> = {
   id: 'wms.lots.create',
+  capability: 'wms.manage_inventory',
   async execute(rawInput, ctx) {
     const parsed = inventoryLotCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, parsed.tenantId)
@@ -1669,6 +1679,7 @@ const createInventoryLotCommand: CommandHandler<InventoryLotCreateInput, { lotId
 
 const updateInventoryLotCommand: CommandHandler<InventoryLotUpdateInput, { lotId: string }> = {
   id: 'wms.lots.update',
+  capability: 'wms.manage_inventory',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Inventory lot')
     const em = resolveEm(ctx)
@@ -1769,6 +1780,7 @@ const updateInventoryLotCommand: CommandHandler<InventoryLotUpdateInput, { lotId
 
 const deleteInventoryLotCommand: CommandHandler<{ id?: string }, { lotId: string }> = {
   id: 'wms.lots.delete',
+  capability: 'wms.manage_inventory',
   prepare: async (input, ctx) => {
     const id = requireId(input?.id, 'Inventory lot')
     const em = resolveEm(ctx)

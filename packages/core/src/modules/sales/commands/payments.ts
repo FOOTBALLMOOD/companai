@@ -329,6 +329,7 @@ const createPaymentCommand: CommandHandler<
   { paymentId: string; orderTotals?: { paidTotalAmount: number; refundedTotalAmount: number; outstandingAmount: number }; orderPaymentMethodIdBefore?: string | null; orderPaymentMethodCodeBefore?: string | null }
 > = {
   id: 'sales.payments.create',
+  capability: 'sales.payments.manage',
   async execute(rawInput, ctx) {
     const input = paymentCreateSchema.parse(rawInput ?? {})
     ensureTenantScope(ctx, input.tenantId)
@@ -702,6 +703,7 @@ const updatePaymentCommand: CommandHandler<
   { paymentId: string; orderTotals?: { paidTotalAmount: number; refundedTotalAmount: number; outstandingAmount: number } }
 > = {
   id: 'sales.payments.update',
+  capability: 'sales.payments.manage',
   async prepare(rawInput, ctx) {
     const parsed = paymentUpdateSchema.parse(rawInput ?? {})
     if (!parsed.id) return {}
@@ -1046,6 +1048,7 @@ const deletePaymentCommand: CommandHandler<
   { paymentId: string; orderTotals?: { paidTotalAmount: number; refundedTotalAmount: number; outstandingAmount: number } }
 > = {
   id: 'sales.payments.delete',
+  capability: 'sales.payments.manage',
   async prepare(rawInput, ctx) {
     const parsed = paymentUpdateSchema.parse(rawInput ?? {})
     if (!parsed.id) return {}

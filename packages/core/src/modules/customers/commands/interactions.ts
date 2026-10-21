@@ -376,6 +376,7 @@ function buildInteractionGraph(em: EntityManager, values: InteractionGraphValues
 
 const createInteractionCommand: CommandHandler<InteractionCreateInput, { interactionId: string; entityId: string }> = {
   id: 'customers.interactions.create',
+  capability: 'customers.activities.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(interactionCreateSchema, rawInput)
 
@@ -629,6 +630,7 @@ const createInteractionCommand: CommandHandler<InteractionCreateInput, { interac
 
 const updateInteractionCommand: CommandHandler<InteractionUpdateInput, { interactionId: string }> = {
   id: 'customers.interactions.update',
+  capability: 'customers.activities.manage',
   async prepare(rawInput, ctx) {
     const { parsed } = parseWithCustomFields(interactionUpdateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -902,6 +904,7 @@ const updateInteractionCommand: CommandHandler<InteractionUpdateInput, { interac
 
 const completeInteractionCommand: CommandHandler<InteractionCompleteInput, { interactionId: string }> = {
   id: 'customers.interactions.complete',
+  capability: 'customers.interactions.manage',
   async prepare(rawInput, ctx) {
     const parsed = interactionCompleteSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -1042,6 +1045,7 @@ const completeInteractionCommand: CommandHandler<InteractionCompleteInput, { int
 
 const cancelInteractionCommand: CommandHandler<InteractionCancelInput, { interactionId: string }> = {
   id: 'customers.interactions.cancel',
+  capability: 'customers.interactions.manage',
   async prepare(rawInput, ctx) {
     const parsed = interactionCancelSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager).fork()
@@ -1180,6 +1184,7 @@ const cancelInteractionCommand: CommandHandler<InteractionCancelInput, { interac
 const deleteInteractionCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { interactionId: string }> =
   {
     id: 'customers.interactions.delete',
+    capability: 'customers.activities.manage',
     async prepare(input, ctx) {
       const id = requireId(input, 'Interaction id required')
       const em = (ctx.container.resolve('em') as EntityManager).fork()

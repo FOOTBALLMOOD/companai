@@ -29,6 +29,7 @@ const saveSalesSettingsCommand: CommandHandler<
   }
 > = {
   id: 'sales.settings.save',
+  capability: 'sales.settings.manage',
   async execute(rawInput, ctx) {
     const input = salesSettingsUpsertSchema.parse(rawInput)
     ensureTenantScope(ctx, input.tenantId)

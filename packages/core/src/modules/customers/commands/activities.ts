@@ -110,6 +110,11 @@ function normalizeUndoCreateLogEntry(
 /** @deprecated Use interaction commands instead. Maintained as a compatibility bridge per SPEC-046b. */
 const createActivityCommand: CommandHandler<ActivityCreateInput, { activityId: string }> = {
   id: 'customers.activities.create',
+  // T-07: this is a deprecated bridge that delegates to the canonical interaction
+  // command, so its capability is the act it performs, not the noun in its id.
+  // Declaring `customers.activities.manage` here would demand a second permission
+  // from a caller who already holds the one the real handler checks.
+  capability: 'customers.interactions.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(activityCreateSchema, rawInput)
     const canonicalCreate = getRequiredHandler<
@@ -215,6 +220,8 @@ const createActivityCommand: CommandHandler<ActivityCreateInput, { activityId: s
 /** @deprecated Use interaction commands instead. Maintained as a compatibility bridge per SPEC-046b. */
 const updateActivityCommand: CommandHandler<ActivityUpdateInput, { activityId: string }> = {
   id: 'customers.activities.update',
+  // Same reasoning as the create bridge above.
+  capability: 'customers.interactions.manage',
   async prepare(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(activityUpdateSchema, rawInput)
     const canonicalUpdate = getRequiredHandler<
@@ -285,6 +292,7 @@ const updateActivityCommand: CommandHandler<ActivityUpdateInput, { activityId: s
 const deleteActivityCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { activityId: string }> =
   {
     id: 'customers.activities.delete',
+    capability: 'customers.activities.manage',
     async prepare(input, ctx) {
       const canonicalDelete = getRequiredHandler<
         { body?: Record<string, unknown>; query?: Record<string, unknown> },

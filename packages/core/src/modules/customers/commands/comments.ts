@@ -77,6 +77,7 @@ async function loadCommentSnapshot(em: EntityManager, id: string): Promise<Comme
 
 const createCommentCommand: CommandHandler<CommentCreateInput, { commentId: string; authorUserId: string | null }> = {
   id: 'customers.comments.create',
+  capability: 'customers.activities.manage',
   async execute(rawInput, ctx) {
     const parsed = commentCreateSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -186,6 +187,7 @@ const createCommentCommand: CommandHandler<CommentCreateInput, { commentId: stri
 
 const updateCommentCommand: CommandHandler<CommentUpdateInput, { commentId: string }> = {
   id: 'customers.comments.update',
+  capability: 'customers.activities.manage',
   async prepare(rawInput, ctx) {
     const parsed = commentUpdateSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -322,6 +324,7 @@ const updateCommentCommand: CommandHandler<CommentUpdateInput, { commentId: stri
 const deleteCommentCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { commentId: string }> =
   {
     id: 'customers.comments.delete',
+    capability: 'customers.activities.manage',
     async prepare(input, ctx) {
       const id = requireId(input, 'Comment id required')
       const em = (ctx.container.resolve('em') as EntityManager)

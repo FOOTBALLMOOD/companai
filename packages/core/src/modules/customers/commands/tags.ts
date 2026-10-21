@@ -81,6 +81,7 @@ async function loadTagSnapshot(em: EntityManager, id: string): Promise<TagSnapsh
 
 const createTagCommand: CommandHandler<TagCreateInput, { tagId: string }> = {
   id: 'customers.tags.create',
+  capability: 'customers.activities.manage',
   async execute(rawInput, ctx) {
     const parsed = tagCreateSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -162,6 +163,7 @@ const createTagCommand: CommandHandler<TagCreateInput, { tagId: string }> = {
 
 const updateTagCommand: CommandHandler<TagUpdateInput, { tagId: string }> = {
   id: 'customers.tags.update',
+  capability: 'customers.activities.manage',
   async prepare(rawInput, ctx) {
     const parsed = tagUpdateSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -280,6 +282,7 @@ const updateTagCommand: CommandHandler<TagUpdateInput, { tagId: string }> = {
 
 const deleteTagCommand: CommandHandler<{ body?: Record<string, unknown>; query?: Record<string, unknown> }, { tagId: string }> = {
   id: 'customers.tags.delete',
+  capability: 'customers.activities.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Tag id required')
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -379,6 +382,7 @@ const deleteTagCommand: CommandHandler<{ body?: Record<string, unknown>; query?:
 
 const assignTagCommand: CommandHandler<TagAssignmentInput, { assignmentId: string }> = {
   id: 'customers.tags.assign',
+  capability: 'customers.activities.manage',
   async execute(rawInput, ctx) {
     const parsed = tagAssignmentSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -525,6 +529,7 @@ const assignTagCommand: CommandHandler<TagAssignmentInput, { assignmentId: strin
 
 const unassignTagCommand: CommandHandler<TagAssignmentInput, { assignmentId: string | null }> = {
   id: 'customers.tags.unassign',
+  capability: 'customers.activities.manage',
   async execute(rawInput, ctx) {
     const parsed = tagAssignmentSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)

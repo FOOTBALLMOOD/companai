@@ -592,6 +592,7 @@ async function deactivateOtherDefaultTaxRates(em: EntityManager, record: SalesTa
 
 const createChannelCommand: CommandHandler<ChannelCreateInput, { channelId: string }> = {
   id: 'sales.channels.create',
+  capability: 'sales.channels.manage',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(channelCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -737,6 +738,7 @@ const createChannelCommand: CommandHandler<ChannelCreateInput, { channelId: stri
 
 const updateChannelCommand: CommandHandler<ChannelUpdateInput, { channelId: string }> = {
   id: 'sales.channels.update',
+  capability: 'sales.channels.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Channel id is required')
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -885,6 +887,7 @@ const deleteChannelCommand: CommandHandler<
   { channelId: string }
 > = {
   id: 'sales.channels.delete',
+  capability: 'sales.channels.manage',
   async prepare(input, ctx) {
     const id = requireId(input, 'Channel id is required')
     const em = (ctx.container.resolve('em') as EntityManager)

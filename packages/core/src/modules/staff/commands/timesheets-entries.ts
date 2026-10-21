@@ -192,6 +192,7 @@ function timeEntrySeedFromSnapshot(snapshot: TimeEntrySnapshot): Record<string, 
 
 const createTimeEntryCommand: CommandHandler<StaffTimeEntryCreateInput, { timeEntryId: string }> = {
   id: 'staff.timesheets.time_entries.create',
+  capability: 'staff.timesheets.manage_own',
   async execute(rawInput, ctx) {
     const parsed = staffTimeEntryCreateSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -309,6 +310,7 @@ const createTimeEntryCommand: CommandHandler<StaffTimeEntryCreateInput, { timeEn
 
 const startTimerCommand: CommandHandler<StaffTimeEntryStartTimerInput, { timeEntryId: string }> = {
   id: 'staff.timesheets.time_entries.start_timer',
+  capability: 'staff.timesheets.manage_own',
   async execute(rawInput, ctx) {
     const parsed = staffTimeEntryStartTimerSchema.parse(rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -471,6 +473,7 @@ const startTimerCommand: CommandHandler<StaffTimeEntryStartTimerInput, { timeEnt
 
 const updateTimeEntryCommand: CommandHandler<StaffTimeEntryUpdateInput, { timeEntryId: string }> = {
   id: 'staff.timesheets.time_entries.update',
+  capability: 'staff.timesheets.manage_own',
   async prepare(rawInput, ctx) {
     const parsed = staffTimeEntryUpdateSchema.parse(rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -596,6 +599,7 @@ const updateTimeEntryCommand: CommandHandler<StaffTimeEntryUpdateInput, { timeEn
 
 const deleteTimeEntryCommand: CommandHandler<{ id?: string }, { timeEntryId: string }> = {
   id: 'staff.timesheets.time_entries.delete',
+  capability: 'staff.timesheets.manage_own',
   async prepare(input, ctx) {
     const id = input?.id
     if (!id) throw new CrudHttpError(400, { error: 'Time entry id is required.' })

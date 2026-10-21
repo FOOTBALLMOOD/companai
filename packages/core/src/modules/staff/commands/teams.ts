@@ -92,6 +92,7 @@ const redoTeamCreate = makeCreateRedo<StaffTeam, TeamSnapshot, StaffTeamCreateIn
 
 const createTeamCommand: CommandHandler<StaffTeamCreateInput, { teamId: string }> = {
   id: 'staff.teams.create',
+  capability: 'staff.manage_team',
   async execute(rawInput, ctx) {
     const { parsed, custom } = parseWithCustomFields(staffTeamCreateSchema, rawInput)
     ensureTenantScope(ctx, parsed.tenantId)
@@ -211,6 +212,7 @@ const createTeamCommand: CommandHandler<StaffTeamCreateInput, { teamId: string }
 
 const updateTeamCommand: CommandHandler<StaffTeamUpdateInput, { teamId: string }> = {
   id: 'staff.teams.update',
+  capability: 'staff.manage_team',
   async prepare(rawInput, ctx) {
     const { parsed } = parseWithCustomFields(staffTeamUpdateSchema, rawInput)
     const em = (ctx.container.resolve('em') as EntityManager)
@@ -347,6 +349,7 @@ const updateTeamCommand: CommandHandler<StaffTeamUpdateInput, { teamId: string }
 
 const deleteTeamCommand: CommandHandler<{ id?: string }, { teamId: string }> = {
   id: 'staff.teams.delete',
+  capability: 'staff.manage_team',
   async prepare(input, ctx) {
     const id = input?.id
     if (!id) throw new CrudHttpError(400, { error: 'Team id is required.' })

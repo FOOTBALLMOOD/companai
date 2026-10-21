@@ -7,36 +7,83 @@
  * invisible: nothing fails, nothing warns, and coverage decays one new command
  * at a time.
  *
- * This is the thing that notices. It was written when live coverage went from
- * 54% to 98% (item 16), and it fails if a new command arrives without a
- * decision — either declare a capability, or add it to the list below with the
- * reason.
+ * **★ This guard was blind, and its own docblock said it was not.** It carried a
+ * hardcoded `PARKED` set naming `catalog`, `customers`, `resources`, `sales`,
+ * `staff` and `wms`, and promised that *"if one is ever un-parked, this test
+ * starts failing for it"*. It cannot: the list is a constant, so un-parking a
+ * module changes nothing here. `T-07` measured 128 unchecked commands on
+ * 2026-10-21.
  *
- * **Parked modules are excluded.** They do not run, so their commands cannot be
- * dispatched. If one is ever un-parked, this test starts failing for it, which
- * is the right moment to classify its commands rather than months later.
+ * **The fix is to stop asking whether a module is parked.** A capability is a
+ * property of the command, not of whether it can be dispatched today, and the
+ * commands in a parked module are exactly the ones nobody is watching. So every
+ * module is checked, and the thirteen that declare nothing are listed below with
+ * the row that owns each one.
+ *
+ * Two smaller things changed with it, and both were silent bugs:
+ *
+ * - **The capability is read from the command's own block**, not from a ±400
+ *   character window that can attribute a neighbouring command's capability to
+ *   this one.
+ * - **Both quote styles are read.** Twenty-four of these handlers use double
+ *   quotes, and a single-quote pattern loses them without saying so.
+ *
+ * The lesson is the one `CC-132` recorded one row earlier: *a control that cannot
+ * see what it guards is not a control.*
  */
 import fs from 'node:fs'
 import path from 'node:path'
 
 const repoRoot = path.resolve(__dirname, '../../../..')
 
-const PARKED = new Set([
-  'catalog', 'checkout', 'customer_accounts', 'customers', 'gateway_stripe',
-  'payment_gateways', 'portal', 'resources', 'sales', 'shipping_carriers',
-  'staff', 'sync_akeneo', 'sync_excel', 'wms',
-])
-
 /**
  * Commands that run ungated on purpose. Each needs a reason, because the whole
  * value of this list is that somebody had to write one.
  */
 const DELIBERATELY_UNGATED: Record<string, string> = {
+  // Behind a route that requires authentication but no feature. The route is the
+  // defect, and `CC-156` owns it; a capability invented here would hide that.
+  'customers.deals.update':
+    'Its route (deals/bulk-update-stage) declares no feature, so there is nothing to inherit. CC-156 owns the route gap.',
+  'customers.labels.assign':
+    'Its route declares requireAuth and no requireFeatures, so any signed-in user may assign a label. CC-156 owns the route gap.',
+  'customers.labels.unassign':
+    'Same route family as labels.assign: authenticated, not authorised. CC-156 owns the route gap.',
+  'sales.quotes.convert_to_order':
+    'Reached from the anonymous quote-accept link, where the hashed token is the credential. A feature gate here would break the customer flow.',
+  'sales.notes.create':
+    'The sales notes route declares requireAuth on all four methods and no feature. CC-156 owns the route gap.',
+  'sales.notes.update':
+    'Same route as notes.create: authenticated, not authorised. CC-156 owns the route gap.',
+  'sales.notes.delete':
+    'Same route as notes.create: authenticated, not authorised. CC-156 owns the route gap.',
+  // No caller at all. A capability would record an act nothing can perform.
+  'customers.interaction.recompute_next':
+    'Named nowhere outside its own commands folder and tests. CC-157 decides delete or wire.',
+  'customers.todos.unlink':
+    'No caller outside its commands folder and tests. CC-157 decides delete or wire.',
+  'customers.todos.create':
+    'Appears only in one integration spec, never in production code. CC-157 decides delete or wire.',
+  'sales.orders.lines.delete':
+    'No caller, and no dynamic construction of the id exists. CC-157 decides delete or wire.',
+  'sales.quotes.lines.upsert':
+    'No caller, and no dynamic construction of the id exists. CC-157 decides delete or wire.',
+  'sales.quotes.lines.delete':
+    'No caller, and no dynamic construction of the id exists. CC-157 decides delete or wire.',
+  // The eighth module, and the one the audit never counted. `checkout` ships in
+  // its own package (`@open-mercato/checkout`), so T-07's codemod, which walks
+  // `packages/core`, did not reach it. Named rather than skipped: the moment this
+  // module is un-parked, these nine need the same treatment as the other 115.
+  'checkout.link.create': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.link.update': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.link.delete': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.template.create': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.template.update': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.template.delete': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  'checkout.transaction.create': 'Parked, and outside T-07 measured scope: checkout ships in its own package. Same treatment when un-parked.',
+  // The one genuine design exception, unchanged from before.
   'messages.tokens.consume':
-    'The external-recipient path. A token from an emailed link is exchanged for ' +
-    'access, and the token IS the credential — the caller has no session and no ' +
-    'ACL, so there is no capability to check. Gating it would break external ' +
-    'access rather than add a control.',
+    'The external-recipient path. A token from an emailed link is exchanged for access, and the token IS the credential, so there is no session and no ACL to check.',
 }
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -67,20 +114,27 @@ function collectCommands(): Command[] {
     ...walk(path.join(repoRoot, 'apps', 'mercato', 'src')),
   ]
   const commands: Command[] = []
+
   for (const file of files) {
     const module = moduleOf(file)
-    if (PARKED.has(module)) continue
-    const src = fs.readFileSync(file, 'utf8')
-    const idPattern = /\bid:\s*'([a-z_0-9]+\.[a-z_0-9.]+)'/g
-    let match: RegExpExecArray | null
-    while ((match = idPattern.exec(src)) !== null) {
-      const window = src.slice(Math.max(0, match.index - 400), match.index + 400)
-      commands.push({
-        id: match[1],
-        module,
-        // A capability may be a quoted string or a function reference (U14).
-        gated: /\bcapability:\s*(?:'|[A-Za-z_])/.test(window),
-      })
+    const source = fs.readFileSync(file, 'utf8')
+    const lines = source.split('\n')
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const idMatch = /^\s*id:\s*(['"])([a-z0-9_.]+)\1\s*,?\s*$/.exec(lines[i])
+      if (!idMatch) continue
+
+      let end = lines.length
+      for (let j = i + 1; j < lines.length; j += 1) {
+        if (/^\s*id:\s*['"]/.test(lines[j])) {
+          end = j
+          break
+        }
+      }
+      const block = lines.slice(i + 1, end).join('\n')
+      if (!/\bexecute\s*[:(]/.test(block)) continue
+
+      commands.push({ id: idMatch[2], module, gated: /\bcapability\s*:/.test(block) })
     }
   }
   return commands
@@ -90,10 +144,10 @@ describe('the authority gate can bind every live command', () => {
   const commands = collectCommands()
 
   it('finds commands to check at all', () => {
-    // Guards the collector itself. A regex that silently matches nothing would
-    // make every assertion below pass while proving nothing — the failure mode
-    // that made an earlier guard useless (L37).
-    expect(commands.length).toBeGreaterThan(40)
+    // Guards the collector itself. A discovery bug that matched nothing would make
+    // every assertion below pass while proving nothing (L37). The floor is the
+    // surface measured on 2026-10-21, not a round number.
+    expect(commands.length).toBeGreaterThanOrEqual(128)
   })
 
   it('leaves no command ungated without a recorded reason', () => {

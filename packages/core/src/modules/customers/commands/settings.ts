@@ -42,6 +42,7 @@ const saveCustomerSettingsCommand: CommandHandler<
   { settingsId: string; addressFormat: CustomerAddressFormat }
 > = {
   id: 'customers.settings.save',
+  capability: 'customers.settings.manage',
   async execute(rawInput, ctx) {
     const input = customerSettingsUpsertSchema.parse(rawInput)
     ensureTenantScope(ctx, input.tenantId)
@@ -81,6 +82,7 @@ const saveStuckThresholdCommand: CommandHandler<
   { settingsId: string; stuckThresholdDays: number }
 > = {
   id: 'customers.settings.save_stuck_threshold',
+  capability: 'customers.deals.manage',
   async execute(rawInput, ctx) {
     const input = customerStuckThresholdUpsertSchema.parse(rawInput)
     ensureTenantScope(ctx, input.tenantId)
@@ -120,6 +122,7 @@ const saveDictionarySortModesCommand: CommandHandler<
   { settingsId: string; dictionarySortModes: CustomerDictionarySortModesUpsertInput['dictionarySortModes'] }
 > = {
   id: 'customers.settings.save_dictionary_sort_modes',
+  capability: 'customers.settings.manage',
   async execute(rawInput, ctx) {
     const input = customerDictionarySortModesUpsertSchema.parse(rawInput)
     ensureTenantScope(ctx, input.tenantId)
