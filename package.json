@@ -120,7 +120,8 @@
     "check:digital-twins": "node scripts/check-digital-twins.mjs",
     "check:digital-twins:fail": "node scripts/check-digital-twins.mjs --fail",
     "check:time-bombs:fail": "node scripts/time-bomb-scanner.mjs --fail",
-    "agents:check-budget": "node scripts/check-agents-md-budget.mjs"
+    "agents:check-budget": "node scripts/check-agents-md-budget.mjs",
+    "lint:unused-disables": "node scripts/report-unused-disables.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.2",

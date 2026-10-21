@@ -1,0 +1,1332 @@
+[
+  {
+    "file": "apps/mercato/src/__tests__/hmr-ws-origin.test.ts",
+    "line": 28,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "apps/mercato/src/__tests__/newrelic-config.test.ts",
+    "line": 7,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "apps/mercato/src/modules/example/api/todos/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "apps/mercato/src/modules/example/commands/interceptors.ts",
+    "line": 25,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "apps/mercato/src/modules/example/subscribers/audit-delete.ts",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "apps/mercato/src/modules/example/subscribers/example-event.ts",
+    "line": 10,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/ai-assistant/src/modules/ai_assistant/lib/__tests__/ai-runtime-port.test.ts",
+    "line": 169,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-unused-expressions"
+  },
+  {
+    "file": "packages/ai-assistant/src/modules/ai_assistant/lib/__tests__/ai-runtime-port.test.ts",
+    "line": 182,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-unused-expressions"
+  },
+  {
+    "file": "packages/ai-assistant/src/modules/ai_assistant/lib/__tests__/business-ir-author.test.ts",
+    "line": 238,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ai-assistant/src/modules/ai_assistant/lib/__tests__/sandbox.test.ts",
+    "line": 779,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — maxOutputSize was removed in T-35; passing it must not compile."
+  },
+  {
+    "file": "packages/ai-assistant/src/modules/ai_assistant/lib/pending-action-recheck.ts",
+    "line": 217,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/cli/src/lib/__tests__/queue-worker-supervisor.test.ts",
+    "line": 62,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-await-in-loop"
+  },
+  {
+    "file": "packages/cli/src/lib/__tests__/scheduler-supervisor.test.ts",
+    "line": 40,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-await-in-loop"
+  },
+  {
+    "file": "packages/cli/src/lib/generators/module-registry.ts",
+    "line": 2935,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/cli/src/lib/generators/module-registry.ts",
+    "line": 3496,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/cli/src/lib/generators/module-registry.ts",
+    "line": 3846,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/__tests__/capability-coverage.test.ts",
+    "line": 369,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/__tests__/capability-coverage.test.ts",
+    "line": 486,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require"
+  },
+  {
+    "file": "packages/core/src/__tests__/capability-coverage.test.ts",
+    "line": 500,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require"
+  },
+  {
+    "file": "packages/core/src/__tests__/capability-coverage.test.ts",
+    "line": 519,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-delete.sd2.test.ts",
+    "line": 62,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-delete.sd2.test.ts",
+    "line": 64,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-rename.sd2.test.ts",
+    "line": 96,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-rename.sd2.test.ts",
+    "line": 98,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-rename.sd2.test.ts",
+    "line": 101,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-rename.sd2.test.ts",
+    "line": 103,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/core-object-rename.sd2.test.ts",
+    "line": 111,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/__tests__/route-cache.test.ts",
+    "line": 64,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/roles/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "packages/core/src/modules/auth/api/users/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "packages/core/src/modules/auth/commands/__tests__/core-object-command.sd2.test.ts",
+    "line": 63,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/commands/__tests__/core-object-command.sd2.test.ts",
+    "line": 66,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/commands/__tests__/core-object-command.sd2.test.ts",
+    "line": 68,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/auth/services/__tests__/authService.test.ts",
+    "line": 36,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error partial"
+  },
+  {
+    "file": "packages/core/src/modules/auth/services/__tests__/authService.test.ts",
+    "line": 44,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error partial"
+  },
+  {
+    "file": "packages/core/src/modules/auth/services/__tests__/authService.test.ts",
+    "line": 69,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error partial user fixture is sufficient for this path"
+  },
+  {
+    "file": "packages/core/src/modules/auth/services/__tests__/authService.test.ts",
+    "line": 78,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error partial user fixture is sufficient for this path"
+  },
+  {
+    "file": "packages/core/src/modules/communication_channels/data/__tests__/channel-payload-enricher.test.ts",
+    "line": 10,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/communication_channels/lib/email-mime.ts",
+    "line": 165,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-control-regex"
+  },
+  {
+    "file": "packages/core/src/modules/customer_accounts/__tests__/customerAuth.test.ts",
+    "line": 25,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/customer_accounts/data/__tests__/guards.test.ts",
+    "line": 70,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/customers/api/addresses/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "packages/core/src/modules/customers/api/tags/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "packages/core/src/modules/customers/backend/customers/companies/page.tsx",
+    "line": 217,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/backend/customers/deals/page.tsx",
+    "line": 231,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/backend/customers/deals/pipeline/components/ChangeOwnerDialog.tsx",
+    "line": 72,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/backend/customers/people/page.tsx",
+    "line": 227,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/calendar/CalendarEventEditor.tsx",
+    "line": 391,
+    "kind": "eslint-disable",
+    "named": true,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps -- openSeq re-seeds defaults per dialog open"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/calendar/editor/LocationField.tsx",
+    "line": 39,
+    "kind": "eslint-disable",
+    "named": true,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps -- idsKey captures the ids"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/calendar/editor/hooks.ts",
+    "line": 160,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [open, form.date, form.startTime, form.endDate, form.endTime, form.allDay, form.status, participantsKey, config.hasAllDay, config.hasEnd, excludeId, draftOwnerUserId, scope, currentUserId, t]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/detail/InlineEditors.tsx",
+    "line": 174,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react/display-name"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/detail/MobilePersonDetail.tsx",
+    "line": 44,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/detail/ScheduleActivityDialog.tsx",
+    "line": 327,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [editData?.id, open, state.date, state.startTime, state.duration, state.allDay, t]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/customers/components/detail/ScheduleActivityDialog.tsx",
+    "line": 462,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [callDirection, callOutcome, callPhoneInvalidMessage, callPhoneNumber, isDateMissing, isTimeMissing, state.activityType, state.allDay, state.date, state.description, dealId, state.duration, editData, entityId, state.guestPermissions, state.linkedEntities, state.location, onActivityCreated, onClose, state.participants, state.recurrenceCount, state.recurrenceDays, state.recurrenceEnabled, state.recurrenceEndDate, state.recurrenceEndType, state.reminderMinutes, runGuardedMutation, state.startTime, t, taskPriority, state.title, translateErrorMessage, trimmedCallPhone, trimmedDate, trimmedStartTime, state.visibility, visibleFields]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/data_sync/__integration__/TC-DS-001.spec.ts",
+    "line": 30,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/directory/components/TenantSelect.tsx",
+    "line": 193,
+    "kind": "eslint-disable",
+    "named": true,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps -- value/onChange/includeEmptyOption are read once at fetch time for auto-select"
+  },
+  {
+    "file": "packages/core/src/modules/entities/api/encryption.ts",
+    "line": 55,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-await-in-loop"
+  },
+  {
+    "file": "packages/core/src/modules/entities/lib/makeActivityRoute.ts",
+    "line": 18,
+    "kind": "eslint-disable",
+    "named": true,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- MikroORM entity class constructor"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/backend/inbox-ops/page.tsx",
+    "line": 145,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, []) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/backend/inbox-ops/page.tsx",
+    "line": 149,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [page, statusFilter, categoryFilter, search, scopeVersion]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/backend/inbox-ops/page.tsx",
+    "line": 156,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [scopeVersion]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/lib/__tests__/executionEngine.test.ts",
+    "line": 22,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/lib/__tests__/executionEngine.test.ts",
+    "line": 24,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/inbox_ops/lib/__tests__/executionEngine.test.ts",
+    "line": 26,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/messages/commands/__tests__/tokens.test.ts",
+    "line": 22,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/sales/backend/sales/documents/[id]/page.tsx",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/commands/documentAddresses.ts",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/commands/documents.ts",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/commands/payments.ts",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/commands/shipments.ts",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/commands/tags.ts",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/__tests__/ShipmentsSection.test.tsx",
+    "line": 68,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/__tests__/salesDocumentFormCurrency.test.tsx",
+    "line": 144,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/__tests__/salesDocumentFormHoistedRenderers.test.tsx",
+    "line": 183,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/__tests__/salesDocumentFormQuickCreate.test.tsx",
+    "line": 156,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-require-imports"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/documents/AddressesSection.tsx",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/documents/AdjustmentDialog.tsx",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/components/documents/AdjustmentsSection.tsx",
+    "line": 1,
+    "kind": "ts-nocheck",
+    "named": false,
+    "text": "// @ts-nocheck"
+  },
+  {
+    "file": "packages/core/src/modules/sales/lib/makeSalesLineRoute.ts",
+    "line": 21,
+    "kind": "eslint-disable",
+    "named": true,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any -- MikroORM entity class constructor"
+  },
+  {
+    "file": "packages/core/src/modules/sync_excel/__integration__/TC-SX-001.spec.ts",
+    "line": 336,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/sync_excel/__integration__/TC-SX-001.spec.ts",
+    "line": 659,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/wms/components/backend/__tests__/CycleCountWizardDialog.lotRuntime2.test.tsx",
+    "line": 252,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/wms/components/backend/__tests__/CycleCountWizardDialog.lotRuntime2.test.tsx",
+    "line": 254,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/wms/components/backend/__tests__/CycleCountWizardDialog.lotRuntime2.test.tsx",
+    "line": 262,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/core/src/modules/workflows/frontend/checkout-demo/page.tsx",
+    "line": 359,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "}, [selectedCustomerId, cartJson, result]) // eslint-disable-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/create-app/template/src/modules/example/api/todos/route.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-explicit-any */"
+  },
+  {
+    "file": "packages/create-app/template/src/modules/example/commands/interceptors.ts",
+    "line": 25,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/create-app/template/src/modules/example/subscribers/audit-delete.ts",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/create-app/template/src/modules/example/subscribers/example-event.ts",
+    "line": 10,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/scheduler/src/modules/scheduler/backend/config/scheduled-jobs/page.tsx",
+    "line": 115,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/search/src/modules/search/api/embeddings/reindex/route.ts",
+    "line": 103,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/api/index/route.ts",
+    "line": 147,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/api/index/route.ts",
+    "line": 155,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/api/index/route.ts",
+    "line": 325,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/fulltext_upsert.ts",
+    "line": 29,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/vector_delete.ts",
+    "line": 26,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/vector_purge.ts",
+    "line": 18,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/vector_purge.ts",
+    "line": 50,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/vector_purge.ts",
+    "line": 57,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/subscribers/vector_upsert.ts",
+    "line": 26,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/workers/fulltext-index.worker.ts",
+    "line": 104,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/search/src/modules/search/workers/vector-index.worker.ts",
+    "line": 377,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/shared/src/lib/business-ir/__tests__/compile.test.ts",
+    "line": 158,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — a query IR has no tenantId; the type forbids it."
+  },
+  {
+    "file": "packages/shared/src/lib/business-ir/__tests__/live.smoke.test.ts",
+    "line": 141,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/shared/src/lib/business-ir/__tests__/live.smoke.test.ts",
+    "line": 149,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/shared/src/lib/business-widget/__tests__/ir.test.ts",
+    "line": 92,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — the IR is semantic: there is no className."
+  },
+  {
+    "file": "packages/shared/src/lib/business-widget/__tests__/ir.test.ts",
+    "line": 94,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — and no style."
+  },
+  {
+    "file": "packages/shared/src/lib/business-widget/__tests__/ir.test.ts",
+    "line": 96,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — and no React props."
+  },
+  {
+    "file": "packages/shared/src/lib/business-widget/__tests__/ir.test.ts",
+    "line": 98,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — and no children."
+  },
+  {
+    "file": "packages/shared/src/lib/business-widget/__tests__/no-llm.test.ts",
+    "line": 37,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — there is no third parameter, so no model client can be"
+  },
+  {
+    "file": "packages/shared/src/lib/crud/advanced-filter-integration.ts",
+    "line": 147,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  },
+  {
+    "file": "packages/shared/src/lib/data/__tests__/deleteOrmEntity.refuse.sd2.test.ts",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/shared/src/lib/data/__tests__/deleteOrmEntity.refuse.sd2.test.ts",
+    "line": 22,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/shared/src/lib/di/container.ts",
+    "line": 261,
+    "kind": "ts-ignore",
+    "named": true,
+    "text": "// @ts-ignore - @/di only exists in app context, not in packages"
+  },
+  {
+    "file": "packages/shared/src/lib/di/container.ts",
+    "line": 296,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/shared/src/lib/i18n/server.ts",
+    "line": 82,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/shared/src/lib/openapi/generator.ts",
+    "line": 136,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-constant-condition"
+  },
+  {
+    "file": "packages/shared/src/lib/openapi/generator.ts",
+    "line": 205,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/shared/src/lib/openapi/generator.ts",
+    "line": 211,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/shared/src/lib/testing/renderWithProviders.tsx",
+    "line": 22,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "{/* @ts-expect-error shared provider accepts loose dict shape */}"
+  },
+  {
+    "file": "packages/shared/src/lib/umes/__tests__/conflict-detection.test.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-require-imports */"
+  },
+  {
+    "file": "packages/shared/src/lib/umes/__tests__/enricher-timing.test.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-require-imports */"
+  },
+  {
+    "file": "packages/shared/src/lib/umes/__tests__/extension-headers.test.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-require-imports */"
+  },
+  {
+    "file": "packages/shared/src/lib/umes/__tests__/interceptor-activity.test.ts",
+    "line": 1,
+    "kind": "eslint-disable-file",
+    "named": false,
+    "text": "/* eslint-disable @typescript-eslint/no-require-imports */"
+  },
+  {
+    "file": "packages/shared/src/lib/user-function/__tests__/no-llm.test.ts",
+    "line": 74,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — there is no eighth parameter, so no model client can be"
+  },
+  {
+    "file": "packages/shared/src/modules/__tests__/overrides.test.ts",
+    "line": 135,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error legacy shape kept here just to assert it is not picked up"
+  },
+  {
+    "file": "packages/shared/src/modules/__tests__/route-overrides.test.ts",
+    "line": 198,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error intentionally malformed"
+  },
+  {
+    "file": "packages/ui/__integration__/TC-AI-UI-003-aichat-registry.spec.tsx",
+    "line": 21,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/__integration__/TC-AI-UI-003-aichat-registry.spec.tsx",
+    "line": 24,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/__integration__/TC-AI-UI-003-aichat-registry.spec.tsx",
+    "line": 28,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/__integration__/TC-AI-UI-003-aichat-registry.spec.tsx",
+    "line": 32,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/__integration__/TC-AI-UI-003-aichat-registry.spec.tsx",
+    "line": 38,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/jest.setup.ts",
+    "line": 53,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/jest.setup.ts",
+    "line": 68,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/AiChat.tsx",
+    "line": 1310,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.conversation.test.tsx",
+    "line": 16,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.conversation.test.tsx",
+    "line": 19,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.conversation.test.tsx",
+    "line": 23,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.conversation.test.tsx",
+    "line": 26,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.conversation.test.tsx",
+    "line": 29,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.debug.test.tsx",
+    "line": 7,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.debug.test.tsx",
+    "line": 10,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.debug.test.tsx",
+    "line": 14,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.debug.test.tsx",
+    "line": 17,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.debug.test.tsx",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.registry.test.tsx",
+    "line": 6,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.registry.test.tsx",
+    "line": 9,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.registry.test.tsx",
+    "line": 13,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.registry.test.tsx",
+    "line": 17,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.registry.test.tsx",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.task-plan.test.tsx",
+    "line": 18,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.task-plan.test.tsx",
+    "line": 21,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.task-plan.test.tsx",
+    "line": 25,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.task-plan.test.tsx",
+    "line": 28,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.task-plan.test.tsx",
+    "line": 31,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.test.tsx",
+    "line": 7,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.test.tsx",
+    "line": 10,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.test.tsx",
+    "line": 14,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.test.tsx",
+    "line": 17,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.test.tsx",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.thinking-unmount.test.tsx",
+    "line": 17,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.thinking-unmount.test.tsx",
+    "line": 20,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.thinking-unmount.test.tsx",
+    "line": 24,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.thinking-unmount.test.tsx",
+    "line": 27,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-var-requires"
+  },
+  {
+    "file": "packages/ui/src/ai/__tests__/AiChat.thinking-unmount.test.tsx",
+    "line": 30,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-explicit-any"
+  },
+  {
+    "file": "packages/ui/src/ai/parts/useAiPendingActionPolling.ts",
+    "line": 196,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/AppShell.tsx",
+    "line": 596,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/AppShell.tsx",
+    "line": 721,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/FilterOverlay.tsx",
+    "line": 117,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/PerspectiveSidebar.tsx",
+    "line": 181,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/PerspectiveSidebar.tsx",
+    "line": 195,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/crud/useGroupOrder.ts",
+    "line": 47,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/detail/TagsSection.tsx",
+    "line": 304,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/fields/registry.ts",
+    "line": 30,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line @typescript-eslint/no-empty-function"
+  },
+  {
+    "file": "packages/ui/src/backend/injection/InjectionSpot.tsx",
+    "line": 210,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/injection/recordContext.tsx",
+    "line": 99,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/injection/useAppEvent.ts",
+    "line": 67,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/inputs/ComboboxInput.tsx",
+    "line": 244,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps — resolveDescription intentionally excluded:"
+  },
+  {
+    "file": "packages/ui/src/backend/inputs/PhoneNumberField.tsx",
+    "line": 440,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/inputs/PhoneNumberField.tsx",
+    "line": 472,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/messages/__tests__/useMessageCompose.test.tsx",
+    "line": 25,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "{/* @ts-expect-error shared provider accepts a loose dict shape */}"
+  },
+  {
+    "file": "packages/ui/src/backend/notifications/useNotificationEffect.ts",
+    "line": 44,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/notifications/useNotificationEffect.ts",
+    "line": 50,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/sidebar/SidebarCustomizationEditor.tsx",
+    "line": 404,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "packages/ui/src/backend/utils/__tests__/optimisticLock.test.ts",
+    "line": 28,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error intentional misuse"
+  },
+  {
+    "file": "packages/ui/src/backend/utils/__tests__/optimisticLock.test.ts",
+    "line": 30,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error intentional misuse"
+  },
+  {
+    "file": "packages/ui/src/portal/hooks/usePortalAppEvent.ts",
+    "line": 54,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line react-hooks/exhaustive-deps"
+  },
+  {
+    "file": "scripts/i18n-check-hardcoded.ts",
+    "line": 31,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — JS sibling module shared with the node:test suite."
+  },
+  {
+    "file": "scripts/i18n-check-usage.ts",
+    "line": 21,
+    "kind": "ts-expect-error",
+    "named": true,
+    "text": "// @ts-expect-error — JS sibling module shared with the node:test suite."
+  },
+  {
+    "file": "scripts/profile-dev-rss.mjs",
+    "line": 232,
+    "kind": "eslint-disable",
+    "named": false,
+    "text": "// eslint-disable-next-line no-console"
+  }
+]

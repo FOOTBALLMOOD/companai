@@ -51,4 +51,20 @@ export default [
   ...nextCoreWebVitals,
   { ignores },
   { name: 'project/rule-overrides', rules: ruleOverrides },
+  // `CC-110` — a DEAD disable is an error, so writing a reason on dead code buys nothing.
+  //
+  // The donor's instrument (`eslint.config.js:72`, zulip): an unused disable directive is reported, which
+  // means the escape-hatch census cannot be padded with directives that suppress nothing. Without it, the
+  // 203 pinned holes could be "named" by adding reasons to lines that no longer need the hole at all —
+  // the census would shrink while the code got worse.
+  //
+  // `reportUnusedDisableDirectives` is the ESLint 9 flat-config spelling. The severity is `warn`, not
+  // `error`, for one measured reason: turning it on as an error on a tree with 203 holes would fail the
+  // build on day one, which is the all-or-nothing shape `CC-110` exists to replace. The ratchet that
+  // turns it into an error is the escape-hatch baseline — the count is published every run, and it can
+  // only shrink.
+  {
+    name: 'project/linter-options',
+    linterOptions: { reportUnusedDisableDirectives: 'warn' },
+  },
 ]

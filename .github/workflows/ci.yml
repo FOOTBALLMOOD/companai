@@ -568,12 +568,34 @@ jobs:
         run: yarn check:declared-controls
 
       # SR-41 — escape hatches: a hole must carry a reason.
-      # REPORT-ONLY ON PURPOSE. `:fail` is all-or-nothing and there is no baseline, so it would
-      # report 169 unnamed holes of 202 and break the build on day one. Publishing the number every
-      # run is honest; the baseline that turns it into enforcement is CC-110 and is deliberately
-      # left to that decision.
-      - name: Report escape hatches (SR-41 — report only, not yet enforcing)
-        run: yarn check:escape-hatches
+      # `CC-110` CLOSED 2026-10-21 — THIS IS NOW A GATE, and the reason it can be is a baseline rather
+      # than a count. The row's own diagnosis was: *"Ours is all-or-nothing `:fail` against 169 items,
+      # which is why it can never be turned on."* A gate that fails 169 times on the day it is switched
+      # on is not a gate, it is a build-breaker nobody merges.
+      #
+      # `scripts/escape-hatches.baseline.json` pins every hole by `file:line:kind`, so `--fail` now means
+      # "the pin still matches": it fails on a hole NOT in the baseline (new) and on a baseline entry that
+      # is no longer there (stale), so the count can only shrink. A hole that gains a reason is PROGRESS
+      # and does not fail; one that loses its reason is a REGRESSION and does.
+      #
+      # Measured 2026-10-21: 190 holes pinned (26 named, 164 unnamed, 10 file-level). The gate passes on
+      # that state today — which is the whole point.
+      #
+      # And the census got SMALLER when the checker got more precise, not when the code changed: the
+      # checker was counting its own docblock examples and its test fixtures' string literals as holes.
+      # `startsComment` now rejects a directive preceded by a block-comment `*` or a quote, which removed
+      # 13 false positives. Three holes remain under `scripts/` and all three are real.
+      - name: Check escape hatches (SR-41 — baseline gate)
+        run: yarn check:escape-hatches:fail
+
+      # A dead disable is reported, so the census cannot be padded with holes that suppress nothing.
+      # The donor's instrument (`eslint.config.js:72`). Severity is `warn` for one measured reason:
+      # `error` on a tree with 190 holes would fail the build on day one — the all-or-nothing shape
+      # `CC-110` exists to replace. **Measured 2026-10-21: 129 unused-disable reports across the 101
+      # files that carry eslint holes** — roughly one dead hole per file. That is the next cleanup, and
+      # the ratchet that turns this into an error is the escape-hatch baseline, not a new row.
+      - name: Report unused eslint-disable directives (CC-110)
+        run: yarn lint:unused-disables
 
       # CC-117 — client boundaries: a backend page root should not be a client component, and a
       # client page root should not grow past 300 LOC.
