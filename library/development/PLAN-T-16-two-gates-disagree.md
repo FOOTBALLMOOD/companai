@@ -1,7 +1,7 @@
 # PLAN-T-16 — two gates answer "the authority dependency is missing" in opposite directions
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** **BUILT and CLOSED 2026-10-21.** **5/5 mutations PROVEN.** §3 is the requirement, §4 is the
+proof, §8 is what was built.
 **Row:** `T-16` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** read from source on 2026-10-21, at the lines named below.
@@ -117,3 +117,43 @@ Plus: the `ai_assistant` and `core` suite counts, and `tsc --noEmit` at 0, as nu
 |---|---|---|
 | **Code Mode is a third authorizer.** It resolves `endpoint.requiredFeatures` from the OpenAPI spec and calls `hasRequiredFeatures` directly, so record locks, project overlays, trust tiers, tenant policy and the org graph are all invisible to it | It is a whole missing control, not a disagreement between two existing ones. The path-traversal and method guards there are genuinely good; the authorization is a different control | A new row, opened by this measurement |
 | **The HTTP RBAC path threads no options** (`onBehalfOfUserId`, `recordId`), so an API key doing a read over HTTP is resolved as an invokerless machine, which widens the answer | Already registered and still open | `CC-10` |
+
+---
+
+## 8. What was built
+
+**One new file** — `packages/shared/src/lib/authority/dependency.ts` — holding the rule in one place:
+
+```ts
+export function authorityDependencyVerdict(state: AuthorityDependencyState): AuthorityDependencyVerdict {
+  return state === 'not_registered' ? 'permit' : 'refuse'
+}
+```
+
+**The tool door** (`ai_assistant/lib/tool-authority.ts`) splits its single `try` into two: a failed
+`resolve` (or a null service) is `not_registered` and permits; a failed `modeFor` on a service that
+resolved is `unreachable` and refuses. **The command gate** (`auth/commands/interceptors.ts`) already
+behaved correctly and now says so through the same function instead of a comment of its own.
+
+### 8.1 The proof caught two of my own mistakes
+
+**The shared rule was decoration.** My first version called `authorityDependencyVerdict` only inside a
+`logger.debug` on the tool door's permit branch, so the decision was still hardcoded. Flipping the rule
+changed nothing and **three of the five mutations survived green**. The rule now decides both branches.
+
+**Two existing tests conflated the two states in their own names.** One was called *"fails closed when the
+resolver is unreachable"* while its container threw on **resolve**, which is `not_registered`. That is how
+the contradiction stayed hidden for months: the test that should have caught it was asserting the wrong
+thing under the right name. Both are split into the states they actually are.
+
+### 8.2 Proof
+
+| | |
+|---|---|
+| mutations | **5/5 PROVEN**, every file restored byte-identically |
+| tool door | 15 tests |
+| command gate | 15 tests |
+| executor | 13 tests |
+| `ai-assistant` | **143 suites / 2,143 tests** |
+| `core` | **663 suites / 5,841 tests** |
+| `tsc --noEmit` | **0** for shared, core and ai-assistant |

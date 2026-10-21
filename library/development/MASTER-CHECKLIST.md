@@ -41,6 +41,18 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
+**LAST DONE, 2026-10-21 (latest): `T-16` is BUILT and CLOSED — both doors now answer a missing
+authority dependency the same way.** The tool door refused when the authority module is not registered; the
+command gate returned, so the act ran ungoverned. In such a deployment an assistant could not call its
+tools but could execute any command that declares a capability. **The distinction both doors were missing
+is the whole fix:** *not registered* means the deployment chose not to gate, so permit; *registered but
+unreachable* means it meant to gate and cannot, so refuse. The rule now lives in one file
+(`shared/lib/authority/dependency.ts`) and both doors call it. **The proof caught two of my own mistakes:**
+the shared rule was initially only a log line, so flipping it changed nothing and three mutations survived
+green; and two existing tests conflated the two states in their own names, one called unreachable while
+its container threw on resolve. **Proof:** 5/5 mutations PROVEN, `ai-assistant` 143 suites / 2,143 tests,
+core 663 / 5,841, `tsc` 0 for three packages. **90 closed · 66 open · 156 total.**
+
 **LAST DONE, 2026-10-21 (latest): `T-15` is BUILT and CLOSED — the confirm path applies the binding's
 narrowing.** An agent is bound to a principal with a narrowing, a tool allowlist and a required-feature
 list. The two dispatch paths compute and enforce it; the confirm path did neither, so a binding narrowed
@@ -475,8 +487,8 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 5 spine findings left, before `CC-121` starts.** `T-16` is the next one by
-rank, and it has not been measured yet, so it is measured before it is built. Then `T-17`,
+**▶ NEXT — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts.** `T-17` is the next one by
+rank, and it has not been measured yet, so it is measured before it is built. Then
 `T-28`, `T-30`, `T-33`. **Measure each from source before building
 it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07` and `T-08` all needed the audit's own sentence corrected,
 and `T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
@@ -1409,8 +1421,8 @@ repaired before it is re-keyed.**
 
 | Slot | Gate | Findings | Count |
 |---|---|---|---|
-| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21), `T-08` (2026-10-21), `T-15` (2026-10-21) | 16 |
-| **Slot 0** | before `CC-121` starts | `T-16` `T-17` `T-28` `T-30` `T-33` | 5 |
+| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21), `T-07` (2026-10-21), `T-08` (2026-10-21), `T-15` (2026-10-21), `T-16` (2026-10-21) | 17 |
+| **Slot 0** | before `CC-121` starts | `T-17` `T-28` `T-30` `T-33` | 4 |
 | **Slot 1** | with `W3` (chokepoint + actor-class gate) | `T-18` `T-19` `T-20` `T-21` `T-22` `T-23` `T-25` `T-26` `T-29` `T-34` | 10 |
 | **Slot 2** | with `W5` (durable runs) | `T-43` | 1 |
 | **Slot 3** | with `W7` (first surface) | `T-09` `T-10` `T-12` `T-40` | 4 |
