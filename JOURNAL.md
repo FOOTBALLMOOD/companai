@@ -96,9 +96,11 @@ the update half of each), the pre-existing fixture that had asserted the **old d
 amended, module **13 suites / 60 tests** with the sync bridge green, **two mutations RED individually**
 (create-path call removed · update-path call removed).
 
-**What is not claimed:** that CI is now green. The next run is the confirmation — the four shards
-green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority 400. And a
-residual, recorded rather than hidden: `de`/`pl`/`es` still carry upstream's positioning at
+**★ OBSERVATION TAKEN 2026-10-21 (run `39549013082`, both fix commits aboard; the run for the first
+commit, `39548126543`, was cancelled by the follow-up push): all 15 shards success** — the four that
+were red are green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority
+400. The first green run since this chain began (`39357327101` → `39363070729` → `39418460891` →
+`39429422803` → `39504503223` → cancelled → green). And a residual, recorded rather than hidden: `de`/`pl`/`es` still carry upstream's positioning at
 `app.metadata.description` while `en` carries the Companai line — rewording them is a hand-translation
 decision (`CC-142`'s rule), and `TC-APP-001` pins the German string, so the spec changes with it.
 A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in
