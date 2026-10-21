@@ -9,6 +9,7 @@ const policyOverrideGetMock = jest.fn()
 const loadAgentRegistryMock = jest.fn()
 const loadAllModuleToolsMock = jest.fn()
 const getAgentMock = jest.fn()
+const resolveAgentDefinitionMock = jest.fn()
 const getToolMock = jest.fn()
 const attachmentFindMock = jest.fn()
 const findBindingMock = jest.fn()
@@ -70,6 +71,13 @@ jest.mock('../../../../../../data/repositories/AiAgentBindingRepository', () => 
 jest.mock('../../../../../../lib/agent-registry', () => ({
   getAgent: (...args: unknown[]) => getAgentMock(...args),
   loadAgentRegistry: (...args: unknown[]) => loadAgentRegistryMock(...args),
+}))
+
+// T-15 — the confirm route resolves the agent through the catalogue (code first,
+// tenant row second), not the global registry. Mocked here because the real one
+// reads the database.
+jest.mock('../../../../../../lib/agent-type-catalog', () => ({
+  resolveAgentDefinition: (...args: unknown[]) => resolveAgentDefinitionMock(...args),
 }))
 
 jest.mock('../../../../../../lib/tool-registry', () => ({
@@ -164,6 +172,7 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    findBindingMock.mockReset()
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
     authMock.mockResolvedValue({
@@ -193,6 +202,7 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
     loadAgentRegistryMock.mockResolvedValue(undefined)
     loadAllModuleToolsMock.mockResolvedValue(undefined)
     getAgentMock.mockReturnValue(makeAgent())
+    resolveAgentDefinitionMock.mockResolvedValue(makeAgent())
     getToolMock.mockReturnValue(makeTool())
     attachmentFindMock.mockResolvedValue([])
 
@@ -273,7 +283,7 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
 
   it('403 tool_not_whitelisted when agent no longer whitelists the tool', async () => {
     repoGetByIdMock.mockResolvedValueOnce(makeRow())
-    getAgentMock.mockReturnValueOnce(makeAgent({ allowedTools: [] }))
+    resolveAgentDefinitionMock.mockResolvedValueOnce(makeAgent({ allowedTools: [] }))
 
     const response = await POST(buildRequest() as any, buildContext('pa_123'))
     expect(response.status).toBe(403)
@@ -283,7 +293,7 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
 
   it('403 agent_features_denied when caller lacks agent features', async () => {
     repoGetByIdMock.mockResolvedValueOnce(makeRow())
-    getAgentMock.mockReturnValueOnce(makeAgent({ requiredFeatures: ['catalog.restricted.manage'] }))
+    resolveAgentDefinitionMock.mockResolvedValueOnce(makeAgent({ requiredFeatures: ['catalog.restricted.manage'] }))
 
     const response = await POST(buildRequest() as any, buildContext('pa_123'))
     expect(response.status).toBe(403)
@@ -303,9 +313,9 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
     expect(body.code).toBe('attachment_cross_tenant')
   })
 
-  it('404 agent_unknown when agent has been removed from the registry', async () => {
+  it('404 agent_unknown when the agent cannot be resolved', async () => {
     repoGetByIdMock.mockResolvedValueOnce(makeRow())
-    getAgentMock.mockReturnValueOnce(undefined)
+    resolveAgentDefinitionMock.mockResolvedValueOnce(null)
 
     const response = await POST(buildRequest() as any, buildContext('pa_123'))
     expect(response.status).toBe(404)
@@ -401,5 +411,55 @@ describe('POST /api/ai/actions/:id/confirm route (Step 5.8)', () => {
     const response = await POST(buildRequest() as any, buildContext('pa_123'))
     expect(response.status).toBe(200)
     expect(findBindingMock).not.toHaveBeenCalled()
+  })
+
+  // --- T-15 — the narrowing the dispatch path applied is applied here too ---
+
+  it('T-15 — refuses a tool outside the binding allowlist (403)', async () => {
+    repoGetByIdMock.mockResolvedValueOnce(makeRow())
+    authMock.mockResolvedValue({ sub: 'ai_worker:key-1', tenantId: 'tenant-1', orgId: 'org-1' })
+    // The binding allows a DIFFERENT tool, so the dispatch that proposed this act
+    // could never have run it. Confirming it would widen what was approved.
+    findBindingMock.mockResolvedValue({ toolAllowlist: ['other.tool'], requiredFeatures: [] })
+
+    const response = await POST(buildRequest() as any, buildContext('pa_123'))
+    expect(response.status).toBe(403)
+    const body = await response.json()
+    expect(body.code).toBe('tool_not_allowed_by_binding')
+  })
+
+  it('T-15 — refuses when the caller lacks a feature the binding requires (403)', async () => {
+    repoGetByIdMock.mockResolvedValueOnce(makeRow())
+    authMock.mockResolvedValue({ sub: 'ai_worker:key-1', tenantId: 'tenant-1', orgId: 'org-1' })
+    findBindingMock.mockResolvedValue({ toolAllowlist: null, requiredFeatures: ['catalog.publish'] })
+
+    const response = await POST(buildRequest() as any, buildContext('pa_123'))
+    expect(response.status).toBe(403)
+    const body = await response.json()
+    expect(body.code).toBe('binding_features_missing')
+  })
+
+  it('T-15 — a tenant-authored type is resolved through the catalogue, not the registry', async () => {
+    repoGetByIdMock.mockResolvedValueOnce(makeRow())
+    // The type exists ONLY as a tenant row. The global registry has never heard of
+    // it, so a route reading `getAgent` would see nothing and fail closed on the
+    // wrong agent, or compute a narrowing from the wrong definition.
+    getAgentMock.mockReturnValue(undefined)
+    resolveAgentDefinitionMock.mockResolvedValue(makeAgent({ id: 'tenant.custom_assistant' }))
+
+    const response = await POST(buildRequest() as any, buildContext('pa_123'))
+    expect(response.status).toBe(200)
+    expect(resolveAgentDefinitionMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('T-15 — an agent that cannot be resolved for the tenant keeps its 404', async () => {
+    repoGetByIdMock.mockResolvedValueOnce(makeRow())
+    getAgentMock.mockReturnValue(undefined)
+    resolveAgentDefinitionMock.mockResolvedValue(null)
+
+    const response = await POST(buildRequest() as any, buildContext('pa_123'))
+    expect(response.status).toBe(404)
+    const body = await response.json()
+    expect(body.code).toBe('agent_unknown')
   })
 })

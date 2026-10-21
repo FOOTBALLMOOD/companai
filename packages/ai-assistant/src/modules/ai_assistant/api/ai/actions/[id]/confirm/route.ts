@@ -8,9 +8,10 @@ import { createRequestContainer } from '@open-mercato/shared/lib/di/container'
 import type { RbacService } from '@open-mercato/core/modules/auth/services/rbacService'
 import { AiPendingActionRepository } from '../../../../../data/repositories/AiPendingActionRepository'
 import { hasRequiredFeatures } from '../../../../../lib/auth'
-import { resolveAgentBinding } from '../../../../../lib/agent-binding'
+import { resolveAgentBinding, computeBoundRunScope } from '../../../../../lib/agent-binding'
+import { resolveAgentDefinition } from '../../../../../lib/agent-type-catalog'
 import { serializePendingActionForClient } from '../../../../../lib/pending-action-client'
-import { getAgent, loadAgentRegistry } from '../../../../../lib/agent-registry'
+import { loadAgentRegistry } from '../../../../../lib/agent-registry'
 import { toolRegistry } from '../../../../../lib/tool-registry'
 import { loadAllModuleTools } from '../../../../../lib/tool-loader'
 import type { AiToolDefinition } from '../../../../../lib/types'
@@ -168,7 +169,25 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Res
 
     await loadAgentRegistry()
     await loadAllModuleTools()
-    const agent = getAgent(row.agentId)
+    // T-15 — the agent is resolved the way the dispatch paths resolve it, not from
+    // the global registry. `getAgent` sees only code-layer agents, so a
+    // tenant-authored type is invisible here, and a narrowing computed from the
+    // wrong definition is wrong in the direction of permission: an absent
+    // definition yields the empty tool set and the binding's features alone.
+    const agent = await resolveAgentDefinition({
+      agentId: row.agentId,
+      scope: { tenantId: auth.tenantId ?? '' },
+      em,
+    })
+    if (!agent) {
+      // The same code the recheck produced when the registry had no such agent,
+      // so an unresolvable type keeps its documented 404 rather than gaining one.
+      return jsonError(
+        404,
+        `Agent "${row.agentId}" could not be resolved for this tenant.`,
+        'agent_unknown',
+      )
+    }
     const tool = toolRegistry.getTool(row.toolName) as AiToolDefinition | undefined
 
     const policyOverrideRepo = new AiAgentMutationPolicyOverrideRepository(em)
@@ -213,6 +232,33 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Res
       )
     }
 
+    // T-15 — the narrowing the dispatch path applied is applied here too, and it
+    // is enforced rather than logged. `binding.bound` is always true above, so the
+    // scope is well-typed. Without this, a binding narrowed at dispatch is
+    // executed at confirm as though it had never been narrowed: an approval
+    // silently widens what was approved.
+    //
+    // A human approver is not special-cased. The narrowing belongs to the binding,
+    // not to the caller's kind, so "a person pressed approve" is not a reason the
+    // allowlist stops applying.
+    const boundScope = computeBoundRunScope({ agent, binding })
+
+    if (!boundScope.allowedTools.includes(row.toolName)) {
+      return jsonError(
+        403,
+        `Tool "${row.toolName}" is outside the allowlist bound to agent "${row.agentId}".`,
+        'tool_not_allowed_by_binding',
+      )
+    }
+
+    if (!hasRequiredFeatures(boundScope.requiredFeatures, acl.features, acl.isSuperAdmin)) {
+      return jsonError(
+        403,
+        `Caller lacks a feature required by agent "${row.agentId}" for tool "${row.toolName}".`,
+        'binding_features_missing',
+      )
+    }
+
     const executeCtx: PendingActionExecuteContext = {
       tenantId: auth.tenantId,
       organizationId: auth.orgId ?? null,
@@ -226,7 +272,7 @@ export async function POST(req: NextRequest, context: RouteContext): Promise<Res
 
     const executed = await executePendingActionConfirm({
       action: row,
-      agent: agent!,
+      agent,
       tool: tool!,
       ctx: executeCtx,
       repo,
