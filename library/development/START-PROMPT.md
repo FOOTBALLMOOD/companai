@@ -24,7 +24,7 @@
 > `CC-128` (the tenant ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) ·
 > `CC-135` (the ceiling's route) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 > means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
-> **Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
+> **Register: 91 closed · 65 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
 > `scripts/check-master-checklist.mjs`. **`CC-92` Slot 0 is COMPLETE — all thirteen spine findings are
 > built**, so **`CC-121` (the authority re-key) is startable behind `CC-119`** (the database rebuild
 > milestone), which is the next row to measure — and the queue behind it is named, with its steps, in the

@@ -41,7 +41,7 @@ is startable behind `CC-119`** (the database rebuild milestone). That gate is th
 17 + pgvector, `DEPLOY-2026-10-20.md`); two checks remain, the `down()` path and the schema-vs-entities diff.
 **The order the rest of the work lands in is `PLAN-development-order-SR-core.md`** — ratchets first, then the
 core, then the authority rows, tenancy, durability, composition.
-**Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
+**Register: 91 closed · 65 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
 `scripts/check-master-checklist.mjs`. **The ONE NUMBER is 78 / 321 units
 (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
 **★ What is new since revision 38:** Slot 0 closed **eight** findings in one day — `T-06` (the undo record

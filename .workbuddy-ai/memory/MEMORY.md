@@ -85,7 +85,7 @@ test) are **open and startable**.
 fails the build when the marker and the register disagree; `scripts/__tests__/check-route.mutations.mjs`
 proves that check can fail (5 mutations, all red); both run in `docs.yml`. **The rule: when the marker and
 the register disagree, the register wins and the marker is wrong.** Waves: **W0 the three inert ratchets**
-(`CC-109` one-truth skip-exits-0 · `CC-110` 202 holes/169 unnamed · `CC-114` 89 settings read twice) —
+(`CC-109` ✅ closed · `CC-110` 202 holes/169 unnamed · `CC-114` 89 settings read twice) —
 `CC-101` already wired 5 checker steps but only 2 as gates, so W0 is "turn reports into gates by shrinking
 the number to zero" · **W0b the Business IR gets a Function** — **measured: the IR IS wired
 (`business-ir-pack` is in `aiTools`) but a Function is NEVER SAVED — no entity, no registry; the pipeline
@@ -94,6 +94,19 @@ ends at "run"** (`CC-13` is the closest row) · **W1 the core** (`CC-119` checks
 **W5 surfaces: chat → workspaces (does not exist) → automation → widgets** · **W6 Hermes (`P2-9b`)** ·
 **W7 ratchets wired**. **One wave at a time; STOP after each; the front-end acceptance test is part of
 "done" — the owner will test prompts, saving functions and database changes through the UI.**
+**★ `CC-109` CLOSED 2026-10-21 (`53ffdcf5`) — and the guard earned itself on its first run.** SKIP exited 0
+(a false green its own docstring warned about); it now exits **2** unless `--allow-skip`. The residue guard —
+scoped to the pin's **declaration surface**, NOT the row's literal "any 32-hex outside registered paths",
+which fails at once on prose quoting commit SHAs — found **`docker/README.md` declaring the superseded
+2026-10-12 pin, stale by one whole re-pin**, because the hand-kept registry had already lost a copy. And
+`HERMES-PIN.md` was excluded by a **wrong note** (it said the doc had two digests and never said which was
+the pin; it has seven and says exactly which). **Register now 91 closed · 65 open · 156 total.**
+**★ Four defects of mine caught only by RUNNING the thing, in one day:** a `^` anchor in a pattern compiled
+without the `m` flag (would have read NO-MATCH forever) · a residue scan scoped one directory too narrow,
+missing the file it was built to catch · **a mutation that could not fail** (widened to `.` when the fixture's
+docs repo is a *sibling*, so the scan could never see it) · and a fixture using `value ?? template` as a
+whole-content override, so passing a value wrote a file with no table row. **Run it; do not read it and
+believe it.**
 **★ THE LESSON OF THE SLOT — ten of thirteen rows needed the audit's sentence corrected, and the corrections
 were never pedantry.** `T-28`: the shape was real, the reachability was not. `T-30`: it reported a
 **designed, documented, tested** contract as a fail-open; fixing that branch would have made a safety

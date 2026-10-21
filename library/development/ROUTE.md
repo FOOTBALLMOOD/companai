@@ -42,10 +42,10 @@ caller is not a capability (`CC-101`, found four times).
 ## 2. The step marker — machine-checked, the only place "where are we" is answered
 
 ```
-ROUTE-STEP: W0.2
-ROUTE-STEP-NAME: the ratchets — SR-39 (CC-109), the one-truth check whose SKIP path exits 0
+ROUTE-STEP: W0.3
+ROUTE-STEP-NAME: the ratchets — SR-41 (CC-110), the escape-hatch gate nothing calls
 ROUTE-STARTED: 2026-10-21
-ROUTE-NEXT: W0.3 — SR-41 (CC-110), the escape-hatch gate nothing calls
+ROUTE-NEXT: W0.4 — SR-46 (CC-114), the two-reads lint with no baseline
 ```
 
 **The order, machine-readable — `scripts/check-route.mjs` reads this block and fails the build when the
@@ -131,7 +131,7 @@ report until the number is zero."** Each row below is one of those reports, and 
 | Step | Row | What is wrong, measured | Proof |
 |---|---|---|---|
 | ~~W0.1~~ | `CC-101` | ~~CI runs **2 of 7** drift checkers~~ | **✅ closed 2026-10-17 — 5 steps wired, 2 as gates** |
-| W0.2 | `SR-39` / `CC-109` | `check:one-truth`'s **SKIP exits 0**; nothing references it | a skipped check fails the build |
+| ~~W0.2~~ | `SR-39` / `CC-109` | ~~`check:one-truth`'s **SKIP exits 0**; nothing references it~~ | **✅ closed 2026-10-21 — SKIP exits 2 unless `--allow-skip`; the doc and the README registered; the residue guard found a stale pin on its first run** |
 | W0.3 | `SR-41` / `CC-110` | **202 holes, 169 unnamed**; `-- x` passes as a reason; the gate is called by nothing | a hole without a named reason fails |
 | W0.4 | `SR-46` / `CC-114` | **89 settings read twice in 46 files**; no baseline | the baseline is committed and the count only goes down |
 

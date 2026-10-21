@@ -22,21 +22,33 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 **★ WHERE THE NEXT AGENT STARTS: `library/development/ROUTE.md` — read it before anything else (2026-10-21).**
 It is the entry point, and the only plan document that is **checked**: `scripts/check-route.mjs` reads its
 step marker against the register and fails the build when they disagree, so an agent cannot quietly work two
-waves ahead. **The current step is `W0.2`** — `SR-39`/`CC-109`, the one-truth check whose **SKIP path exits
-0**, which makes it a check that reports success when it did not run. **Measured first, then build:** read
-`scripts/check-one-truth.mjs` and find every path that exits 0 without comparing anything; the fix is that a
-skipped comparison fails the build, and the baseline of what it currently reports is committed so the number
-can only go down. **Proof:** a mutation that restores the skip path goes red. **STOP after W0.2** and report
-the number.
+waves ahead. **The current step is `W0.3`** — `SR-41`/`CC-110`, the escape-hatch gate: **202 holes, 169
+unnamed**, `-- x` passes as a reason, and the gate is **called by nothing**. **Measured first, then build:**
+run `node scripts/check-escape-hatches.mjs` and confirm the numbers on disk; the fix is that a hole without a
+named reason **fails** rather than reports, and the 169 unnamed ones are either named or closed — the same
+shape `CC-109` just closed, where the count was already known so the work was a cleanup of known size, not a
+discovery. **Proof:** a mutation that restores the report-only behaviour goes red. **STOP after W0.3** and
+report the number.
 
-**The waves, in order, so nobody has to guess:** W0 the three inert ratchets (`CC-109` · `CC-110` · `CC-114`)
-→ **W0b the Business IR gets a Function** — the owner's own test is *send a prompt, save a function, apply a
-database change*, and measured 2026-10-21 **a Function is never saved: no entity, no registry, the pipeline
-ends at "run"** → W1 the core (`CC-119`'s two checks → `CC-121` → `CC-122` → `SR-02` slice 2 + `SR-07` →
-`SR-13`) → W2 authority as data → W3 tenancy → W4 durability → W5 the surfaces (chat → workspaces →
-automation → widgets) → W6 Hermes → W7 the ratchets wired. **One wave per session. STOP after each. The
-front-end acceptance test is part of "done" — a capability with no caller is not a capability.**
+**What W0.2 just proved, and why the wave is shaped this way:** `CC-109` closed with the one-truth check's
+SKIP exiting **2** instead of 0 (a false green), the human-facing doc finally registered, and a **residue
+guard that found a real stale pin on its first run** — `docker/README.md` had been declaring the superseded
+2026-10-12 digest for a whole re-pin, invisible because nothing had ever read that file. **The hand-kept
+registry had already lost a copy.** So W0 is not "wire the checkers": it is "turn three report-only checks
+into gates by shrinking what they report to zero", and the sizes are known — 202 holes, 169 unnamed, 89
+double-reads.
 
+**The waves, in order, so nobody has to guess:** W0 the three inert ratchets (`CC-109` ✅ · `CC-110` ·
+`CC-114`) → **W0b the Business IR gets a Function** — the owner's own test is *send a prompt, save a
+function, apply a database change*, and measured 2026-10-21 **a Function is never saved: no entity, no
+registry, the pipeline ends at "run"** → W1 the core (`CC-119`'s two checks → `CC-121` → `CC-122` →
+`SR-02` slice 2 + `SR-07` → `SR-13`) → W2 authority as data → W3 tenancy → W4 durability → W5 the surfaces
+(chat → workspaces → automation → widgets) → W6 Hermes → W7 the ratchets wired. **One wave per session. STOP
+after each. The front-end acceptance test is part of "done" — a capability with no caller is not a
+capability.** **★ And if you disagree with the route, challenge it in writing and report back — do not drift
+around it** (owner, 2026-10-21).
+
+**▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
 **▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
 **▶ SLOT 0 IS COMPLETE — `CC-92`'s thirteen spine findings are all built (2026-10-21), and `CC-121` is
 startable behind `CC-119`.** What was repaired: the tenant-scope helper that accepted a foreign tenant
@@ -93,6 +105,65 @@ queue is empty for the first time since the register was built.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21, `CC-109`: the one-truth check's SKIP exits 2 — and the residue guard found a stale pin on its first run
+
+**Route `W0.2`, closed. Next: `W0.3` (`CC-110`, the escape-hatch gate).**
+
+**Three defects. The first is the one the row names.**
+
+`check:one-truth`'s `main()` returned 1 only for verdict FAIL, so a fact with **one** readable
+representation was `SKIP` and **exited 0** — a green. Its own docstring called silence *"a false green"* and
+its SKIP report said *"one copy is not a one-truth problem, but it is also not a green."* **The report said
+it was not a green; the exit code called it one.** It now exits **2** unless `--allow-skip`, so
+"could not check" is distinguishable from "drifted".
+
+**★ And the second defect was not latent — it had already happened.** The registry (`FACTS`) is hand-kept,
+so the day somebody adds a fourth copy the check still reads 3/3 and passes. The row prescribed zulip's
+residue guard. Measured, the row's own version of it — *"fail on any 32-hex hit outside registered paths"* —
+**fails at once**: `library/development/` holds 32-hex in `BACKLOG.md`, `HANDOVER.md`,
+`MASTER-CHECKLIST.md` and more, prose quoting commit SHAs. A guard that reddens the build for a hash in a
+changelog is the control `CC-101`'s close record warns about — one that fires so loudly it gets switched off.
+So the guard is scoped to the pin's **declaration surface**, and the reason is written into the script.
+
+**And scoping it found real drift on its first run:**
+
+> `docker/README.md:65` declared `ca760e97…` as *"the digest the mounted tree must produce"* — the
+> **superseded 2026-10-12 pin, stale by one whole re-pin**, invisible to the one-truth check because nothing
+> had ever read that file. **The hand-kept registry had already lost a copy.**
+
+It is registered now, and the stale value is corrected with a note saying how it got there.
+
+**★ The third defect was a wrong comment doing the damage.** `HERMES-PIN.md` was excluded by a `note` in
+`FACTS` saying it *"carries TWO different 32-hex digests for the same tree and never says which is the pin
+digest."* Measured: it carries **seven**, and it says **exactly** which one is the pin (`:183` *"The pinned
+digest — this is the value the harness enforces"*). The note was wrong, and it is what kept the one copy a
+human reads unguarded.
+
+**Proof.** 8 tests (3 pre-existing, 5 new or rewritten) · **4/4 mutations RED**, file restored
+checksum-verified: SKIP back to exit 0 (1) · the doc's registration removed (2) · the residue scan narrowed to
+nothing (1) · the guard widened to the row's literal prescription (1). `node scripts/check-one-truth.mjs`
+exits 0 with five copies reading one value and no residue.
+
+**★ Four things the build found, three of them mine.**
+
+1. **My first pattern used `^`**, and the checker compiles patterns with `new RegExp(source, 'g')` and no `m`
+   flag — so the new representation would have read **NO-MATCH forever**. A registered copy that silently
+   contributes nothing is worse than an unregistered one.
+2. **My first residue scan was `docker/hermes` only**, missing the very file it was built to catch —
+   `docker/README.md` is one level up.
+3. **My first M4 could not fail.** Widening to `.` stayed green because the fixture's docs repo is a
+   *sibling*, so a scan of the code tree can never see prose in the docs tree. The faithful mutation scans
+   the shared parent. **A mutation that cannot fail is not a proof** — the third time today.
+4. **An existing test asserted `status === 0` under the comment *"a SKIP is not a failure — but it is not a
+   green either."*** The comment was right; the assertion pinned the opposite. Fourth time this month.
+
+**★ CI safety, measured rather than assumed.** The job checks out only the code repo, so three of five copies
+are present — PASS, 3 readable, exit 0, and the two docs copies are reported **absent** rather than silently
+skipped. The `ci.yml` comment that recorded the SKIP limitation as open is updated, because leaving it would
+describe a state that no longer exists.
 
 ---
 
