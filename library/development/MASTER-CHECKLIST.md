@@ -41,7 +41,31 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE, 2026-10-21 (latest): `T-16` is BUILT and CLOSED — both doors now answer a missing
+**LAST DONE, 2026-10-21 (latest): `T-17` is BUILT and CLOSED — a forbidden provider is refused, and an
+empty model list stops meaning "use the default".** The operator's `OM_AI_AVAILABLE_PROVIDERS` is described
+in the code as the **ultimate** constraint on which provider a tenant may reach, and it was not being
+applied: when the resolved provider fell outside it and no permitted replacement was configured, the
+forbidden provider was kept anyway, on the stated reasoning that *"the throw at the api-key gate will
+surface the misconfiguration"* — **which cannot happen, because a provider that is configured has its key
+by definition**, which is exactly what `isConfigured` tests. A data-residency policy, silently unapplied,
+with the operator holding a reason to believe it holds. **★ The row understated it: there are two
+fail-opens on the same axis, plus a route that stored the state causing the second.** `pickAllowedModel`
+answered an **empty** model allowlist — *no models permitted* — with the provider's default model, the same
+answer it gives for *nothing configured*; and the settings route accepted that state without saying so.
+**Proof:** the provider refusal, the empty-list refusal and the reported state each have their own test;
+**5/5 mutations RED** (keep the resolved provider · fall back to the default · collapse the two states ·
+report the state as unconstrained · downgrade the refusal to a warning), files restored
+checksum-verified; `ai-assistant` **143 suites / 2,150 tests**, with the same **27** failures that fail on
+`HEAD` (measured by stashing this change); `tsc` 0.
+**★ Three things the build found.** An existing test was **named for the correct rule and asserted the
+defect** — *"treats an empty tenant model list as 'no models permitted' and falls back to provider
+default"* — the name was the specification, the body contradicted it, and the body was what ran. A
+hand-written module mock in an unrelated suite enumerated every export, so adding one turned a 200 into a
+**500 in a suite about something else**. And my own composition test used an empty **env var** to mean
+"no models", which means *unset* — the empty-array state can only come from the **tenant** snapshot, which
+is why the two needed different answers in the first place. **90 closed · 66 open · 156 total.**
+
+**LAST DONE, 2026-10-21: `T-16` is BUILT and CLOSED — both doors now answer a missing
 authority dependency the same way.** The tool door refused when the authority module is not registered; the
 command gate returned, so the act ran ungoverned. In such a deployment an assistant could not call its
 tools but could execute any command that declares a capability. **The distinction both doors were missing
@@ -384,7 +408,10 @@ checksum-verified; auth **103 suites / 910 tests**; core **657 suites / 5,779 te
 **PREVIOUSLY — 2026-10-19: `CC-92` is SCHEDULED — the preview audit's 45 findings now have gates
 instead of a queue.** The row had said *"the rest are queued"* since 16 October, which named no slot,
 so nothing in §4 could start any of them. The schedule is `PREVIEW-AUDIT-TRIAGE.md` **§6**, carried here
-as **§9.4**, and it is **by gate, not date**: 11 closed · **Slot 0 = 10 findings before `CC-121` starts** — `T-27` and `T-35` were built and left the row on 2026-10-19, and `T-04` on 2026-10-20 ·
+as **§9.4**, and it is **by gate, not date**: **Slot 0 = 3 findings before `CC-121` starts** — ten of the
+thirteen built (`T-27`/`T-35` on 2026-10-19, `T-04`/`T-05` on 2026-10-20,
+`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
+for the count, because a running total written here drifts ·
 Slot 1 = 10 with `W3` · Slot 2 = 1 with `W5` · Slot 3 = 4 with `W7` · Slot 4 = 3 with `W8` · Slot 5 = 2
 with `P2-9b` · 4 deferred by name. **★ The revisit point is Slot 0, and the reason is specific:** `CC-121`
 re-keys every `principal_id`, and the gate it re-keys through cannot see **seven modules' commands**
@@ -487,19 +514,18 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts.** **`T-17` is IN HAND: measured,
-requirement written (commit `fe5fd08`, `PLAN-T-17-model-allowlist-fails-open.md`), and NOT yet built.** The
-next agent starts at §3 of that plan: four requirements against five mutations, and no code is written.
-Behind it: `T-28`, `T-30`, `T-33`. **Measure each from source before building
-it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08` and `T-17` all needed the audit's own sentence
-corrected (T-17's row understated two fail-opens as one),
-and `T-07`'s correction was the largest, because the seven modules it named are **parked** and the guard
-meant to catch it had been excluding them by hand. **Rule 13,
+**▶ NEXT — `CC-92` Slot 0: 3 spine findings left, before `CC-121` starts.** `T-28` is next by rank and is
+**not yet measured**, so it is measured before it is built; then `T-30` and `T-33`. **Measure each from
+source before building it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08` and `T-17` all needed the
+audit's own sentence corrected — and `T-17`'s row was the widest miss so far, naming **one** fail-open
+where there were **two** plus a route storing the state that caused the second. `T-07`'s correction was the
+largest, because the seven modules it named are **parked** and the guard meant to catch it had been
+excluding them by hand. **Rule 13,
 corrected 2026-10-21:** this sentence twice named `T-06` while describing **`T-05`'s** race (*"the approvals
 queue can approve the same act twice"*), which closed on 2026-10-20. The description was left behind
 when `T-05` closed. The findings and their slots are
 `PREVIEW-AUDIT-TRIAGE.md` §6, carried here as §9.4. Behind Slot 0: `CC-121` (behind `CC-119`, the
-database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
+database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
 owner's trigger.
 **No row on the authority path is waiting on you:** the four in §4 that still need a decision are the
 long-standing ones.

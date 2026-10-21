@@ -1,10 +1,13 @@
 # PLAN-T-17 — the model allowlist fails open on the provider axis
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** BUILT AND CLOSED 2026-10-21. §3 is the requirement; §4 is the proof, with the run recorded
+in §4.1.
 **Row:** `T-17` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** read from source on 2026-10-21, at the lines named below.
+**Files changed:** `lib/model-factory.ts` (the refusal on both axes, `pickAllowedModel` → `string | null`,
+a new error code) · `lib/model-allowlist.ts` (`noModelsPermitted`, one shared `providersWithNoModels`) ·
+`api/settings/allowlist/route.ts` (the state is reported) · three test files.
 
 ---
 
@@ -104,6 +107,51 @@ fallback chain's warning text.
 | M5 | The refusal is downgraded to a warning and the request proceeds | R1, R2 |
 
 Plus: the `ai-assistant` suite count, and `tsc --noEmit` at 0, as numbers.
+
+---
+
+## 4.1 The run — 5/5 RED, and three things the build found
+
+**5/5 mutations RED**, every file restored checksum-verified (`L187`: checksums first, restore **by
+copy**).
+
+| # | Mutation | Result |
+|---|---|---|
+| M1 | keep the resolved provider when no replacement is configured | **RED** — 1 failed |
+| M2 | an empty model allowlist falls back to the default model | **RED** — 2 failed |
+| M3 | collapse `undefined` and `[]` into one branch | **RED** — 2 failed |
+| M4 | the route reports the state as unconstrained | **RED** — 1 failed |
+| M5 | the refusal is downgraded to a warning and the request proceeds | **RED** — 3 failed |
+
+**Runs:** the three touched suites **168 tests** · `tsc --noEmit` on `packages/ai-assistant` exit **0** ·
+the package's full run **143 suites / 2,150 tests**, with the **27** failures that also fail on `HEAD`
+(measured by stashing this change: the same 5 suites, the same 27 tests — `CC-80`'s hermetic-env note
+names that set).
+
+**★ Three things the build found, and the first is the row in miniature.**
+
+1. **An existing test was named for the correct rule and asserted the defect.** Its name:
+   *"treats an empty tenant model list as 'no models permitted' and falls back to provider default"* —
+   and its body asserted `modelId === 'gpt-5-mini'`. The name was the specification; the body
+   contradicted it, and the body was what ran. This is `T-16`'s shape again (two tests there conflated
+   their own two states in their names), and it is worth stating plainly: **a test's name is not a
+   control; only its assertion is.** It now asserts the refusal.
+
+2. **A hand-written module mock in another suite broke, and the mock was the defect.**
+   `d2-gap-guard.test.ts` enumerated every export of `model-allowlist` by hand, so adding one made the
+   route throw `… is not a function` and surface as a **500 in a suite about something else entirely**.
+   It now spreads `jest.requireActual` and overrides only what it needs, so it can never silently omit
+   an export again.
+
+3. **My own test premise was wrong, and the failure taught the rule.** I wrote the composition case with
+   `OM_AI_AVAILABLE_MODELS_OPENAI: ''` expecting "no models permitted". An empty **env var** means
+   *unset* — which is precisely why the empty-array state can only come from the **tenant** snapshot.
+   The test now uses the tenant allowlist, and the comment says why.
+
+**And the state is now visible in three places rather than one:** `EffectiveAllowlist.noModelsPermitted`
+(recomputed at both intersections, never inherited), the route's response, and the runtime's refusal
+sentence. One shared `providersWithNoModels`, because a second copy of the rule is how the two states
+drift apart again.
 
 ---
 

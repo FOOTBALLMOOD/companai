@@ -61,11 +61,10 @@ In the **docs repo**, in this order:
    and §5's register for every open item with its trigger.
 
 **As of 2026-10-21 (evening), the position is:** register at **90 closed · 66 open · 156 total**; the
-frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 4 spine
-findings that gate `CC-121`, and **`T-17` is IN HAND: its requirement is written** (commit `fe5fd08`,
-`library/development/PLAN-T-17-model-allowlist-fails-open.md`) **and nothing is built yet**, so the next
-agent starts at §3 of that plan. Behind it: `T-28`, `T-30`, `T-33`. Nine of the thirteen are closed
-(`T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`). **The authority family is
+frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **NEXT is `CC-92` Slot 0** — the 3 spine
+findings that gate `CC-121`, and **`T-28` is next: it is not measured yet**, so measure it from source
+first, then write the requirement, then build. Behind it: `T-30`, `T-33`. Ten of the thirteen are closed
+(`T-27`, `T-35`, `T-04`, `T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`). **The authority family is
 complete and closed:** `CC-125` (the
 floor), `CC-128` (the ceiling), `CC-134` (the superadmin read), `CC-135` (the ceiling's door), `CC-136` (a
 platform act is a platform act), `CC-137` (one capability means one door), `CC-139` (the ceiling's screen),

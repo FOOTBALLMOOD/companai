@@ -78,11 +78,12 @@ it. `CC-154` (the template's app tests run nowhere: root jest TS5011, the templa
 ConfigSet error) and `CC-155` (the example todo command drifted between app and template, no parity
 test) are **open and startable**.
 
-**★ IN HAND — `CC-92` Slot 0: 7 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
-`T-05`, `T-06`, `T-07`. **Next by rank: `T-08`** (trust demotion is never triggered). Then `T-15`,
-`T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source first**: `T-27`,
-`T-35`, `T-04`, `T-06` and `T-07` all needed the audit's sentence corrected. Schedule:
-`PREVIEW-AUDIT-TRIAGE.md` §6 = checklist §9.4.
+**★ IN HAND — `CC-92` Slot 0: 3 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
+`T-05`, `T-06`, `T-07`, `T-08`, `T-15`, `T-16`, `T-17`. **Next: `T-28`** (the PUT command path skips the
+guard set when the candidate id is not on the parsed input) — **not measured yet**, so measure first. Then
+`T-30`, `T-33`. **Measure each from source first**: seven of the ten closed needed the audit's sentence
+corrected, and `T-17`'s was the widest miss (one named fail-open, two real ones, plus a route storing the
+state). Schedule: `PREVIEW-AUDIT-TRIAGE.md` §6 = checklist §9.4.
 **★ `T-07` CLOSED 2026-10-21 (`3b633189`/`9fd67e90`/`80bc4c0`), and the row was wrong in two ways.** The
 seven modules are **parked** (only `communication_channels` is enabled and it has no commands), so the
 gap was prospective; and the guard meant to catch it carried a **hardcoded parked list** naming six of

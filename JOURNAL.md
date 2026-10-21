@@ -19,9 +19,24 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 4 spine findings left, before `CC-121` starts. `T-17` is the current one: its requirement is written and nothing is built yet.** Nine of the thirteen are closed — **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that was never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller), **`T-15`** (the confirm path applies the binding's narrowing) and **`T-16`** (both doors answer a missing authority dependency the same way). **4 remain:** `T-17` (in hand), `T-28`, `T-30`, `T-33`. `CC-121` re-keys every `principal_id` through the authority gate. **The spine is repaired before it is re-keyed:** a migration through a gate with holes produces a clean answer about a partial system. The findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the checklist as §9.4.
+**IN HAND — `CC-92` Slot 0: 3 spine findings left, before `CC-121` starts.** Ten of the thirteen are closed
+— **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that was
+never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double
+approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a
+capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller),
+**`T-15`** (the confirm path applies the binding's narrowing), **`T-16`** (both doors answer a missing
+authority dependency the same way) and **`T-17`** (a forbidden provider is refused, and an empty model list
+stops meaning "use the default"). **3 remain:** `T-28`, `T-30`, `T-33` — none of them measured yet.
+`CC-121` re-keys every `principal_id` through the authority gate. **The spine is repaired before it is
+re-keyed:** a migration through a gate with holes produces a clean answer about a partial system. The
+findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the checklist as §9.4.
 
-**★ WHERE THE NEXT AGENT STARTS.** `T-17` — the model allowlist fails open on the provider axis. The requirement exists and is complete: `library/development/PLAN-T-17-model-allowlist-fails-open.md` (commit `fe5fd08`), measured from source, four requirements (§3), five mutations (§4). **No code is written.** The next step is to build §3 against §4 and prove it. Two fail-opens are measured: `enforceAllowlist` keeps a forbidden provider when no permitted replacement is configured (its own comment says the api-key gate will catch the misconfiguration, but a configured provider has its key by definition), and `pickAllowedModel` returns the default model for an **empty** allowlist, which means *no models permitted*, while `undefined` means *nothing configured*.
+**★ WHERE THE NEXT AGENT STARTS.** `T-28` — the PUT command path skips the guard set when the candidate id
+is not on the parsed input. **It is NOT measured yet**, so the first step is the measurement, not the build:
+read `T-28`'s row in `PREVIEW-AUDIT-TRIAGE.md` §6 and then read the code, because **seven of the ten rows
+closed so far needed the audit's own sentence corrected** — `T-17`'s was the widest miss, naming one
+fail-open where there were two plus a route storing the state that caused the second. Then write the
+requirement, build it against a mutation list, and close it. Behind `T-28`: `T-30`, `T-33`.
 
 **What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
 whole platform through CI for the first time, and every run found the next defect — `CC-148` through
@@ -54,6 +69,64 @@ queue is empty for the first time since the register was built.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21, `T-17`: a forbidden provider is refused, and an empty model list stops meaning "use the default"
+
+**Slot 0, finding 10 of 13. Three left: `T-28`, `T-30`, `T-33`.**
+
+**★ Where the other nine are recorded, because they are not here.** `T-27`, `T-35`, `T-04`, `T-05`, `T-06`,
+`T-07`, `T-08`, `T-15` and `T-16` were closed on 2026-10-19/20/21 and their accounts live in
+`.workbuddy-ai/memory/2026-10-19.md`, `2026-10-20.md` and `2026-10-21.md`, not in this file. Each also has a
+`PLAN-*` document and a register row. This entry starts the habit again for Slot 0; the nine are not
+re-written here because their plans and rows are the authority and a second copy would drift.
+
+**The row said "the model allowlist fails open on the provider axis". Measured, that is accurate and
+understated — there are two fail-opens on the same axis, plus a route that stored the state causing the
+second.**
+
+1. **The provider axis.** When the resolved provider fell outside `OM_AI_AVAILABLE_PROVIDERS` and no
+   permitted replacement was configured, the code **kept the forbidden provider**, on the stated reasoning
+   that *"the throw at the api-key gate will surface the misconfiguration to the operator instead of
+   silently masking it."* That reasoning is false, and its falsehood is the whole defect: **a provider that
+   is configured has its key by definition** — that is precisely what `isConfigured` tests — so the api-key
+   gate never fires. A data-residency policy, described in the code as the operator's *ultimate* constraint,
+   silently unapplied, with the operator holding a written reason to believe it held.
+2. **The model axis, failing open the other way.** `pickAllowedModel` answered an **empty** allowlist with
+   the provider's **default model**. An empty list means *no models permitted*; `undefined` means *nothing
+   configured*. Two states, one answer — and the strictest configuration behaved as if it had not been set.
+3. **And the route stored it without saying so.** An operator could save `{ openai: [] }` and read back a
+   snapshot indistinguishable from an ordinary constraint.
+
+**★ The build found the defect twice more, in places that were supposed to be the safety net.**
+
+- **An existing test was named for the correct rule and asserted the defect.** Its name: *"treats an empty
+  tenant model list as 'no models permitted' and falls back to provider default"* — its body asserted
+  `modelId === 'gpt-5-mini'`. The name was the specification, the body contradicted it, and the body was
+  what ran. `T-16`'s shape a second time, and worth saying plainly: **a test's name is not a control; only
+  its assertion is.**
+- **A hand-written module mock in an unrelated suite broke.** `d2-gap-guard.test.ts` enumerated every export
+  of `model-allowlist` by hand, so adding one made the route throw `… is not a function` and surface as a
+  **500 in a suite about something else entirely** — the kind of red that sends the next person to the
+  wrong file. It now spreads `jest.requireActual` and overrides only what it needs.
+
+**And my own test premise was wrong, which taught the rule.** I wrote the composition case with
+`OM_AI_AVAILABLE_MODELS_OPENAI: ''` expecting *no models permitted*. An empty **env var** means *unset* —
+which is exactly why the empty-array state can only come from the **tenant** snapshot, and why the two
+states needed different answers in the first place.
+
+**What shipped.** `enforceAllowlist` returns a discriminated result (`ok: false` + a sentence) instead of
+silently keeping a forbidden pair; the caller throws a new `provider_not_allowed` error; `pickAllowedModel`
+returns `string | null` and `[]` yields `null`; `EffectiveAllowlist.noModelsPermitted` names the providers
+that permit nothing (recomputed at both intersections, never inherited); the settings route reports it. One
+shared `providersWithNoModels`, because a second copy of the rule is how the two states drift apart again.
+
+**Proof.** The three touched suites **168 tests**; **5/5 mutations RED** — keep the resolved provider (1) ·
+fall back to the default (2) · collapse the two states (2) · report the state as unconstrained (1) ·
+downgrade the refusal to a warning (3) — files restored checksum-verified; `tsc` 0; `ai-assistant`
+**143 suites / 2,150 tests** with the **same 27 failures that fail on `HEAD`**, measured by stashing this
+change rather than assumed.
 
 ---
 
