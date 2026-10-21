@@ -71,8 +71,8 @@ Sorted by rank, then by the audit's own priority. "Src" is the `preview/` docume
 | # | Src | The finding | Validation | Rank | Urgency | Action |
 |---|---|---|---|---|---|---|
 | **T-04** | 08 §3 | **A Function that asks for a count returns rows.** A `gap` verifies as `passed` | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-20** — `PLAN-T04-count-returns-rows.md`, code `6d7ef0ce`. The refusal is an error now, the message names its gaps, and the runner asks the IR's operation at its own gate. |
-| **T-05** | 08 §4 | **The approvals queue can approve the same act twice.** Read-then-act, no CAS | 🔬 CONFIRMED | high | urgent | EXECUTE |
-| **T-06** | 08 §5 | **`undo` writes the one record the tamper-evident chain does not cover** | 🔬 CONFIRMED | high | urgent | EXECUTE |
+| **T-05** | 08 §4 | **The approvals queue can approve the same act twice.** Read-then-act, no CAS | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-20** — code `17911238`, docs `7f57f3e`. One claim, three races, and the mutation that survived the first run. **Rule 13, corrected 2026-10-21:** this row and §6.2 still read *urgent / EXECUTE* for a day after the row closed, which is the same stale-row defect `T-06`'s close found in the `NEXT` block |
+| **T-06** | 08 §5 | **`undo` writes the one record the tamper-evident chain does not cover** | 🔬 CONFIRMED | high | **done** | ✅ **BUILT 2026-10-21** — `PLAN-T-06-undo-ledger-gap.md`, code `dcc7799`+ the build commit. `markUndone` now appends to the chain and the event says `historyAction: 'undo'` with `sourceLogId`; the fork is gone so the reversal and its proof commit together; `verifyUndoCoverage` compares the journal against the chain in both directions. 12 tests, 5/5 mutations |
 | **T-07** | 08 §6 | **Nine modules' commands are invisible to the authority gate**, one of them enabled | 🔬 CONFIRMED | high | scheduled | EXECUTE |
 | **T-08** | 08 §7 | **Trust demotion is never triggered.** `demoteIfEvidenceDemands` has 4 callers, all its own test | 🔬 CONFIRMED | high | scheduled | EXECUTE |
 | **T-09** | 11 §1 | **The design-system lint is broken** (`@typescript-eslint` mixed versions) and all six rules are `warn` | 🔬 CONFIRMED | high | scheduled | EXECUTE |
@@ -415,21 +415,23 @@ logged and closable by `OM_ENFORCE_TENANT_SCOPE_STRICT`, which leaves **12** in 
 `T-36` is **fixed** by
 `CC-132` (`moduleRootFor` + `enabledModules`, measured in the guard).
 
-### 6.1 Already closed — do not re-fix (8)
+### 6.1 Already closed — do not re-fix (10)
 
 `T-01` `fa974bb1` · `T-02` `60a6714f` · `T-03` → `SR-47`/`CC-93` · `T-13`/`T-14` `CC-98` · `T-32` `13c6206f` ·
 `T-45` `CC-97` · **`T-36` — closed by `CC-132`** (the coverage guard's denominator no longer excludes
-anything shipped outside `packages/core`; the row's own defect, fixed under a different row).
+anything shipped outside `packages/core`; the row's own defect, fixed under a different row) ·
+**`T-05` `17911238`/`7f57f3e`** (the double approve) · **`T-06` `PLAN-T-06-undo-ledger-gap.md`** (the
+undo record the chain did not cover).
 
-### 6.2 Slot 0 — before `W1` / `CC-121` starts (10 remaining of 13; `T-27`, `T-35`, `T-04` built)
+### 6.2 Slot 0 — before `W1` / `CC-121` starts (8 remaining of 13; `T-27`, `T-35`, `T-04`, `T-05`, `T-06` built)
 
 The spine's own guarantees. Each is a central promise the pipeline will otherwise build on top of.
 
 | # | Rank | Why it cannot wait for its own workstream | The gate |
 |---|---|---|---|
 | **T-04** | high | ✅ **BUILT 2026-10-20** — was: a Function that asks for a count returns rows, and the gap verifies as `passed`. Now refused at the compiler (an error, not a gap), named at verify, and refused again at the runner. `PLAN-T04-count-returns-rows.md`. | — |
-| **T-05** | high | The approvals queue can approve the same act twice (read-then-act, no compare-and-set) — every approval built later inherits the race | Slot 0 |
-| **T-06** | high | `undo` writes the one record the tamper-evident chain does not cover — a ledger with a known gap stops being evidence. **REQUIREMENT WRITTEN 2026-10-21** (`PLAN-T-06-undo-ledger-gap.md`), measured from source and it is narrower and sharper than this sentence: `log()` chains every journal row (`actionLogService.ts:242-244`, `:270-287`), `markUndone` (`:736`) writes the trace row with `createLogEntity` and **never appends**, and **redo is covered** because it re-executes through `commandBus.execute` (`redo/route.ts:155`) while undo does not. So the same reversal is chained forward and unchained backward, and `verifyTenantChain` cannot see a missing event because the chain stays internally consistent. A second thing in the same method is named and not conflated: `markUndone` writes on `em.fork()` while `appendToLedger` requires the caller's transaction. | Slot 0 |
+| **T-05** | high | ✅ **BUILT 2026-10-20** (`17911238`) — was: the approvals queue can approve the same act twice (read-then-act, no compare-and-set), so every approval built later inherits the race. Now one claim decides which caller wins | Slot 0 |
+| **T-06** | high | ✅ **BUILT 2026-10-21** — was: `undo` wrote the one record the tamper-evident chain did not cover, and a ledger with a known gap stops being evidence. `markUndone` now appends to the chain (`historyAction: 'undo'`, `sourceLogId`), on the caller's EntityManager instead of a fork, and `verifyUndoCoverage` reports a row claiming `undone` with no event and an event whose row is not `undone`. **Measured first:** redo was already covered because it re-executes through the bus, so the same reversal was chained forward and unchained backward | Slot 0 |
 | **T-07** | high | **7 core modules' commands are invisible to the authority gate** (re-measured today: `catalog`, `communication_channels`, `customers`, `resources`, `sales`, `staff`, `wms`). W1 re-keys principals across this gate | Slot 0 |
 | **T-08** | high | Trust demotion is never triggered — 4 callers, all its own test (`SR-47` re-confirmed today). Graduated trust that never demotes is a one-way ratchet | Slot 0 |
 | **T-15** | medium | The confirm path drops the binding's narrowing — an approval silently widens what was approved | Slot 0 |

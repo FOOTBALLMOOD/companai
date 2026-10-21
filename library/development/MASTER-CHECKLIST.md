@@ -432,15 +432,15 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 9 spine findings left, before `CC-121` starts.** `T-06` is the next one by
-rank: **`undo` writes the one record the tamper-evident chain does not cover**, so the ledger has a
-known gap and a ledger with a known gap stops being evidence. Then `T-07` (seven modules' commands
-invisible to the gate, measured and mapped on 2026-10-21), `T-08`, `T-15`, `T-16`, `T-17`, `T-28`,
-`T-30`, `T-33`. **Rule 13, corrected 2026-10-21:** this sentence named `T-06` while describing
-**`T-05`'s** race (*"the approvals queue can approve the same act twice, a read-then-act with no
-compare-and-set"*), which closed on 2026-10-20, and then listed `T-06` a second time. The description
-was left behind when `T-05` closed. **Measure each from source before building it**: `T-27`, `T-35`
-and `T-04` all needed the audit's own sentence corrected. The findings and their slots are
+**▶ NEXT — `CC-92` Slot 0: 8 spine findings left, before `CC-121` starts.** `T-07` is the next one by
+rank, and it is **measured** (`scripts/measure-t07-command-capabilities.mjs`, 2026-10-21): **128 command
+handlers with no capability** across 7 modules, **109 mappable** to a capability their route already
+requires, **19 needing a decision** (9 no route, 7 route declares no feature, 3 route declares two).
+Then `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source before building
+it**: `T-27`, `T-35`, `T-04` and `T-06` all needed the audit's own sentence corrected. **Rule 13,
+corrected 2026-10-21:** this sentence named `T-06` while describing **`T-05`'s** race (*"the approvals
+queue can approve the same act twice"*), which closed on 2026-10-20, and then listed `T-06` a second
+time. The description was left behind when `T-05` closed. The findings and their slots are
 `PREVIEW-AUDIT-TRIAGE.md` §6, carried here as §9.4. Behind Slot 0: `CC-121` (behind `CC-119`, the
 database rebuild milestone), then `CC-122`; `CC-138` rides `W3`; **`CC-133`** stays deferred by the
 owner's trigger.
@@ -1362,8 +1362,8 @@ repaired before it is re-keyed.**
 
 | Slot | Gate | Findings | Count |
 |---|---|---|---|
-| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20) | 12 |
-| **Slot 0** | before `CC-121` starts | `T-06` `T-07` `T-08` `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 9 |
+| **closed** | — | `T-01` `T-02` `T-03` `T-13` `T-14` `T-32` `T-36` `T-45` · **built from the schedule:** `T-27` `T-35` (2026-10-19), `T-04` (2026-10-20), `T-05` (2026-10-20), `T-06` (2026-10-21) | 13 |
+| **Slot 0** | before `CC-121` starts | `T-07` `T-08` `T-15` `T-16` `T-17` `T-28` `T-30` `T-33` | 8 |
 | **Slot 1** | with `W3` (chokepoint + actor-class gate) | `T-18` `T-19` `T-20` `T-21` `T-22` `T-23` `T-25` `T-26` `T-29` `T-34` | 10 |
 | **Slot 2** | with `W5` (durable runs) | `T-43` | 1 |
 | **Slot 3** | with `W7` (first surface) | `T-09` `T-10` `T-12` `T-40` | 4 |

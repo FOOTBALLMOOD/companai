@@ -1,7 +1,9 @@
 # PLAN-T-06 — the undo record the chain does not cover
 
-**Status:** REQUIREMENT ONLY, written 2026-10-21. **No code is written.** §3 is the requirement;
-§4 is the proof the build will have to pass. The row stays open until both are done.
+**Status:** **BUILT and CLOSED 2026-10-21.** Written as a requirement and built to it the same day.
+§3 is the requirement, §4 is the proof, **§8 is what was built and §9 is the build record** (three
+corrections, one of them to this document's own proof table). The row is closed.
+
 **Row:** `T-06` in `PREVIEW-AUDIT-TRIAGE.md` §6, carried as `MASTER-CHECKLIST.md` §9.4.
 **Slot:** 0, before `CC-121` re-keys every `principal_id` through this gate.
 **Measurement:** read from source on 2026-10-21, at the lines named below.
@@ -155,3 +157,82 @@ stated as numbers rather than "green".
   vocabulary.
 - **What verification should do when the two disagree:** fail, because a chain that tolerates a
   disagreement is a chain that reports on itself rather than on the record.
+
+---
+
+## 8. What was built
+
+| File | Change | Rule |
+|---|---|---|
+| `core/src/modules/audit_logs/services/actionLogService.ts` | `appendToLedger` puts `historyAction` and `sourceLogId` in the event payload when the trace carries them, and omits both otherwise so ordinary writes stay byte-identical; `markUndone` writes on `this.em` instead of a fork and **calls `appendToLedger`**; new `verifyUndoCoverage` | R1, R2, R3, R4 |
+| `shared/src/lib/commands/command-bus.ts` | the reversal and its record run inside `runInTransaction`, the same boundary `execute` uses; `handler.undo` hoisted to `undoHandler` | R4 |
+| `core/.../__tests__/actionLogService.undoLedger.test.ts` | **7 tests**: one event appended · same EntityManager, no fork · nothing chained when there is no trace · the marker is present · the event type is unchanged · an ordinary write has no marker · both directions chain | R1, R2, R4, R5 |
+| `core/.../__tests__/ledgerService.undoCoverage.test.ts` | **5 tests**: agree · row without event · event without row · a null source id ignored · a tenant with no reversals | R3 |
+| `scripts/verify-t06-mutations.mjs` | the proof | §4 |
+
+**The shape of the fix is two lines of behaviour and one structural change.** Behaviour: the append
+runs, and the payload carries what the trace already knows. Structure: the fork is gone, so the trace
+and its proof commit with the reversal they describe.
+
+**`verifyUndoCoverage` is a separate answer, not another field on the hash walk.** The walk answers
+*"is this chain internally intact?"*, and a missing event is not a broken link, so folding the two
+questions together would let one answer stand for the other.
+
+---
+
+## 9. The build record
+
+### 9.1 Rule 13: §4's M5 could not be proved as written
+
+M5 said *"redo is refactored to write its record without `execute`"*. It cannot go red in a unit suite:
+redo's chaining is a property of the **command bus**, and these tests construct the bus with a mocked
+action-log service, so refactoring redo's internals changes nothing they can observe.
+
+Replaced with the same claim from the side that is testable: **the forward path stops chaining**, and
+the symmetry assertion (both directions append) goes red. The rule is unchanged; only the mutation that
+proves it moved.
+
+### 9.2 The compiler caught what the tests could not
+
+Wrapping the undo in `runInTransaction` moved `handler.undo` inside a closure, and TypeScript's
+narrowing from the `if (!handler.undo)` guard above does not survive into a nested function. `tsc`
+reported `TS2722: Cannot invoke an object which is possibly 'undefined'`.
+
+Fixed by **hoisting the function** to `undoHandler` after the guard, not by a `!` assertion: the
+assertion would silence the compiler without saying why the narrowing was lost, and the next reader
+would have to rediscover it. This is the second time in this project that the type-checker found
+something the suite could not, and the first where the code was correct and the *shape* was not.
+
+### 9.3 The sort-comparator guard caught production code, one day after catching a script
+
+`verifyUndoCoverage` sorted its two result lists with a bare `.sort()`. `explicit-sort-comparators.test.ts`
+scans production sources for exactly that, and the full core suite went red with `1 failed, 662 passed`.
+
+Two lessons, and the second is new:
+
+- the same trap that bit the `CC-132` measurement script now bit **shipped code**, so "it is only a
+  measurement script" was never the reason it happened;
+- **fixing the source broke the mutation script's anchor**, because the anchor text itself contained
+  the old `.sort()` and the scanner reads the script too. The mutation then reported `NOT APPLIED`,
+  which is a silent no-op rather than a pass, and the guard flagged the script on the same run. Both
+  were fixed by writing the anchor against the new line.
+
+### 9.4 The proof
+
+| Check | Result |
+|---|---|
+| the two new suites | **12 tests PASS** |
+| `scripts/verify-t06-mutations.mjs` | **5/5 PROVEN**, every file restored byte-identical |
+| `audit_logs` module | **18 suites / 120 tests green** |
+| `command-bus` suites | **6 suites / 23 tests green** |
+| `packages/core` | **663 suites / 5,839 tests green** |
+| `packages/shared` | **211 suites / 2,613 tests green** |
+| `tsc --noEmit` | **0** for `core` and `shared` |
+
+**The five mutations:**
+
+1. `markUndone` writes the trace row without extending the chain (the defect)
+2. the event is chained but does not say it is a reversal
+3. verification accepts a row claiming undone with no event
+4. the trace commits outside the caller transaction, on a fork
+5. the forward path stops chaining, so the two directions disagree
