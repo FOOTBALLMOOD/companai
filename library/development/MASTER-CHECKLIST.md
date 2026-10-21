@@ -41,7 +41,24 @@ reproduces exactly, so the headline above stands.)*
 records named in §5 and §7. This section stays short because a section that
 grows every session stops being read.
 
-**LAST DONE, 2026-10-21 (latest): `T-17` is BUILT and CLOSED — a forbidden provider is refused, and an
+**LAST DONE, 2026-10-21 (latest): `T-28` is BUILT and CLOSED — a PUT that carries its id in the URL now
+gets its guards, and the lock that lives inside them.** Two paths derived the same thing two ways: DELETE
+read `input.id ?? query.id ?? body.id`; PUT read `input.id` alone. And `candidateId` gates the whole guard
+block, so a PUT whose id arrives in the URL or the query ran **no mutation guard and no optimistic-lock
+check** — because the lock is `crudMutationGuardService`, which is one of the guards it was skipping. **The
+audit said "two concurrent tab-saves both succeed"; that is true of a route shaped this way, and I could
+not show an enabled route is shaped this way today** — every command-update route I measured carries its id
+in the body. So the honest severity is `CC-101`'s class: a control that silently did not run, openable by
+the next route. **The fix is therefore two-part:** PUT derives the id exactly as DELETE does, and the
+residual skip — no id anywhere — is **logged** with the command and the method, because the skip that made
+this invisible is the defect, not the missing fallback. **Proof:** 4 tests (query id, body id, no id,
+normal path silent) · **4/4 mutations RED** (drop the query fallback · derive from the query only ·
+silence the log · log unconditionally), files restored checksum-verified; `tsc` 0; shared **212 suites /
+2,624 tests, 0 failures**. **★ And one mutation that could not fail:** my first "drop the body fallback"
+stayed green, because `input` is derived from the body — a mutation that cannot go red is not a proof.
+**90 closed · 66 open · 156 total.**
+
+**LAST DONE, 2026-10-21: `T-17` is BUILT and CLOSED — a forbidden provider is refused, and an
 empty model list stops meaning "use the default".** The operator's `OM_AI_AVAILABLE_PROVIDERS` is described
 in the code as the **ultimate** constraint on which provider a tenant may reach, and it was not being
 applied: when the resolved provider fell outside it and no permitted replacement was configured, the
@@ -408,9 +425,9 @@ checksum-verified; auth **103 suites / 910 tests**; core **657 suites / 5,779 te
 **PREVIOUSLY — 2026-10-19: `CC-92` is SCHEDULED — the preview audit's 45 findings now have gates
 instead of a queue.** The row had said *"the rest are queued"* since 16 October, which named no slot,
 so nothing in §4 could start any of them. The schedule is `PREVIEW-AUDIT-TRIAGE.md` **§6**, carried here
-as **§9.4**, and it is **by gate, not date**: **Slot 0 = 3 findings before `CC-121` starts** — ten of the
+as **§9.4**, and it is **by gate, not date**: **Slot 0 = 2 findings before `CC-121` starts** — eleven of the
 thirteen built (`T-27`/`T-35` on 2026-10-19, `T-04`/`T-05` on 2026-10-20,
-`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
+`T-06`/`T-07`/`T-08`/`T-15`/`T-16`/`T-17`/`T-28` on 2026-10-21); `PREVIEW-AUDIT-TRIAGE.md` §6 is the authority
 for the count, because a running total written here drifts ·
 Slot 1 = 10 with `W3` · Slot 2 = 1 with `W5` · Slot 3 = 4 with `W7` · Slot 4 = 3 with `W8` · Slot 5 = 2
 with `P2-9b` · 4 deferred by name. **★ The revisit point is Slot 0, and the reason is specific:** `CC-121`
@@ -514,10 +531,12 @@ packages green, `tsc` 0 for core and all nine. **One process miss, mine:** the c
 with the requirement broke `explicit-sort-comparators.test.ts` because only the guard's own suite was run
 before that commit. **72 closed · 62 open · 134 total.**
 
-**▶ NEXT — `CC-92` Slot 0: 3 spine findings left, before `CC-121` starts.** `T-28` is next by rank and is
-**not yet measured**, so it is measured before it is built; then `T-30` and `T-33`. **Measure each from
-source before building it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08` and `T-17` all needed the
-audit's own sentence corrected — and `T-17`'s row was the widest miss so far, naming **one** fail-open
+**▶ NEXT — `CC-92` Slot 0: 2 spine findings left, before `CC-121` starts.** `T-30` is next by rank and is
+**not yet measured**, so it is measured before it is built; then `T-33`. **Measure each from
+source before building it**: `T-27`, `T-35`, `T-04`, `T-06`, `T-07`, `T-08`, `T-17` and `T-28` all needed the
+audit's own sentence corrected — and `T-28`'s correction was about **reachability**: the shape is real, but
+"two concurrent tab-saves both succeed" needs a route that puts the id in the URL, and no enabled one
+measured does. `T-17`'s row was the widest miss so far, naming **one** fail-open
 where there were **two** plus a route storing the state that caused the second. `T-07`'s correction was the
 largest, because the seven modules it named are **parked** and the guard meant to catch it had been
 excluding them by hand. **Rule 13,

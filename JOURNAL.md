@@ -19,24 +19,26 @@ box, **the box wins** (owner's instruction, 2026-10-06).
 > section that did not exist. If you are reading this and the box is gone again, **that is the defect,
 > not a change of policy**: restore it here rather than adding a task line to one of the pointing files.
 
-**IN HAND — `CC-92` Slot 0: 3 spine findings left, before `CC-121` starts.** Ten of the thirteen are closed
-— **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that was
-never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double
+**IN HAND — `CC-92` Slot 0: 2 spine findings left, before `CC-121` starts.** Eleven of the thirteen are
+closed — **`T-27`** (the tenant-scope helper that accepted a foreign tenant), **`T-35`** (the sandbox cap that
+was never enforced), **`T-04`** (a Function asking for a count and answered with rows), **`T-05`** (the double
 approve), **`T-06`** (the undo record now extends the hash chain), **`T-07`** (115 commands gained a
 capability, and the guard that could not see them was rewritten), **`T-08`** (trust demotion has a caller),
 **`T-15`** (the confirm path applies the binding's narrowing), **`T-16`** (both doors answer a missing
-authority dependency the same way) and **`T-17`** (a forbidden provider is refused, and an empty model list
-stops meaning "use the default"). **3 remain:** `T-28`, `T-30`, `T-33` — none of them measured yet.
+authority dependency the same way), **`T-17`** (a forbidden provider is refused, and an empty model list
+stops meaning "use the default") and **`T-28`** (a PUT carrying its id in the URL now gets its guard set,
+and the optimistic lock inside it). **2 remain:** `T-30`, `T-33` — neither measured yet.
 `CC-121` re-keys every `principal_id` through the authority gate. **The spine is repaired before it is
 re-keyed:** a migration through a gate with holes produces a clean answer about a partial system. The
 findings and their slots are `PREVIEW-AUDIT-TRIAGE.md` §6, carried in the checklist as §9.4.
 
-**★ WHERE THE NEXT AGENT STARTS.** `T-28` — the PUT command path skips the guard set when the candidate id
-is not on the parsed input. **It is NOT measured yet**, so the first step is the measurement, not the build:
-read `T-28`'s row in `PREVIEW-AUDIT-TRIAGE.md` §6 and then read the code, because **seven of the ten rows
-closed so far needed the audit's own sentence corrected** — `T-17`'s was the widest miss, naming one
-fail-open where there were two plus a route storing the state that caused the second. Then write the
-requirement, build it against a mutation list, and close it. Behind `T-28`: `T-30`, `T-33`.
+**★ WHERE THE NEXT AGENT STARTS.** `T-30` — optimistic locking is client-opt-in **and the reader fails
+open** (five early `ok: true` returns). **It is NOT measured yet**, so the first step is the measurement,
+not the build: read the row in `PREVIEW-AUDIT-TRIAGE.md` §6, then read the code, because **eight of the
+eleven rows closed so far needed the audit's own sentence corrected** — `T-28`'s was about *reachability*
+(the shape is real; the "two concurrent tab-saves" scenario needs a route that puts the id in the URL, and
+no enabled one measured does). Then write the requirement, build it against a mutation list, and close it.
+Behind `T-30`: `T-33`.
 
 **What the four days were, recorded here so the box is not overtaken again:** the fresh deploy put the
 whole platform through CI for the first time, and every run found the next defect — `CC-148` through
@@ -69,6 +71,54 @@ queue is empty for the first time since the register was built.
 door) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability means one door) ·
 `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view). **No row on the authority
 path is waiting on the owner.**
+
+---
+
+## 2026-10-21, `T-28`: a PUT carrying its id in the URL now gets its guards — and the lock inside them
+
+**Slot 0, finding 11 of 13. Two left: `T-30`, `T-33`.**
+
+**Two paths derived the same thing two ways.** DELETE read `input.id ?? query.id ?? body.id`; PUT read
+`input.id` alone. And `candidateId` gates the whole guard block:
+
+```ts
+if (updateAllGuards.length && ctx.auth.tenantId && candidateId) {
+```
+
+so a PUT whose id arrived in the URL or the query ran **no mutation guard and no optimistic-lock check** —
+because the lock is `crudMutationGuardService` (`di/container.ts:203`), which is one of the guards it was
+skipping. Several enabled routes declare `rawBodySchema = z.object({}).passthrough()`, so nothing requires
+an `id` in the body and the shape is open to the next route.
+
+**★ Where the audit overstated, and why saying so matters.** It said *"two concurrent tab-saves both
+succeed"*. That is true of a route shaped this way — and **I could not show that an enabled route is shaped
+this way today**: every command-update route I measured carries its id in the body, so `input.id` is
+populated and the guards run. The honest severity is therefore `CC-101`'s class: **a control that silently
+did not run**, openable by the next route rather than currently open. A defect that is reported as live when
+it is latent gets fixed in a hurry and verified carelessly; naming it correctly is what let the fix be the
+right shape.
+
+**★ And that changed the fix, not just the wording.** The row's own sentence asks for the fallback. The
+fallback alone would leave the *silence*: a PUT with no id anywhere would still skip the guards and say
+nothing. So the fix is two-part — PUT derives the id exactly as DELETE does, **and** the residual skip is
+logged with the command and the method, because **the invisibility was the defect**. The guards still do not
+run without a `resourceId` (that is what they reason about; inventing one would be worse), but the
+limitation is now a line an operator can find.
+
+**Proof.** 4 tests — a query id runs the guard and it sees that id · a body id still runs it · no id still
+executes **and logs** · a normal PUT logs nothing. **4/4 mutations RED**: drop the query fallback (1) ·
+derive from the query only (2) · silence the log (1) · log unconditionally (3). Files restored
+checksum-verified; `tsc` 0; shared **212 suites / 2,624 tests, 0 failures**.
+
+**★ A mutation that could not fail, which is worth more than the ones that did.** My first "drop the body
+fallback" stayed **green** — because `input` is derived from the body, so removing the third term changes
+nothing a test can see. A mutation that cannot go red is not a proof; it is a sentence that looks like one.
+The honest mutation is *"derive from the query only"*, which drops the two terms that actually carry the
+value.
+
+**One thing this touches that it does not fix:** `candidateId` also feeds `baseMetadata.resourceId` and
+every sync event's `resourceId`, so a PUT that lost its id lost its audit address too — which is `T-33`'s
+subject, and `T-33` is next.
 
 ---
 

@@ -21,18 +21,19 @@ ceiling) · `CC-134` (the superadmin read, scoped to the foundational tenant) ·
 route + the flag's producer) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
 **Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
-`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 3 spine findings left** before
-`CC-121`, and **`T-28` is next: it is NOT measured yet**, so the first step is the measurement, then the
-requirement, then the build. Behind it: `T-30`, `T-33`. The box at the top
+`scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0 — 2 spine findings left** before
+`CC-121`, and **`T-30` is next: it is NOT measured yet**, so the first step is the measurement, then the
+requirement, then the build. Behind it: `T-33`. The box at the top
 of [`../../JOURNAL.md`](../../JOURNAL.md) names it with its steps. **The ONE NUMBER is 78 / 321 units
 (24.3 %)**, re-derived by `scripts/derive-counts.mjs`.
-**★ What is new since revision 38:** Slot 0 closed **six** findings in one day — `T-06` (the undo record
+**★ What is new since revision 38:** Slot 0 closed **seven** findings in one day — `T-06` (the undo record
 extends the hash chain), `T-07` (115 commands gained a capability, and the guard that should have caught
 it was rewritten: it had been excluding those modules **by hand** while promising it would not),
 `T-08` (trust demotion finally has a caller, in the undo path), `T-15` (the confirm path applies the
 binding's narrowing, and resolves the agent through the catalogue rather than the global registry),
-`T-16` (both doors now answer a missing authority dependency the same way, from one shared rule) and
-`T-17` (a forbidden provider is refused, and an empty model list stops meaning "use the default").
+`T-16` (both doors now answer a missing authority dependency the same way, from one shared rule),
+`T-17` (a forbidden provider is refused, and an empty model list stops meaning "use the default") and
+`T-28` (a PUT carrying its id in the URL now gets its guard set, and the optimistic lock inside it).
 **Two live rows are worth knowing beyond the spine:**
 `CC-156` (three endpoints are authenticated but not authorised, so any signed-in user may assign labels or
 edit sales notes) and `CC-157` (six commands nothing can invoke). Both are startable now.

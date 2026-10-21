@@ -15,8 +15,8 @@
 > `CC-135` (the ceiling's route) · `CC-136` (a platform act is a platform act) · `CC-137` (one capability
 > means one door) · `CC-139` (the ceiling's screen) · `CC-140` (its write refuses a stale view).
 > **Register: 90 closed · 66 open · 156 total**, counted from `MASTER-CHECKLIST.md` §5 by
-> `scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0** — the 3 spine findings that
-> gate `CC-121`, with **`T-28` next (not yet measured: measure before building)** and `T-30`, `T-33`
+> `scripts/check-master-checklist.mjs`. **The live task is `CC-92` Slot 0** — the 2 spine findings that
+> gate `CC-121`, with **`T-30` next (not yet measured: measure before building)** and `T-33`
 > behind it — and it is named, with its steps and the queue behind it, in the **`★ ACTIVE TASK`
 > box at the top of [`../../JOURNAL.md`](../../JOURNAL.md)**, which is where you should look next.
 > *(The box had gone missing; it was restored on 2026-10-19. If it is missing again, restoring it is the
