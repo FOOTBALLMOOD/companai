@@ -60,7 +60,7 @@ In the **docs repo**, in this order:
 3. `library/development/MASTER-CHECKLIST.md` **§2** — the canonical "LAST DONE" and "NEXT" lines,
    and §5's register for every open item with its trigger.
 
-**As of 2026-10-21 (night), the position is:** register at **91 closed · 65 open · 156 total**; the
+**As of 2026-10-21 (night), the position is:** register at **92 closed · 64 open · 156 total**; the
 frontier is the agent spine (`PLAN-2026-10-18-one-agent.md`); **`CC-92` Slot 0 is COMPLETE — all thirteen
 spine findings are built** (the last, `T-33`, on 2026-10-21), so **`CC-121` (the authority re-key) is
 startable behind `CC-119`** (the database rebuild milestone), and `CC-119` is the next row to measure.

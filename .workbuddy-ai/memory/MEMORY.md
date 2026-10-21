@@ -100,13 +100,34 @@ scoped to the pin's **declaration surface**, NOT the row's literal "any 32-hex o
 which fails at once on prose quoting commit SHAs — found **`docker/README.md` declaring the superseded
 2026-10-12 pin, stale by one whole re-pin**, because the hand-kept registry had already lost a copy. And
 `HERMES-PIN.md` was excluded by a **wrong note** (it said the doc had two digests and never said which was
-the pin; it has seven and says exactly which). **Register now 91 closed · 65 open · 156 total.**
+the pin; it has seven and says exactly which). **Register now 92 closed · 64 open · 156 total.**
 **★ Four defects of mine caught only by RUNNING the thing, in one day:** a `^` anchor in a pattern compiled
 without the `m` flag (would have read NO-MATCH forever) · a residue scan scoped one directory too narrow,
 missing the file it was built to catch · **a mutation that could not fail** (widened to `.` when the fixture's
 docs repo is a *sibling*, so the scan could never see it) · and a fixture using `value ?? template` as a
 whole-content override, so passing a value wrote a file with no table row. **Run it; do not read it and
 believe it.**
+**★ `CC-110` CLOSED 2026-10-21 — the escape-hatch gate exists because a BASELINE replaced a COUNT.**
+The row’s own diagnosis was the problem: *"all-or-nothing `:fail` against 169 items, which is why it can
+never be turned on."* `scripts/escape-hatches.baseline.json` pins every hole by `file:line:kind`; `--fail`
+fails on a hole **not** in the baseline (new) and on a baseline entry no longer present (stale), so the count
+can only shrink. A hole that gains a reason is PROGRESS and does not fail; one that loses it is a REGRESSION.
+**The gate passes on today’s 190 pinned holes (26 named, 164 unnamed, 10 file-level) — that is the point.**
+Also: `isNamed` was `/--\s*\S/` so `-- x` was a reason (now needs an alphabetic run of 3+); a file-level
+block disable was counted as one line-hole while exempting the whole file (12 of them — now its own kind);
+`reportUnusedDisableDirectives` is now set.
+**★ TWO NUMBERS THAT CHANGE THE REMAINING WORK: (1) 129 DEAD HOLES** — `reportUnusedDisableDirectives`
+reports 129 unused directives across the 98 files with a pinned hole, so the escape-hatch backlog is ~129
+**deletions**, not 164 namings. **(2) THE CHECKER WAS COUNTING ITSELF** — its docblock examples and its test
+fixtures’ string literals were holes; fixing that took the census 203 → 190 with no product code changed.
+**Register now 92 closed · 64 open · 156 total.**
+**★ Six defects of mine caught only by RUNNING the thing, across two steps:** a `^` anchor in a pattern
+compiled without the `m` flag · a residue scan one directory too narrow · **a mutation that could not fail**
+(widened to `.` when the docs repo is a *sibling*) · a fixture using `value ?? template` as a content
+override · a baseline path resolved from the script instead of `--root`, so a fixture could not pin its own ·
+and comparing `text` before `named`, which filed **every act of progress as STALE**. **Run it; do not read it
+and believe it.**
+
 **★ THE LESSON OF THE SLOT — ten of thirteen rows needed the audit's sentence corrected, and the corrections
 were never pedantry.** `T-28`: the shape was real, the reachability was not. `T-30`: it reported a
 **designed, documented, tested** contract as a fail-open; fixing that branch would have made a safety
