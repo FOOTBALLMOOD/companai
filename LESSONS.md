@@ -5485,12 +5485,12 @@ denominator lesson in the integration harness), L197.*
 **A check that reads a line of config without the guard around it answers a question nobody asked.**
 
 `CC-152`, 2026-10-20. The integration discovery read `apps/mercato/src/modules.ts` and matched
-`enabledModules.push({ id: 'example' … })` — a regex with no idea that the push sits inside
+`enabledModules.push({ id: 'example' … })`, a regex with no idea that the push sits inside
 `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false))`. It answered "is this module
-enabled?" with **yes**, while the runtime, reading the same file, answered **no** — because the runtime
+enabled?" with **yes**, while the runtime, reading the same file, answered **no**, because the runtime
 executes the `if` and the regex only reads the text. 33 specs then ran against pages that exist only when
 the flag is on; 56 tests failed on 404s. The same trap `CC-132` (a directory scan cannot see a parked
-module) and `CC-149` (a dependency check that read directories) fell into — twice the deciding fact was
+module) and `CC-149` (a dependency check that read directories) fell into, and twice the deciding fact was
 **in the file and the check could not interpret it**.
 
 **The rules.**
@@ -5498,22 +5498,23 @@ module) and `CC-149` (a dependency check that read directories) fell into — tw
    above it is the other half. A reader that takes the push without the guard is reading a different
    file than the one the runtime executes.
 2. **When a check cannot interpret what it reads, over-include, never under-include.** Here the unknown
-   shape fails loud — the spec runs and fails visibly. The opposite (silently excluding) shrinks the suite
+   shape fails loud: the spec runs and fails visibly. The opposite, silently excluding, shrinks the suite
    and nobody notices until something regresses in the dark.
 3. **The hollow green is the second failure.** With the flag off, discovery would find **0 specs** and all
-   15 shards would pass having run nothing — 8 of today's shards already did exactly that. A suite that
-   runs nothing is not green; it is absent. If the fix's effect can be "no tests", say so in the row.
+   15 shards would pass having run nothing, and 8 of that day's shards already did exactly that. A suite
+   that runs nothing is not green; it is absent. If the fix's effect can be "no tests", say so in the row.
 
 *Cross-ref: `CC-152` (the fix: guard-aware discovery + `OM_ENABLE_EXAMPLES` in the integration job),
 `CC-149` and `CC-132` (the same trap in the directory scan), L197 (a green run proves the file exists).*
 
 ---
 
+
 ## L201
 
 **A rule enforced in exactly one place is enforced in the place that doesn't matter.**
 
-`CC-153`, 2026-10-21. The example module's todo form enforced `priority <= 5` on blur — the field showed
+`CC-153`, 2026-10-21. The example module's todo form enforced `priority <= 5` on blur: the field showed
 its red message and a human at a browser could not submit an 8. The command behind it,
 `commands/todos.ts`, parsed the payload, wrote the row, and validated **nothing**. An API caller sent
 `cf_priority: 8` and got **201 created**. The rule was declared in `ce.ts` the whole time, in the same
@@ -5523,7 +5524,7 @@ for all of them.
 
 **The rules.**
 1. **A validation is a property of the write, not of the screen.** If a rule matters, it belongs where
-   the data changes — the form check is UX layered on top, never the check itself.
+   the data changes. The form check is UX layered on top, never the check itself.
 2. **Ask what else writes, before believing the rule is enforced.** The todo entity had three writers
    (HTTP, the `example_customers_sync` bridge, redo) and one check on a fourth path (the browser).
    Enumerate the writers; then decide where the rule lives.
@@ -5536,15 +5537,15 @@ neither the pass nor the failure was visible).*
 
 ---
 
+
 ## L202
 
-**A permission bit is invisible in code, in the working tree and on Windows — only the git index
-records it.**
+**A permission bit is invisible in code, in the working tree and on Windows. Only the git index records it.**
 
 `CC-153`, 2026-10-21. Two committed spawn targets (`packages/cli/bin/mercato`,
-`packages/create-app/bin/create-mercato-app`) carried no execute bit. Every content check passes — the
-bytes are identical, the node shebang is there, the file exists — and Windows runs them anyway, so
-every local run was green. Linux **refuses to spawn them**: the CLI exited 1 with **empty stdout and
+`packages/create-app/bin/create-mercato-app`) carried no execute bit. Every content check passes: the
+bytes are identical, the node shebang is there, the file exists, and Windows runs them anyway, so every
+local run was green. Linux **refuses to spawn them**: the CLI exited 1 with **empty stdout and
 stderr** (a status-null `spawnSync`), so the failure looked like a crash inside the tool rather than a
 property of the file. A `git diff` can hide a mode-only change from a casual reading; `git ls-files -s`
 shows `100755` versus `100644`. The guard asks git, because git is the only place the answer lives.
@@ -5554,12 +5555,12 @@ shows `100755` versus `100644`. The guard asks git, because git is the only plac
    permission bit that is the index; for an ignored file, `git check-ignore` (`CC-146`); for a symlink,
    the index entry. A file-exists walker sees none of them.
 2. **Empty stderr is not a crash.** A subprocess that fails with no output at all was usually
-   *refused*, not run — EACCES, a missing interpreter, a bad shebang. Read the spawn status before
+   *refused*, not run: EACCES, a missing interpreter, a bad shebang. Read the spawn status before
    reading the logs.
 3. **A guard for an invisible property must name its instrument.** `bin-executable-bit.test.ts`
    shells out to git and asserts both the mode and the shebang, so the test says where the truth lives
    and no future reader re-derives it from the working tree.
 
-*Cross-ref: `CC-153` ② (the fix + the guard), `CC-146` (two source files no clean checkout could see —
+*Cross-ref: `CC-153` ② (the fix + the guard), `CC-146` (two source files no clean checkout could see,
 the same lesson for `.gitignore`), L200 (a check that cannot interpret what it reads answers a question
 nobody asked).*

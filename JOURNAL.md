@@ -58,121 +58,47 @@ path is waiting on the owner.**
 
 ---
 
-## 2026-10-21 — `CC-153`: the run that confirmed `CC-152` found four real defects, and none was a test
+## 2026-10-21, `CC-153`: the run that confirmed `CC-152` found four real defects, and none was a test
 
-**The flag worked. That is how the module's own defects finally became visible.** Run `39504503223` —
-the run for `CC-152`'s fix commit — came back **11 of 15 shards green**: the 404s were gone, and every
-spec that had failed on a missing page passed. The 4 red shards carried **8 failures, and every one was
-a defect the example module always had**, which CI could never see because the module had never run.
-This is the pattern the register keeps meeting: **the fix that makes a thing run also makes it fail.**
+**The flag worked, and that is how the module's own defects finally became visible.** Run `39504503223`, the run for `CC-152`'s fix commit, came back **11 of 15 shards green**: the 404s were gone and every spec that had failed on a missing page passed. The 4 red shards carried **8 failures, and every one was a defect the example module always had**, which CI could never see because the module had never run. This is the pattern the register keeps meeting: **the fix that makes a thing run also makes it fail.**
 
-**① The description on the one page every locale shares was frozen in English.** `layout.tsx` exported
-a *static* `metadata` object. A static export is evaluated once, at build time, with no request
-context — so `meta[name="description"]` carried the English text into every locale. `TC-APP-001`'s
-German run asserted the de string and got English. `generateMetadata()` runs per request, after
-`detectLocale()`, and reads the same dictionary the `html lang` attribute already resolves per
-request; the Companai line now lives in `en.json`. **The critic pass over that fix found its own
-dormant copy:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried upstream's positioning —
-nothing calls the helper, but the fallback fires when a locale's dictionary misses the key, so the
-next caller would have shipped the exact description we had just removed (`0136e043`). **② Two committed bins had no execute bit.** Linux
-refuses to spawn a `100644` bin, so `umes:list/inspect/check` exited 1 with **empty stdout and
-stderr** — a status-null `spawnSync` — which reads like a crash. It was a permission bit, and
-**Windows ignores the bit, so only the git index could answer**: `update-index --chmod=+x`, blob shas
-unchanged, and a guard that asks `git ls-files -s` (`CC-146`'s rule, third place). **③ `TC-UMES-020`
-needs routes that cannot exist.** The payment demo reads `payment_gateways` — parked by owner decision,
-"an operating system, not an ERP" — so its pages and session API are generated for no configuration.
-The spec now **declares** the dependency (`CC-151`'s fix), and discovery excludes it until the module
-is un-parked. **④ The todo command validated nothing.** The CRUD form enforced `priority <= 5` on blur;
-**the command — where every write funnels — enforced nothing**, so an API write stored 8. The rule was
-declared in `ce.ts` all along; the create and update commands now read it, for the keys the caller
-actually sent.
+**① The description on the one page every locale shares was frozen in English.** `layout.tsx` exported a *static* `metadata` object. A static export is evaluated once, at build time, with no request context, so `meta[name="description"]` carried the English text into every locale. `TC-APP-001`'s German run asserted the de string and got English. `generateMetadata()` runs per request, after `detectLocale()`, and reads the same dictionary the `html lang` attribute already resolves per request; the Companai line now lives in `en.json`. **The critic pass over that fix found its own dormant copy:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried upstream's positioning. Nothing calls the helper, but the fallback fires when a locale's dictionary misses the key, so the next caller would have shipped the exact description we had just removed (`0136e043`).
 
-**Proof, two routes each.** Metadata: layout suite **5/5**, and restoring the static export goes
-**3 RED** (sha256-identical restore). Exec bit: guard **5/5**, and the index read directly. Parked
-dependency: discovery on the real repo **33 → 32 specs**, `TC-UMES-020` gone from both trees while its
-`.spec.ts` still sits on disk, **0 real specs** with the flag unset, suite **10/10**. Validation:
-**5 cases** (reject 8 with the declared 400 and no entity write · accept 5 · accept the sync shape ·
-the update half of each), the pre-existing fixture that had asserted the **old defective behaviour**
-amended, module **13 suites / 60 tests** with the sync bridge green, **two mutations RED individually**
-(create-path call removed · update-path call removed).
+**② Two committed bins had no execute bit.** Linux refuses to spawn a `100644` bin, so `umes:list/inspect/check` exited 1 with **empty stdout and stderr**, a status-null `spawnSync`, which reads like a crash. It was a permission bit, and **Windows ignores the bit, so only the git index could answer**: `update-index --chmod=+x`, blob shas unchanged, and a guard that asks `git ls-files -s` (`CC-146`'s rule, third place).
 
-**★ OBSERVATION TAKEN 2026-10-21 (run `39549013082`, both fix commits aboard; the run for the first
-commit, `39548126543`, was cancelled by the follow-up push): all 15 shards success** — the four that
-were red are green: de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority
-400. The first green run since this chain began (`39357327101` → `39363070729` → `39418460891` →
-`39429422803` → `39504503223` → cancelled → green). And a residual, recorded rather than hidden: `de`/`pl`/`es` still carry upstream's positioning at
-`app.metadata.description` while `en` carries the Companai line — rewording them is a hand-translation
-decision (`CC-142`'s rule), and `TC-APP-001` pins the German string, so the spec changes with it.
-A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in
-all four catalogs of both trees and renders nowhere — the usage checker already counts it as unused.
+**③ `TC-UMES-020` needs routes that cannot exist.** The payment demo reads `payment_gateways`, parked by owner decision ("an operating system, not an ERP"), so its pages and session API are generated for no configuration. The spec now **declares** the dependency (`CC-151`'s fix), and discovery excludes it until the module is un-parked.
+
+**④ The todo command validated nothing.** The CRUD form enforced `priority <= 5` on blur; **the command, where every write funnels, enforced nothing**, so an API write stored 8. The rule was declared in `ce.ts` all along; the create and update commands now read it, for the keys the caller actually sent.
+
+**Proof, two routes each.** Metadata: layout suite **5/5**, and restoring the static export goes **3 RED** (sha256-identical restore). Exec bit: guard **5/5**, and the index read directly. Parked dependency: discovery on the real repo **33 → 32 specs**, `TC-UMES-020` gone from both trees while its `.spec.ts` still sits on disk, **0 real specs** with the flag unset, suite **10/10**. Validation: **5 cases** (reject 8 with the declared 400 and no entity write · accept 5 · accept the sync shape · the update half of each), the pre-existing fixture that had asserted the **old defective behaviour** amended, module **13 suites / 60 tests** with the sync bridge green, **two mutations RED individually** (create-path call removed · update-path call removed).
+
+**★ OBSERVATION TAKEN 2026-10-21** (run `39549013082`, both fix commits aboard; the run for the first commit was cancelled by the follow-up push): **all 15 shards success**, the four that were red are green (de metadata, `umes:*` exit 0, `TC-UMES-020` excluded rather than failed, priority 400). The first green run since this chain began (`39357327101` → `39363070729` → `39418460891` → `39429422803` → `39504503223` → cancelled → green).
+
+**★ TRANSLATION LANDED 2026-10-21 (`bb25eda9`).** The owner's call on the residual: the de, pl and es catalogs now carry the Companai line at `app.metadata.description`, translated by hand for their review and correction, and both copies of `TC-APP-001` moved to the new German string so the spec travels with the dictionary. Arabic stays out of scope; it is `CC-144`'s own row. A second orphan, recorded not rewritten: the `app.page.subtitle` key carries upstream positioning in all four catalogs of both trees and renders nowhere, so it is catalog drift for the owner's sweeps, not a visible surface.
 
 ---
 
-## 2026-10-21 — the critic pass over `CC-153` opens `CC-154` and `CC-155`
+## 2026-10-21, the critic pass over `CC-153` opens `CC-154` and `CC-155`
 
-**A pass whose job is to break a conclusion earns its keep when it breaks one.** The `CC-153` fix was
-green — all 15 shards — and the same pass found three more things in the neighbourhood of its own
-work. **The first was inside the fix:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried
-upstream's positioning. Dead code today (nothing calls it), but the fallback fires the moment a
-locale's dictionary misses the key, so the next caller would have shipped the exact description the
-row removed — fixed as `0136e043`, and the reason it survived one review is the lesson `CC-153`
-already carries: the check and the thing it guards can be one file apart.
+**A pass whose job is to break a conclusion earns its keep when it breaks one.** The `CC-153` fix was green, all 15 shards, and the same pass found three more things in the neighbourhood of its own work. **The first was inside the fix:** `resolveLocalizedAppMetadata`'s `t()` fallback still carried upstream's positioning. Dead code today, nothing calls it, but the fallback fires the moment a locale's dictionary misses the key, so the next caller would have shipped the exact description the row removed. Fixed as `0136e043`, and the reason it survived one review is the lesson `CC-153` already carries: the check and the thing it guards can be one file apart.
 
-**The other two were pre-existing, measured on files this change never touched, and are now rows
-rather than footnotes.** `CC-154`: the scaffolded app's tests run nowhere in this repository — the
-root jest fails every one with `TS5011`, the template's own config fails with a ts-jest `ConfigSet`
-error, both reproduced on `global-error.test.tsx`, so template code can break and nothing here
-notices until a customer scaffolds. `CC-155`: the todo example's two copies have drifted — the app's
-`commands/todos.ts` has the redo and team-scope wiring the template's copy lacks, no parity test
-covers that file, and the scaffold a customer runs is the smaller copy. Both startable; neither
-caused by this work; both recorded with what a fix would be.
+**The other two were pre-existing, measured on files this change never touched, and are now rows rather than footnotes.** `CC-154`: the scaffolded app's tests run nowhere in this repository. The root jest fails every one with `TS5011`, the template's own config fails with a ts-jest `ConfigSet` error, both reproduced on `global-error.test.tsx`, so template code can break and nothing here notices until a customer scaffolds. `CC-155`: the todo example's two copies have drifted. The app's `commands/todos.ts` has the redo and team-scope wiring the template's copy lacks, no parity test covers that file, and the scaffold a customer runs is the smaller copy. Both startable; neither caused by this work; both recorded with what a fix would be.
 
-**What is not claimed:** that these two rows should be fixed now. They are rows because a gap that
-lives inside a closed row is a gap that gets forgotten — `CC-138`'s lesson, applied to the pass that
-was auditing for exactly that.
+**What is not claimed:** that these two rows should be fixed now. They are rows because a gap that lives inside a closed row is a gap that gets forgotten, which is `CC-138`'s lesson applied to the pass that was auditing for exactly that.
 
 ---
 
-## 2026-10-20 (night) — `CC-152`: discovery read a guard it could not see, and the flag was off
+## 2026-10-20 (night), `CC-152`: discovery read a guard it could not see, and the flag was off
 
-**The `CC-150`/`CC-151` fix commit's own CI run went red again — 7 of 15 shards, 56 failed tests — and
-every failing test was an example-module spec failing on a 404.** The Playwright error-context snapshots
-downloaded from the run say it plainly: `heading "404" — This page could not be found.` at
-`/backend/mutation-lifecycle`, and `toHaveTitle … Received: "404: This page could not be found."` at
-`/backend/example`. Of the 13 specs that ran, 10 files failed; the 3 that passed (`TC-CLI-001`,
-`TC-UMES-010`, `TC-UMES-013`) never touch the module's pages or routes.
+**The `CC-150`/`CC-151` fix commit's own CI run went red again, 7 of 15 shards and 56 failed tests, and every failing test was an example-module spec failing on a 404.** The Playwright error-context snapshots downloaded from the run say it plainly: `heading "404", This page could not be found.` at `/backend/mutation-lifecycle`, and `toHaveTitle … Received: "404: This page could not be found."` at `/backend/example`. Of the 13 specs that ran, 10 files failed; the 3 that passed (`TC-CLI-001`, `TC-UMES-010`, `TC-UMES-013`) never touch the module's pages or routes.
 
-**The mechanism is a switch, not a folder.** `apps/mercato/src/modules.ts` pushes the example module
-behind a guard — `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) { enabledModules.push({
-id: 'example' … }) }` — because the module must never reach a customer's product. Its ~20 backend pages and
-its API routes are **generated only for an enabled module**, and the integration job never sets the flag.
-And **the reader I wrote for `CC-149` answered "enabled" from a line the runtime never executes**: the regex
-`enabledModules\.push\(\s*\{\s*id:\s*'…'` matched the push and could not see the `if` above it. Same trap as
-`CC-132`/`CC-149` (a denominator that cannot see the thing that decides), one layer deeper — the deciding
-fact was neither a directory nor a declaration but a **guard around the declaration**.
+**The mechanism is a switch, not a folder.** `apps/mercato/src/modules.ts` pushes the example module behind a guard, `if (parseBooleanWithDefault(process.env.OM_ENABLE_EXAMPLES, false)) { enabledModules.push({ id: 'example' … }) }`, because the module must never reach a customer's product. Its ~20 backend pages and its API routes are **generated only for an enabled module**, and the integration job never sets the flag. And **the reader I wrote for `CC-149` answered "enabled" from a line the runtime never executes**: the regex `enabledModules\.push\(\s*\{\s*id://s*'…'` matched the push and could not see the `if` above it. Same trap as `CC-132`/`CC-149` (a denominator that cannot see the thing that decides), one layer deeper, and the deciding fact was neither a directory nor a declaration but a **guard around the declaration**.
 
-**Two halves, because there are two truths to keep.** (1) Discovery now reads the guard with the push:
-an env-guarded push counts only when its own flag parses on, with the same token table
-`@open-mercato/shared/lib/boolean` uses; an `enabledModules.some((entry) => entry.id === 'OTHER')` guard
-follows the module it names; **any other shape over-includes** — a wrong check must fail loud (the spec runs
-and fails), never silently shrink the suite. (2) The `ephemeral-integration` job sets
-`OM_ENABLE_EXAMPLES: 'true'`: CI works **on** the platform, so the module is enabled and its specs finally
-cover the pages they were written for. Without (2), (1) alone would turn the suite hollow — 0 specs, 15
-shards each passing having run nothing, which is exactly what 8 of today's shards did.
+**Two halves, because there are two truths to keep.** (1) Discovery now reads the guard with the push: an env-guarded push counts only when its own flag parses on, with the same token table `@open-mercato/shared/lib/boolean` uses; an `enabledModules.some((entry) => entry.id === 'OTHER')` guard follows the module it names; **any other shape over-includes**, so a wrong check fails loud (the spec runs and fails), never silently shrinks the suite. (2) The `ephemeral-integration` job sets `OM_ENABLE_EXAMPLES: 'true'`: CI works **on** the platform, so the module is enabled and its specs finally cover the pages they were written for. Without (2), (1) alone would turn the suite hollow, 0 specs and 15 shards each passing having run nothing, which is exactly what 8 of that day's shards did.
 
-**Proof, by two different routes.** (a) Unit: two new tests — the env guard across `unset` / `0` / `yes`,
-and the module guard following `example` — discovery suite **10/10**; the mutation neutralising the env
-guard is **RED** (2 failed), the one neutralising the module guard is **RED** (1 failed), each file
-restored **sha256-identical**; cli package **74 suites / 1,273 tests** 0 failures; `tsc --noEmit` clean.
-(b) The **real repository** through the fixed code: flag unset (CI's default) → **0 specs discovered**;
-flag `true` → **33** (13 `apps/mercato` + 20 template; the template's are ignored by the Playwright
-config, which is why only the 13 ran).
+**Proof, by two different routes.** (a) Unit: two new tests, the env guard across `unset` / `0` / `yes` and the module guard following `example`, discovery suite **10/10**; the mutation neutralising the env guard is **RED** (2 failed), the one neutralising the module guard is **RED** (1 failed), each file restored **sha256-identical**; cli package **74 suites / 1,273 tests** 0 failures; `tsc --noEmit` clean. (b) The **real repository** through the fixed code: flag unset (CI's default) gives **0 specs discovered**; flag `true` gives **33** (13 `apps/mercato` + 20 template; the template's are ignored by the Playwright config, which is why only the 13 ran).
 
-**What is not claimed:** that CI is now green, or that the example specs pass with the module on. The run
-carrying this commit is the end-to-end confirmation — that the flag reaches the in-shard build (the shard
-rebuilds the app itself, so it should) and that the specs pass once the pages exist. The seeded `admin`
-role receives `example.*` through the module's `defaultRoleFeatures`, so the pages' `requireFeatures`
-gate should open for it. `CC-152`'s §5 row records this as an observation to take, not a fact.
+**★ OBSERVATION TAKEN 2026-10-21:** the flag reaches the in-shard build, 11 of 15 shards green, the 404s gone, and every spec that had failed on a missing page now passes. What was left was not the flag: **4 shards, 8 failures, every one a real defect the example module always had and CI could never see**, opened as `CC-153` and closed the same night.
 
 ---
 
