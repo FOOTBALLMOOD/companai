@@ -39,7 +39,7 @@
  * SIBLING checkout (`../../library/…`), so a code-only clone legitimately has fewer copies — and
  * that must be visible in the output rather than read as agreement.
  */
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 
@@ -56,10 +56,15 @@ const FACTS = [
     description: 'The digest the mounted Hermes tree must produce (the pin).',
     note:
       'The fact that drifted: the 2026-10-16 re-pin updated three of four copies and missed ' +
-      'verify_pin.py (CC-90). HERMES-PIN.md is deliberately NOT registered yet — it carries TWO ' +
-      'different 32-hex digests for the same tree (f57f729d… in its §1 table, 07ee857b… in its ' +
-      '"computed twice" note) and never says which is the pin digest. A checker cannot demand ' +
-      'agreement from a document that does not agree with itself; the document must be fixed first.',
+      'verify_pin.py (CC-90). ' +
+      '`CC-109` — this note used to say HERMES-PIN.md could NOT be registered because it "carries TWO ' +
+      'different 32-hex digests for the same tree and never says which is the pin digest". **That was ' +
+      'wrong, and it is what kept the one copy a human reads unguarded.** Measured 2026-10-21: the doc ' +
+      'carries SEVEN 32-hex values — the §1 history table, the upstream git revision, a superseded ' +
+      'comparison — and it says exactly which one is the pin, at :183 ("**The pinned digest — this is the ' +
+      'value the harness enforces:**") followed by the value. A pattern anchored on the declaration line ' +
+      'picks the pin and nothing else, which is why the pattern below is anchored rather than a bare ' +
+      '32-hex match.',
     representations: [
       {
         label: 'verify_pin.py',
@@ -76,15 +81,113 @@ const FACTS = [
         path: '../../library/.hermes_pin.py',
         pattern: 'EXPECTED_DIGEST\\s*=\\s*"([0-9a-f]{32})"',
       },
+      {
+        // `CC-109` — the one copy a human reads, registered at last. Anchored on the word `digest`
+        // followed by a colon, because the file also carries six other 32-hex values (history table,
+        // upstream revision, superseded comparison) and a bare match would read all of them.
+        // **Not anchored with `^`:** the checker compiles patterns with `new RegExp(source, 'g')` and no
+        // `m` flag (`:199`), so `^` would only ever match the start of the file and this representation
+        // would read NO-MATCH forever. The self-conflict check catches a second match, so the anchor does
+        // not need to be a line anchor to be safe.
+        label: 'library/development/HERMES-PIN.md (docs repo)',
+        path: '../../library/development/HERMES-PIN.md',
+        pattern: 'digest\\s*:\\s*([0-9a-f]{32})',
+      },
+      {
+        // `CC-109` — the fifth copy, found by the residue guard on its first run: it held the superseded
+        // 2026-10-12 pin for one whole re-pin because nothing had ever looked at this file. Registered
+        // now, so the next re-pin cannot miss it. The pattern is anchored on the table row, which is the
+        // only place in the file the value appears as a declared default.
+        label: 'docker/README.md (the operator-facing table)',
+        path: 'docker/README.md',
+        pattern: '\\|\\s*`HERMES_PIN_DIGEST`\\s*\\|\\s*`([0-9a-f]{32})`',
+      },
     ],
   },
 ]
 
+/**
+ * `CC-109` — where the pin is DECLARED as a value, as opposed to quoted in prose.
+ *
+ * The row prescribes "fail on any 32-hex hit outside registered paths". Measured, that fails at once:
+ * `library/development/` holds 32-hex in BACKLOG.md, BUILD-ORDER.md, DEPLOY-2026-10-20.md, HANDOVER.md,
+ * MASTER-CHECKLIST.md and more — prose quoting commit SHAs and old pins for reasons unrelated to the pin.
+ * A guard that reddens the build for a hash in a changelog is the control CC-101's close record warns
+ * about: *"a control that fires so loudly it gets switched off."*
+ *
+ * So the guard is scoped by SHAPE and LOCATION — the files that state the pin as a machine-readable
+ * value — and prose is excluded by scope rather than by an allowlist that would grow forever.
+ */
+const PIN_DECLARATION_SURFACE = [
+  // The whole `docker/` tree, not just `docker/hermes/` — the drift the guard found on its first run is in
+  // `docker/README.md`, one level up from where a narrow scan would have looked.
+  'docker',
+  'docker-compose.hermes.yml',
+  '../../library/.hermes_pin.py',
+]
+
+/**
+ * `CC-109` — the residue guard.
+ *
+ * Zulip's harvest (`tools/check-feature-level-updated:26`) fails when a placeholder survived. Ours is the
+ * same idea against a different drift: **a 32-hex value sitting in the pin's declaration surface in a file
+ * that is not a registered representation** — i.e. a fifth copy nobody added to the registry. The registry
+ * being hand-kept is not a latent risk here: it already lost one, and the guard found it on its first run
+ * (`docker/README.md` declaring the superseded 2026-10-12 pin).
+ *
+ * Scoped to `PIN_DECLARATION_SURFACE` — see the note there for why it is not "any 32-hex in the tree".
+ */
+function checkResidue(repoRoot, facts) {
+  const registered = new Set()
+  for (const fact of facts) {
+    for (const representation of fact.representations) {
+      registered.add(path.resolve(repoRoot, representation.path))
+    }
+  }
+
+  const findings = []
+  for (const entry of PIN_DECLARATION_SURFACE) {
+    const full = path.resolve(repoRoot, entry)
+    if (!existsSync(full)) continue
+    const files = statSync(full).isDirectory() ? walk(full) : [full]
+    for (const file of files) {
+      if (registered.has(file)) continue
+      if (file.includes('__pycache__')) continue
+      let text
+      try {
+        text = readFileSync(file, 'utf8')
+      } catch {
+        continue
+      }
+      const hits = text.match(/[0-9a-f]{32}/g) ?? []
+      if (hits.length > 0) {
+        findings.push({ file: path.relative(repoRoot, file), hits: [...new Set(hits)] })
+      }
+    }
+  }
+  return findings
+}
+
+function walk(dir) {
+  const out = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      if (entry.name === '__pycache__' || entry.name === 'node_modules') continue
+      out.push(...walk(full))
+    } else {
+      out.push(full)
+    }
+  }
+  return out
+}
+
 function parseArgs(argv) {
-  const options = { json: false, root: process.cwd(), help: false }
+  const options = { json: false, root: process.cwd(), help: false, allowSkip: false }
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--json') options.json = true
+    else if (arg === '--allow-skip') options.allowSkip = true
     else if (arg === '--help' || arg === '-h') options.help = true
     else if (arg === '--root') {
       const value = argv[i + 1]
@@ -186,7 +289,7 @@ function main() {
     return 1
   }
   if (options.help) {
-    process.stdout.write('Usage: node scripts/check-one-truth.mjs [--json] [--root <dir>]\n')
+    process.stdout.write('Usage: node scripts/check-one-truth.mjs [--json] [--root <dir>] [--allow-skip]\n')
     return 0
   }
 
@@ -194,6 +297,22 @@ function main() {
   report(report_, options)
 
   const failed = report_.filter((fact) => fact.verdict === 'FAIL')
+  const skipped = report_.filter((fact) => fact.verdict === 'SKIP')
+  const residue = checkResidue(options.root, FACTS)
+
+  // `CC-109` — the residue guard's findings are printed whether or not anything drifted, because a fifth
+  // copy is drift even when the four registered ones agree perfectly. That is the whole point of a
+  // residue check: it catches what the registry cannot see.
+  if (residue.length > 0) {
+    const lines = residue.map((finding) => `  ${finding.file}: ${finding.hits.join(', ')}`).join('\n')
+    const message =
+      `\nONE-TRUTH RESIDUE — ${residue.length} file(s) in the pin's declaration surface hold a 32-hex ` +
+      `value and are not registered representations:\n${lines}\n` +
+      `Either the value is a copy of the fact (register it in FACTS, then make it agree) or it is stale ` +
+      `(delete it). A checker cannot tell those apart, and neither can a reader.\n`
+    process.stderr.write(message)
+  }
+
   const summary =
     failed.length > 0
       ? `\nONE-TRUTH CHECK FAILED — ${failed.length} fact(s) drifted.\n`
@@ -205,7 +324,14 @@ function main() {
   if (options.json || failed.length > 0) process.stderr.write(summary)
   else process.stdout.write(summary)
 
-  return failed.length > 0 ? 1 : 0
+  // `CC-109` — **the exit code must agree with the report.** A SKIP verdict is "not checked", and the
+  // report has always said so ("one copy is not a one-truth problem, but it is also not a green"), while
+  // the exit code called it green. Exit 2 is a distinct code so a caller can tell "drifted" (1) from
+  // "could not check" (2) — and `--allow-skip` is the explicit opt-out for a checkout that legitimately
+  // has fewer copies, such as a code-only clone of a sibling docs repo.
+  if (failed.length > 0 || residue.length > 0) return 1
+  if (skipped.length > 0 && !options.allowSkip) return 2
+  return 0
 }
 
 process.exitCode = main()

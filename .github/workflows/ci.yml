@@ -524,7 +524,7 @@ jobs:
       #
       # AFTER, MEASURED 2026-10-17 (night) — five steps, two of which can actually fail:
       #   SR-38 digital-twins      :fail  — green today, ENFORCING
-      #   SR-39 one-truth          plain  — green today, ENFORCING (SKIP path exits 0; see below)
+      #   SR-39 one-truth          plain  — green today, ENFORCING (SKIP exits 2 unless --allow-skip; see below)
       #   SR-46 two-reads          plain  — 89 findings today, REPORTING
       #   SR-47 declared-controls  plain  — 5 of 6 controls uncovered today, REPORTING
       #   SR-41 escape-hatches     plain  — 169 of 202 holes unnamed today, REPORTING
@@ -539,10 +539,15 @@ jobs:
         run: yarn check:digital-twins:fail
 
       # SR-39 — one truth: one fact, one canonical copy. GREEN today.
-      # KNOWN LIMITATION, recorded rather than hidden: main() returns 1 only on verdict FAIL, so a
-      # SKIP — fewer than two readable representations — exits 0. That is the "false green" its own
-      # docstring warns about. It is a real control for real drift; the SKIP path stays open until
-      # the checker itself is changed (its own row, not this one's).
+      # `CC-109` CLOSED 2026-10-21 — the SKIP path no longer exits 0. It exits **2** unless
+      # `--allow-skip`, so "could not check" is distinguishable from "checked and drifted" (1). The old
+      # comment here recorded that as an open limitation; it is closed, and this note is updated rather
+      # than left to describe a state that no longer exists.
+      #
+      # Safe on a CODE-ONLY checkout (which is what this job does — one `actions/checkout`, no sibling
+      # docs repo): three of the five registered copies are in this repo (`verify_pin.py`,
+      # `docker-compose.hermes.yml`, `docker/README.md`), so the fact is PASS with 3 readable and exits 0.
+      # The two docs-repo copies are reported as absent, never silently skipped.
       - name: Check one truth (SR-39)
         run: yarn check:one-truth
 
