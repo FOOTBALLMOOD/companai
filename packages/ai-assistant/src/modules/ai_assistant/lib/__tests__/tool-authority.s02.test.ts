@@ -45,7 +45,14 @@ function decision(gate: string, allowed = true) {
 
 function makeContext(
   aclAllows: boolean,
-  resolver: { mode: 'off' | 'shadow' | 'enforce'; decide: (call: DecideCall) => unknown | null } | null,
+  resolver:
+    | {
+        mode: 'off' | 'shadow' | 'enforce'
+        decide: (call: DecideCall) => unknown | null
+        /** T-16 — registered, but the mode lookup itself fails. */
+        modeForThrows?: boolean
+      }
+    | null,
   overrides: Partial<McpToolContext> = {},
 ): { context: McpToolContext; calls: DecideCall[] } {
   const calls: DecideCall[] = []
@@ -57,7 +64,10 @@ function makeContext(
       if (name === 'authorityEnforcement') {
         if (!resolver) throw new Error('not registered')
         return {
-          modeFor: async () => resolver.mode,
+          modeFor: async () => {
+            if (resolver.modeForThrows) throw new Error('resolver unreachable')
+            return resolver.mode
+          },
           decideFor: async (subject: string, feature: string, scope: DecideCall['scope'], options?: DecideCall['options']) => {
             const call: DecideCall = { subject, feature, scope, options }
             calls.push(call)
@@ -137,9 +147,24 @@ describe('S-02 — the tool door consults the authority resolver', () => {
     expect(result.error).toContain('Insufficient permissions')
   })
 
-  it('fails closed when the enforcement service is unreachable', async () => {
-    // The source study's named warning: fail closed, or do not ship the switch.
+  // T-16 — the two missing-dependency states, which this door used to answer as
+  // one. The old test called the FIRST of these "unreachable", and that is how the
+  // contradiction with the command gate stayed hidden for months.
+
+  it('permits when the enforcement service is NOT REGISTERED', async () => {
+    // The deployment chose not to gate. Refusing here broke a working deployment
+    // for a constraint it never asked for, and contradicted the command gate,
+    // which permits on this exact state.
     const { context } = makeContext(true, null)
+    const result = await executeTool('crm_contacts_manage', {}, context)
+    expect(result.success).toBe(true)
+  })
+
+  it('refuses when the enforcement service is REGISTERED BUT UNREACHABLE', async () => {
+    // The source study's named warning still holds for this state: fail closed, or
+    // do not ship the switch. The deployment meant to gate and cannot reach the
+    // gate, so the act is refused rather than run ungoverned.
+    const { context } = makeContext(true, { mode: 'enforce', decide: () => null, modeForThrows: true })
     const result = await executeTool('crm_contacts_manage', {}, context)
     expect(result.success).toBe(false)
     expect(result.errorCode).toBe('UNAUTHORIZED')

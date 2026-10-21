@@ -1,5 +1,6 @@
 import { createLogger } from '@open-mercato/shared/lib/logger'
 import type { Decision } from '@open-mercato/shared/lib/authority/decision'
+import { AUTHORITY_UNREACHABLE_BINDING_RULE, authorityDependencyVerdict } from '@open-mercato/shared/lib/authority/dependency'
 import type { McpToolContext } from './types'
 
 const logger = createLogger('ai_assistant').child({ component: 'tool-authority' })
@@ -151,28 +152,53 @@ export async function checkToolAuthority(
 
   let resolver: ToolAuthorityResolver | null = null
   let mode: 'off' | 'shadow' | 'enforce' = 'shadow'
+
+  // T-16 — the resolve and the mode lookup are TWO failures, and the old single
+  // `try` could not tell them apart. A deployment that does not register the
+  // authority module chose not to gate, so refusing there broke a working
+  // deployment for a constraint it never asked for, while the command gate was
+  // permitting on the very same state.
   try {
-    resolver = context.container.resolve('authorityEnforcement') as ToolAuthorityResolver
+    resolver = (context.container.resolve('authorityEnforcement') as ToolAuthorityResolver | undefined) ?? null
+  } catch {
+    resolver = null
+  }
+  if (!resolver) {
+    // Not registered. The shared rule DECIDES this branch, it does not decorate
+    // it — an earlier version called it only for the log line, and the mutation
+    // proof caught that immediately: flipping the rule changed nothing.
+    const verdict = authorityDependencyVerdict('not_registered')
+    logger.debug('Tool authority: enforcement service not registered', { toolName, verdict })
+    if (verdict === 'refuse') {
+      return {
+        kind: 'refuse',
+        gate: 'A0',
+        bindingRule: 'dependency-not-registered',
+        because: 'The authority dependency is not registered, so the act was refused rather than run ungoverned.',
+      }
+    }
+    return { kind: 'permit' }
+  }
+
+  try {
     mode = await resolver.modeFor(context.tenantId)
   } catch (error) {
-    // The dependency could not be reached. In `enforce` this is a refusal — see
-    // the header. The mode is unknown here, so it is read as the strictest
-    // position the platform ships with a switch for, and the call is refused;
-    // `off`/`shadow` deployments never reach this branch with `enforce`
-    // semantics because `modeFor` is the thing that failed.
-    logger.error('Tool authority: enforcement service unreachable; failing closed', {
-      toolName,
-      err: error,
-    })
+    // Registered but unreachable. The deployment meant to gate and cannot, so the
+    // act is refused rather than run ungoverned — the one direction the tool door
+    // always had right, and the direction the command gate gets by throwing.
+    // The shared rule decides here too, for the same reason as above.
+    const verdict = authorityDependencyVerdict('unreachable')
+    logger.error('Tool authority: enforcement service unreachable', { toolName, verdict, err: error })
+    if (verdict === 'permit') return { kind: 'permit' }
     return {
       kind: 'refuse',
       gate: 'A0',
-      bindingRule: 'enforcement-unreachable',
+      bindingRule: AUTHORITY_UNREACHABLE_BINDING_RULE,
       because: 'The authority resolver could not be reached, so the act was refused rather than run ungoverned.',
     }
   }
 
-  if (!resolver || mode === 'off') return { kind: 'permit' }
+  if (mode === 'off') return { kind: 'permit' }
 
   const scope = { tenantId: context.tenantId, organizationId: context.organizationId }
   const onBehalfOfUserId = responsibleUserIdFor(context)

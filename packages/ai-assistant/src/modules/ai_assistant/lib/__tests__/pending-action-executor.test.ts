@@ -487,16 +487,62 @@ describe('executePendingActionConfirm — S-02 authority gate', () => {
     expect(calls[0]?.feature).toBe(FEATURE)
   })
 
-  it('fails closed when the resolver is unreachable', async () => {
-    // `makeCtx()`'s container throws for `authorityEnforcement`.
+
+})
+
+// T-16 — this test used to be called "fails closed when the resolver is
+// unreachable", but its container throws on RESOLVE, which is the NOT-REGISTERED
+// state. The same conflation that hid the contradiction between the tool door and
+// the command gate. Split into the two states they actually are.
+
+describe('T-16 — a missing authority dependency on the confirm path', () => {
+  const FEATURE = 'customers.people.manage'
+  const gatedTool = (handler?: () => Promise<unknown>) =>
+    makeTool({ requiredFeatures: [FEATURE], ...(handler ? { handler } : {}) } as Partial<AiToolDefinition>)
+  it('permits when the authority module is NOT REGISTERED', async () => {
+    // `makeCtx()`'s container throws for `authorityEnforcement`. The deployment
+    // chose not to gate, so the act proceeds.
     const handler = jest.fn(async () => ({ recordId: 'p-1' }))
-    const repo = makeRepoStub(makeAction())
     const result = await executePendingActionConfirm({
       action: makeAction(),
       agent: makeAgent(),
       tool: gatedTool(handler),
       ctx: makeCtx(),
-      repo: repo as unknown as never,
+      repo: makeRepoStub(makeAction()) as unknown as never,
+      emitEvent: jest.fn().mockResolvedValue(undefined),
+    })
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(result.ok).toBe(true)
+  })
+
+  it('refuses when the authority module is REGISTERED BUT UNREACHABLE', async () => {
+    // It resolves, and then the mode lookup fails: the deployment meant to gate
+    // and cannot reach the gate.
+    const handler = jest.fn(async () => ({ recordId: 'p-1' }))
+    const ctx = {
+      ...makeCtx(),
+      container: {
+        resolve: (name: string) => {
+          if (name === 'em') return {}
+          if (name === 'eventBus') return { emitEvent: async () => {} }
+          if (name === 'authorityEnforcement') {
+            return {
+              modeFor: async () => {
+                throw new Error('resolver unreachable')
+              },
+              decideFor: async () => null,
+            }
+          }
+          throw new Error(`unknown dep ${name}`)
+        },
+      } as unknown as AwilixContainer,
+    }
+    const result = await executePendingActionConfirm({
+      action: makeAction(),
+      agent: makeAgent(),
+      tool: gatedTool(handler),
+      ctx,
+      repo: makeRepoStub(makeAction()) as unknown as never,
       emitEvent: jest.fn().mockResolvedValue(undefined),
     })
     expect(handler).not.toHaveBeenCalled()

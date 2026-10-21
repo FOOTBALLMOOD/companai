@@ -206,3 +206,49 @@ describe('what the gate refuses (T-45)', () => {
     })
   })
 })
+
+// T-16 — this door's answer to a missing authority dependency, stated as a test so
+// the two doors cannot drift apart again. The tool door used to REFUSE on the same
+// state, which is the contradiction this row is about.
+
+describe('T-16 — a missing authority dependency', () => {
+  it('permits when the authority module is NOT REGISTERED', async () => {
+    const context = {
+      commandId: GATED_COMMAND,
+      capability: CAPABILITY,
+      auth: { sub: 'user-1', tenantId: TENANT, orgId: 'org-1' },
+      selectedOrganizationId: 'org-1',
+      container: {
+        resolve: (name: string) => {
+          if (name === 'authorityEnforcement' || name === 'pendingActService') {
+            throw new Error('not registered')
+          }
+          return null
+        },
+      },
+    }
+
+    // The deployment chose not to gate. The shared rule says permit, and this
+    // door has always agreed with it.
+    await expect(authorityCommandGate.beforeExecute!({}, context as never)).resolves.toBeUndefined()
+  })
+
+  it('fails the act when the authority module is registered but UNREACHABLE', async () => {
+    const { context } = makeContext({ mode: 'enforce' })
+    ;(context.container as { resolve: (n: string) => unknown }).resolve = (name: string) => {
+      if (name === 'authorityEnforcement') {
+        return {
+          modeFor: jest.fn(async () => {
+            throw new Error('resolver unreachable')
+          }),
+          decideFor: jest.fn(async () => null),
+        }
+      }
+      if (name === 'pendingActService') return { hold, holdUntilCommit }
+      return null
+    }
+
+    // The deployment meant to gate and cannot, so the act must not run ungoverned.
+    await expect(authorityCommandGate.beforeExecute!({}, context as never)).rejects.toThrow()
+  })
+})

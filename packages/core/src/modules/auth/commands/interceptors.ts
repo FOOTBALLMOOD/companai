@@ -9,6 +9,7 @@ import {
   type PendingActService,
 } from '@open-mercato/core/modules/auth/services/pendingActService'
 import type { Decision } from '@open-mercato/shared/lib/authority/decision'
+import { authorityDependencyVerdict } from '@open-mercato/shared/lib/authority/dependency'
 
 const logger = createLogger('authority').child({ component: 'command-gate' })
 
@@ -191,8 +192,15 @@ export const authorityCommandGate: CommandInterceptor = {
       enforcement = context.container.resolve('authorityEnforcement') as AuthorityEnforcementService
       pendingActs = context.container.resolve('pendingActService') as PendingActService
     } catch {
-      // Neither registered — a lean bootstrap. Nothing to gate with, so nothing
-      // is gated. An absent dependency is not evidence of a constraint.
+      // T-16 — this door always answered "not registered" correctly, and it now
+      // says so through the shared rule rather than in a comment of its own. A
+      // deployment that did not register the authority module chose not to gate,
+      // so the act is permitted. The tool door used to refuse on this exact state,
+      // which is the disagreement this row is about.
+      logger.debug('Command declares a capability but authority is not registered; not gated', {
+        commandId: context.commandId,
+        verdict: authorityDependencyVerdict('not_registered'),
+      })
       return
     }
     if (!enforcement || !pendingActs) return
