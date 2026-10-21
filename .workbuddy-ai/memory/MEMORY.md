@@ -78,24 +78,28 @@ it. `CC-154` (the template's app tests run nowhere: root jest TS5011, the templa
 ConfigSet error) and `CC-155` (the example todo command drifted between app and template, no parity
 test) are **open and startable**.
 
-**★ IN HAND — `CC-92` Slot 0: 9 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
-`T-05`. **Next by rank: `T-06`** (the undo record the chain misses) — **requirement written
-2026-10-21**, `PLAN-T-06-undo-ledger-gap.md`. Then `T-07` (**measured 2026-10-21**: 128 command
-handlers with no capability, 109 mappable, 19 needing a decision — 9 no route, 7 route declares no
-feature, 3 route declares two; plus `catalog.offers` gated by `sales.channels.manage`, a feature
-`catalog` does not declare), `T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from
-source first** — `T-27`, `T-35`, `T-04` and `T-06` all needed the audit's sentence corrected.
-Schedule: `PREVIEW-AUDIT-TRIAGE.md` §6 = checklist §9.4.
+**★ IN HAND — `CC-92` Slot 0: 8 of 13 left, before `CC-121` starts.** Closed: `T-27`, `T-35`, `T-04`,
+`T-05`, `T-06`. **Next by rank: `T-07`**, and it is **measured** (`scripts/measure-t07-command-capabilities.mjs`,
+2026-10-21): 128 command handlers with no capability across 7 modules, **109 mappable**, **19 needing a
+decision** (9 no route, 7 route declares no feature, 3 route declares two). One cross-module oddity:
+`catalog.offers.*` is gated by `sales.channels.manage`, a feature `catalog` does not declare. Then
+`T-08`, `T-15`, `T-16`, `T-17`, `T-28`, `T-30`, `T-33`. **Measure each from source first**: `T-27`,
+`T-35`, `T-04` and `T-06` all needed the audit's sentence corrected. Schedule:
+`PREVIEW-AUDIT-TRIAGE.md` §6 = checklist §9.4.
 **★ WHY SLOT 0 BEFORE W1:** `CC-121` re-keys every `principal_id` through a gate that cannot see seven
 modules' commands and once accepted a missing identity. **The spine is repaired before it is re-keyed.**
 
-**★ `T-06`'s shape (measured 2026-10-21):** `log()` chains every journal row
-(`actionLogService.ts:242-244`, `:270-287`), `markUndone` (`:736`) writes the trace with
-`createLogEntity` and **never appends**, and **redo is covered** because it re-executes through
-`commandBus.execute` (`redo/route.ts:155`) while undo does not. So the same reversal is chained forward
-and unchained backward, and `verifyTenantChain` cannot see a missing event because the chain stays
-internally consistent. Second thing in the same method, named and not conflated: `markUndone` writes on
-`em.fork()` while `appendToLedger` requires the caller's transaction (atomicity, not chaining).
+**★ `T-06` CLOSED 2026-10-21 (`6e5da887`/`2879a92`):** the undo record now extends the chain. `markUndone`
+appends (it never did), the event carries `historyAction: 'undo'` + `sourceLogId` (an undo whose event
+type was the original command id was indistinguishable from the act), it writes on `this.em` not a fork,
+and `commandBus.undo` runs inside `runInTransaction`. **Redo was already covered** because it re-executes
+through the bus — the asymmetry is what made it a defect. `verifyUndoCoverage` is a **separate answer**
+from the hash walk, because a missing event is not a broken link. Proof: 12 tests, 5/5 mutations,
+core 663/5,839, shared 211/2,613, tsc 0. **Two things the build caught:** `tsc` found `TS2722` when the
+narrowing on `handler.undo` was lost inside the closure (hoisted, not asserted); and
+`explicit-sort-comparators` caught a bare `.sort()` in **production** code, one day after catching a
+script. **★ And `T-05`'s triage rows were still open a day after it closed** — its close updated the
+checklist and journal but not the register it is counted in (L184 again).
 
 **AFTER IT:** `CC-121` (behind `CC-119`, the DB rebuild) → `CC-122` · `CC-138` rides `W3` · `CC-133`
 deferred by the owner's trigger. **REMOTE (2026-10-20): `https://github.com/FOOTBALLMOOD/companai`** —
